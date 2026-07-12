@@ -13,12 +13,12 @@ module AsciiChem
     # correct as fields are added.
     class Node
       def accept(visitor)
-        visitor.public_send(:"visit_#{short_name}", self)
+        visitor.public_send(:"visit_#{self.class.short_name}", self)
       rescue NoMethodError => e
-        raise unless e.name == :"visit_#{short_name}"
+        raise unless e.name == :"visit_#{self.class.short_name}"
 
         raise NotImplementedError,
-              "#{visitor.class} does not implement visit_#{short_name}"
+              "#{visitor.class} does not implement visit_#{self.class.short_name}"
       end
 
       def ==(other)
@@ -56,14 +56,17 @@ module AsciiChem
         {}
       end
 
-      # Symbol form of the class basename, used to derive the visitor
+      # Snake-case form of the class basename, used to derive the visitor
       # method (`Atom` -> `visit_atom`, `ElectronConfiguration` ->
-      # `visit_electron_configuration`).
-      def short_name
-        snake = self.class.name.split("::").last
-                    .gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
-                    .gsub(/([a-z\d])([A-Z])/, '\1_\2')
-        snake.downcase
+      # `visit_electron_configuration`). Memoised per class so the
+      # string transformation runs once per class, not once per visit.
+      def self.short_name
+        @short_name ||= begin
+          snake = name.split("::").last
+                      .gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
+                      .gsub(/([a-z\d])([A-Z])/, '\1_\2')
+          snake.downcase
+        end
       end
     end
   end
