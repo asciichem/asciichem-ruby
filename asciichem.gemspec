@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
                        "model and renders to MathML, HTML, LaTeX, and SVG. Math embedding uses Plurimath."
   spec.homepage      = "https://www.asciichem.org"
   spec.license       = "BSD-2-Clause"
-  spec.required_ruby_version = Gem::Requirement.new(">= 3.2.0")
+  spec.required_ruby_version = Gem::Requirement.new(">= 3.3.0")
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/asciichem/asciichem-ruby"
