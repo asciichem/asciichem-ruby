@@ -71,6 +71,19 @@ module AsciiChem
         mrow
       end
 
+      def visit_reaction_cascade(cascade)
+        mrow = el("mrow")
+        return mrow if cascade.steps.empty?
+
+        head = cascade.steps.first
+        add_terms(mrow, head.reactants)
+        cascade.steps.each do |step|
+          mrow.add_child(render_arrow(step))
+          add_terms(mrow, step.products)
+        end
+        mrow
+      end
+
       def visit_electron_configuration(ec)
         mrow = el("mrow")
         ec.orbitals.each_with_index do |(orbital, occupancy), index|

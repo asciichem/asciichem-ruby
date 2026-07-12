@@ -92,6 +92,17 @@ module AsciiChem
       ReactionBuilder.new(reactants, arrow, products).build
     end
 
+    # -- reaction cascades ------------------------------------------------
+    #
+    # The grammar wraps a chain in `{ cascade: { first: <Reaction>,
+    # arrow:..., products:... (repeated) } }`. Fold into a single
+    # ReactionCascade with steps[0] = first and each subsequent step
+    # built from the previous step's products as reactants.
+
+    rule(cascade: subtree(:data)) do
+      CascadeBuilder.new(data).build
+    end
+
     # -- electron configuration ------------------------------------------
 
     rule(orbitals: sequence(:pairs)) do
@@ -240,8 +251,6 @@ module AsciiChem
         )
       end
 
-      private
-
       def kind
         ARROW_KINDS.fetch(@arrow[:kind].to_s, :forward)
       end
@@ -267,6 +276,55 @@ module AsciiChem
         when nil   then []
         else            [side]
         end
+      end
+    end
+
+    # Builds a ReactionCascade. Parslet delivers the cascade shape in
+    # one of two forms depending on how the grammar's sequence
+    # flattened:
+    #   - Array of segment hashes:
+    #     [{ first: <Reaction> }, { arrow:, products: }, ...]
+    #   - Single hash with array values:
+    #     { first: <Reaction>, arrow: [...], products: [...] }
+    # Normalise to a canonical form before building.
+    class CascadeBuilder
+      def initialize(data)
+        @first, @tail = canonicalise(data)
+      end
+
+      def build
+        steps = [@first]
+        @tail.each do |arrow, products|
+          prev_products = steps.last.products
+          steps << ReactionBuilder.new(prev_products, arrow, products).build
+        end
+        Model::ReactionCascade.new(steps: steps)
+      end
+
+      private
+
+      def canonicalise(data)
+        if data.is_a?(Array)
+          canonicalise_array(data)
+        else
+          canonicalise_hash(data)
+        end
+      end
+
+      def canonicalise_array(arr)
+        first = arr.find { |s| s.is_a?(Hash) && s.key?(:first) }[:first]
+        tail = arr
+                 .select { |s| s.is_a?(Hash) && s.key?(:arrow) }
+                 .map { |s| [s[:arrow], s[:products]] }
+        [first, tail]
+      end
+
+      def canonicalise_hash(hash)
+        first = hash[:first]
+        arrows = Array(hash[:arrow])
+        products = Array(hash[:products])
+        tail = arrows.zip(products)
+        [first, tail]
       end
     end
 

@@ -15,6 +15,7 @@ module AsciiChem
     autoload :Molecule, "asciichem/model/molecule"
     autoload :Node, "asciichem/model/node"
     autoload :Reaction, "asciichem/model/reaction"
+    autoload :ReactionCascade, "asciichem/model/reaction_cascade"
     autoload :Text, "asciichem/model/text"
   end
 end

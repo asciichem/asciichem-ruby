@@ -37,6 +37,19 @@ module AsciiChem
       end
     end
 
+    desc "lint -i INPUT", "Run chemistry checks; exit 1 on error, 0 if clean"
+    method_option :input, aliases: "-i", type: :string, required: true,
+                           desc: "AsciiChem source text"
+    def lint
+      formula = AsciiChem.parse(options[:input])
+      diagnostics = AsciiChem::Linter.run(formula)
+      diagnostics.each { |d| puts d }
+      exit diagnostics.any? { |d| d.severity == :error } ? 1 : 0
+    rescue AsciiChem::ParseError => e
+      warn "Parse error: #{e.message}"
+      exit 1
+    end
+
     desc "version", "Print the AsciiChem gem version"
     def version
       puts AsciiChem::VERSION

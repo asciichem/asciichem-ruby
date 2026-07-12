@@ -53,6 +53,26 @@ module AsciiChem
         "#{left} #{above}#{arrow}#{below} #{right}"
       end
 
+      def visit_reaction_cascade(cascade)
+        return "" if cascade.steps.empty?
+
+        head = cascade.steps.first
+        out = head.reactants.map { |n| render_node(n) }.join(" + ")
+        cascade.steps.each do |step|
+          arrow = escape(step.arrow_entity)
+          conds = step.conditions
+          if conds
+            above = conds.above ? "<sup>#{escape(conds.above)}</sup>" : ""
+            below = conds.below ? "<sub>#{escape(conds.below)}</sub>" : ""
+            out += " #{above}#{arrow}#{below}"
+          else
+            out += " #{arrow}"
+          end
+          out += " " + step.products.map { |n| render_node(n) }.join(" + ")
+        end
+        out
+      end
+
       def visit_electron_configuration(ec)
         ec.orbitals.map { |orb, occ| "#{escape(orb)}<sup>#{escape(occ)}</sup>" }.join(" ")
       end

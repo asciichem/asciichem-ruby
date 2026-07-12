@@ -1,0 +1,5 @@
+A <=>[][] B
+A <=>[only-above] B
+A <=>[][only-below] B
+A -> B
+A ->[catalyst] B
