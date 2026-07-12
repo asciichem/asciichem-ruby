@@ -31,6 +31,7 @@ module AsciiChem
 
       def visit_atom(atom)
         parts = []
+        parts << (":" * atom.lone_pairs) if atom.lone_pairs
         parts << "^#{wrap(atom.isotope)}" if atom.isotope
         parts << wrap(atom.element)
         parts << mhchem_subscript(atom.subscript) if atom.subscript
@@ -41,6 +42,7 @@ module AsciiChem
         elsif atom.superscript
           parts << "^#{wrap(atom.superscript)}"
         end
+        parts << ("." * atom.radical_electrons) if atom.radical_electrons
         parts.join
       end
 

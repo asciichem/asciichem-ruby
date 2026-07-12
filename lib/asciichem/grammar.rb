@@ -128,19 +128,31 @@ module AsciiChem
     # -- atoms -------------------------------------------------------------
 
     rule(:prefixed_atom) do
-      isotope_marker.as(:isotope) >>
+      lewis_prefix.maybe >>
+        isotope_marker.as(:isotope) >>
         element_symbol.as(:element) >>
-        atom_suffix
+        atom_suffix >>
+        lewis_radicals.maybe
     end
 
     rule(:plain_atom) do
-      element_symbol.as(:element) >> atom_suffix
+      lewis_prefix.maybe >>
+        element_symbol.as(:element) >>
+        atom_suffix >>
+        lewis_radicals.maybe
     end
 
     rule(:atom_suffix) do
       subscript_marker.maybe.as(:subscript) >>
         superscript_marker.maybe.as(:superscript)
     end
+
+    # Lewis markers. Prefix `:` count = lone_pairs (binds to following
+    # atom, like the isotope prefix). Suffix `.` count = radical
+    # electrons. Position-specific lone pairs (`:O:` style) collapse
+    # into a total count — the renderer decides layout.
+    rule(:lewis_prefix) { str(":").repeat(1).as(:lone_pairs) }
+    rule(:lewis_radicals) { str(".").repeat(1).as(:radical_electrons) }
 
     # Markers consume the leading `_` / `^` but capture only the value.
     rule(:isotope_marker) do

@@ -46,6 +46,7 @@ module AsciiChem
         base = wrap_charge(base, atom)   if atom.charge
         base = wrap_oxidation(base, atom) if atom.oxidation_state
         base = wrap_subsup(base, atom)
+        base = wrap_lewis(base, atom)
         base
       end
 
@@ -184,6 +185,23 @@ module AsciiChem
         else
           wrap_in_sup(base, mn(atom.superscript))
         end
+      end
+
+      # Lewis markers: lone pairs as `:` chars before, radicals as `.`
+      # chars after. MathML has no native Lewis structure element; the
+      # ASCII stand-in is the canonical form for round-trip.
+      def wrap_lewis(base, atom)
+        return base unless atom.lone_pairs || atom.radical_electrons
+
+        mrow = el("mrow")
+        if atom.lone_pairs
+          mrow.add_child(mtext(":" * atom.lone_pairs))
+        end
+        mrow.add_child(base)
+        if atom.radical_electrons
+          mrow.add_child(mtext("." * atom.radical_electrons))
+        end
+        mrow
       end
 
       def wrap_in_sub(base, sub)
