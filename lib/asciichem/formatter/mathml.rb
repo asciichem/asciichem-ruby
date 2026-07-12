@@ -227,7 +227,9 @@ module AsciiChem
       end
 
       def mi(content)
-        e = el("mi"); e.content = content.to_s; e
+        e = el("mi", mathvariant: "normal")
+        e.content = content.to_s
+        e
       end
 
       def mn(content)
