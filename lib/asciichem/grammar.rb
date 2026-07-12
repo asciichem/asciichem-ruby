@@ -27,7 +27,7 @@ module AsciiChem
 
     rule(:nodes) { node.repeat(1) }
 
-    rule(:node)  { reaction | electron_config | molecule | embedded_math | text_run }
+    rule(:node)  { reaction | electron_config | molecule | embedded_math | text_run.as(:text_run) }
 
     # -- reactions ---------------------------------------------------------
 
@@ -65,8 +65,19 @@ module AsciiChem
       coefficient.maybe >> units.as(:units)
     end
 
-    rule(:units) { unit.repeat(1) }
+    rule(:units) { (unit | bond).repeat(1) }
     rule(:unit)  { prefixed_atom | group | plain_atom }
+
+    # Bonds appear inside molecules as separators between units. v1
+    # supports single (`-`), double (`=`), and triple (`#`). The model
+    # has additional kinds (wedge, hash, dative, wavy) for v2 once the
+    # grammar has syntax for them; for now those kinds are reachable
+    # only by direct model construction.
+    rule(:bond) do
+      str("#").as(:triple) |
+        str("=").as(:double) |
+        str("-").as(:single)
+    end
 
     rule(:coefficient) do
       (digits.as(:value) >> (element_symbol | open_bracket).present?).as(:coefficient)

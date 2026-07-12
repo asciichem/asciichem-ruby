@@ -46,6 +46,10 @@ module AsciiChem
         AsciiChem::Formatter.render(:latex, self)
       end
 
+      def to_svg
+        AsciiChem::Formatter.render(:svg, self)
+      end
+
       # Subclasses override to expose the attributes that participate in
       # equality. Default: empty (so two bare Nodes are equal).
       def value_attributes

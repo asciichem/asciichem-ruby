@@ -27,6 +27,10 @@ RSpec.describe AsciiChem::Formatter::Text do
     # stoichiometric coefficients
     "2H_2O",
     "3H_2",
+    # bonds — linear structural notation
+    "H-O-H",
+    "H_2C=CH_2",
+    "HC#CH",
     # reactions
     "2H_2 + O_2 -> 2H_2O",
     "N_2 + 3H_2 <=>[Fe][400°C] 2NH_3",

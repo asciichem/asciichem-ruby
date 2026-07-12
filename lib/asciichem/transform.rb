@@ -52,6 +52,12 @@ module AsciiChem
       AtomBuilder.new(el, subscript: sub, superscript: sup).build
     end
 
+    # -- bonds ------------------------------------------------------------
+
+    rule(triple: simple(:_t))   { Model::Bond.new(kind: :triple) }
+    rule(double: simple(:_d))   { Model::Bond.new(kind: :double) }
+    rule(single: simple(:_s))   { Model::Bond.new(kind: :single) }
+
     # -- molecules -------------------------------------------------------
 
     rule(coefficient: subtree(:coef), units: subtree(:units)) do
