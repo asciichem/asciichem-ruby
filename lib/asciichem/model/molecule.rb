@@ -21,7 +21,7 @@ module AsciiChem
 
       STEREO_TO_LETTER = {
         R: "R", S: "S", E: "E", Z: "Z",
-        alpha: "α", beta: "β"
+        alpha: "alpha", beta: "beta"
       }.freeze
 
       attr_accessor :coefficient, :nodes, :stereo

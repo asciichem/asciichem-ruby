@@ -27,11 +27,14 @@ RSpec.describe AsciiChem::Formatter::Mathml do
       expect(xml).to include("<mn>2</mn>")
     end
 
-    it "binds a prefix isotope to the atom via <msup> — the semantic fix" do
+    it "binds a prefix isotope to the atom via <mmultiscripts> — the semantic fix" do
       xml = render("^14C")
-      # The fix: <msup><mi>C</mi><mn>14</mn></msup>, NOT
-      # <msup><mi></mi><mn>14</mn></msup><mi>C</mi>.
-      expect(xml).to include("<msup>")
+      # IUPAC: isotopes are LEFT superscripts (¹⁴C). Use
+      # <mmultiscripts> with <mprescripts/> so the binding stays on
+      # the atom — the AsciiMath `<msup><mi></mi>...<mi>C</mi>`
+      # pattern (empty base + sibling) loses the binding.
+      expect(xml).to include("<mmultiscripts>")
+      expect(xml).to include("<mprescripts/>")
       expect(xml).to include('<mi mathvariant="normal">C</mi>')
       expect(xml).to include("<mn>14</mn>")
       expect(xml).not_to match(%r{<mi>\s*</mi>})

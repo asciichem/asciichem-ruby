@@ -17,7 +17,7 @@ RSpec.describe AsciiChem::Model::Molecule do
     it "exposes stereo_letter for rendering" do
       expect(described_class.new(nodes: [], stereo: :R).stereo_letter).to eq("R")
       expect(described_class.new(nodes: [], stereo: :S).stereo_letter).to eq("S")
-      expect(described_class.new(nodes: [], stereo: :alpha).stereo_letter).to eq("α")
+      expect(described_class.new(nodes: [], stereo: :alpha).stereo_letter).to eq("alpha")
     end
   end
 
