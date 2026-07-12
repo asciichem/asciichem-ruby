@@ -1,0 +1,5 @@
+# frozen_string_literal: true
+
+module AsciiChem
+  VERSION = "0.1.0"
+end

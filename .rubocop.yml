@@ -1,0 +1,34 @@
+require:
+  - rubocop
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+  Exclude:
+    - "pkg/**/*"
+    - "vendor/**/*"
+    - "coverage/**/*"
+
+# Parser grammars benefit from short methods; parslet DSL reads top-to-bottom.
+Metrics/MethodLength:
+  Max: 40
+  Exclude:
+    - "lib/asciichem/parser.rb"
+
+Metrics/ClassLength:
+  Max: 200
+  Exclude:
+    - "lib/asciichem/parser.rb"
+    - "lib/asciichem/transform.rb"
+
+# Specs read better with non-trivial blocks.
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+    - "*.gemspec"
+
+# Visitor dispatch methods are short by design.
+Style/Documentation:
+  Exclude:
+    - "lib/asciichem/formatter/*.rb"
+    - "lib/asciichem/model/*.rb"

@@ -1,1 +1,55 @@
-= AsciiChem Ruby gem
+= AsciiChem
+
+AsciiChem is an ASCII syntax for representing chemistry: atoms, molecules,
+bonds, reactions, electron configurations, and embedded mathematics. It
+parses to a semantic model and renders to MathML, HTML, LaTeX, and SVG.
+
+== Why
+
+AsciiMath is insufficient for chemistry:
+
+* Prefix superscripts/subscripts have no atom to bind to — AsciiMath
+  forces a phantom `{}` carrier (e.g. `{}^14C`), which is semantically
+  wrong: the isotope belongs to the atom, not to an empty element.
+* No native syntax for stoichiometric coefficients, reaction arrows,
+  conditions, or spectator ions.
+* No representation for electron configuration, term symbols, or bonds.
+* No structural diagrams.
+
+AsciiChem closes these gaps.
+
+== Installation
+
+Add to your Gemfile:
+
+[source,ruby]
+----
+gem "asciichem"
+----
+
+Or install directly:
+
+[source,sh]
+----
+$ gem install asciichem
+----
+
+== Usage
+
+[source,ruby]
+----
+require "asciichem"
+
+formula = AsciiChem.parse("H_2O")
+formula.to_mathml  # => "<math>...</math>"
+formula.to_text    # => "H_2O"  (round trip)
+----
+
+== Design
+
+See link:ARCHITECTURE.adoc[] and the specification at
+https://www.asciichem.org[].
+
+== License
+
+BSD-2-Clause. See link:LICENSE[LICENSE].
