@@ -72,19 +72,49 @@ module AsciiChem
     # -- molecules ---------------------------------------------------------
 
     rule(:molecule) do
-      coefficient.maybe >> units.as(:units)
+      stereo_prefix.maybe >> coefficient.maybe >> units.as(:units)
+    end
+
+    # Stereochemistry prefix: `(R)-`, `(S)-`, `(E)-`, `(Z)-`,
+    # `(a)-`/`(α)-` (alpha), `(b)-`/`(β)-` (beta). Tried before
+    # `coefficient` so the lookahead-via-failure on the closed letter
+    # set disambiguates from a parenthesised group: `(R)` matches
+    # because `R` is in the stereo set; `(OH)` fails because `OH` is
+    # not a single stereo letter, and the molecule rule falls through
+    # to the regular group parse.
+    rule(:stereo_prefix) do
+      str("(") >> stereo_letter.as(:stereo) >> str(")") >> str("-")
+    end
+
+    rule(:stereo_letter) do
+      str("alpha") | str("beta") |
+        str("R") | str("S") | str("E") | str("Z") |
+        str("α") | str("β") |
+        str("a") | str("b")
     end
 
     rule(:units) { (unit | bond).repeat(1) }
     rule(:unit)  { prefixed_atom | group | plain_atom }
 
-    # Bonds appear inside molecules as separators between units. v1
-    # supports single (`-`), double (`=`), and triple (`#`). The model
-    # has additional kinds (wedge, hash, dative, wavy) for v2 once the
-    # grammar has syntax for them; for now those kinds are reachable
-    # only by direct model construction.
+    # Bonds appear inside molecules as separators between units.
+    # Supported kinds, in alternation order (longest match first to
+    # avoid `>-` shadowing `-`):
+    #   single    `-`
+    #   double    `=`
+    #   triple    `#`
+    #   quadruple `##`
+    #   wedge     `>-`  (solid wedge toward viewer)
+    #   hash      `-<`  (hashed wedge away from viewer)
+    #   dative    `~>`  (electron-pair donor → acceptor; `->` is taken
+    #                    by the reaction arrow)
+    #   wavy      `~~`  (resonance / delocalised)
     rule(:bond) do
-      str("#").as(:triple) |
+      str("##").as(:quadruple) |
+        str(">-").as(:wedge) |
+        str("-<").as(:hash) |
+        str("~>").as(:dative) |
+        str("~~").as(:wavy) |
+        str("#").as(:triple) |
         str("=").as(:double) |
         str("-").as(:single)
     end

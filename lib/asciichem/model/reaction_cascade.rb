@@ -21,6 +21,10 @@ module AsciiChem
         { steps: steps }
       end
 
+      def children
+        steps
+      end
+
       def to_s
         "ReactionCascade(#{steps.map(&:to_s).join(' >> ')})"
       end

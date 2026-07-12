@@ -56,6 +56,17 @@ module AsciiChem
         {}
       end
 
+      # Child nodes for traversal. Default: no children. Container
+      # classes (Formula, Molecule, Group, Reaction, ReactionCascade)
+      # override to expose their contents; leaves (Atom, Bond,
+      # EmbeddedMath, Text) inherit the empty default.
+      #
+      # Used by Linter::Base#walk. Adding a new container class means
+      # defining `children` on it — no edits to the linter.
+      def children
+        []
+      end
+
       # Snake-case form of the class basename, used to derive the visitor
       # method (`Atom` -> `visit_atom`, `ElectronConfiguration` ->
       # `visit_electron_configuration`). Memoised per class so the

@@ -23,8 +23,9 @@ module AsciiChem
 
       def visit_molecule(molecule)
         prefix = molecule.coefficient.nil? || molecule.coefficient.empty? ? "" : molecule.coefficient.to_s
+        stereo = molecule.stereo ? "(#{molecule.stereo_letter})-" : ""
         body = molecule.nodes.map { |n| render_node(n) }.join
-        "#{prefix}#{body}"
+        "#{stereo}#{prefix}#{body}"
       end
 
       def visit_atom(atom)

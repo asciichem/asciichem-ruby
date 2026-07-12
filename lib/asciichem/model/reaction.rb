@@ -28,6 +28,10 @@ module AsciiChem
           conditions: conditions }
       end
 
+      def children
+        reactants + products
+      end
+
       def arrow_ascii
         ARROWS.fetch(arrow).fetch(:ascii)
       end

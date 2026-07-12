@@ -14,7 +14,11 @@ RSpec.describe AsciiChem::Model::Bond do
       expect(described_class.new(kind: :single).ascii).to eq("-")
       expect(described_class.new(kind: :double).ascii).to eq("=")
       expect(described_class.new(kind: :triple).ascii).to eq("#")
-      expect(described_class.new(kind: :dative).ascii).to eq("->")
+      expect(described_class.new(kind: :quadruple).ascii).to eq("##")
+      expect(described_class.new(kind: :wedge).ascii).to eq(">-")
+      expect(described_class.new(kind: :hash).ascii).to eq("-<")
+      expect(described_class.new(kind: :dative).ascii).to eq("~>")
+      expect(described_class.new(kind: :wavy).ascii).to eq("~~")
     end
   end
 
