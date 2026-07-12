@@ -7,7 +7,7 @@ module AsciiChem
   class Cli < Thor
     package_name "AsciiChem"
 
-    desc "convert -i INPUT -t FORMAT", "Convert AsciiChem INPUT to FORMAT (mathml|text|html|latex)"
+    desc "convert -i INPUT -t FORMAT", "Convert AsciiChem INPUT to FORMAT (mathml|text|html|latex|svg)"
     method_option :input, aliases: "-i", type: :string, required: true,
                            desc: "AsciiChem source text"
     method_option :format, aliases: "-t", type: :string, default: "mathml",
@@ -50,6 +50,7 @@ module AsciiChem
       when :text   then formula.to_text
       when :html   then formula.to_html
       when :latex  then formula.to_latex
+      when :svg    then formula.to_svg
       else
         raise AsciiChem::FormatError, "unknown format: #{format}"
       end

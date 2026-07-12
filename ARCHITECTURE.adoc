@@ -1,0 +1,239 @@
+= AsciiChem Architecture
+
+AsciiChem is an ASCII syntax for representing chemistry: atoms,
+molecules, bonds, reactions, electron configurations, and embedded
+mathematics. It parses text into a semantic model and renders the model
+to multiple output formats.
+
+This document is the durable reference for contributors. The
+https://www.asciichem.org[site] is the user-facing spec; this file is
+the implementation guide.
+
+== Layers
+
+```
+          ┌─────────────┐
+text ───► │   Grammar   │   parslet parser, flat-hash tree
+          └──────┬──────┘
+                 ▼
+          ┌─────────────┐
+          │  Transform  │   tree → model, with builder helpers
+          └──────┬──────┘
+                 ▼
+          ┌─────────────┐
+          │   Model     │   Formula, Atom, Molecule, Group, Bond,
+          │             │   Reaction, ElectronConfiguration,
+          │             │   EmbeddedMath, Text
+          └──────┬──────┘
+                 ▼
+          ┌──────────────────────────────────────────────┐
+          │  Formatter (visitor)                         │
+          │  ┌─────────┐ ┌──────┐ ┌───────┐ ┌─────┐ ┌───┐ │
+          │  │ Mathml  │ │ Text │ │ HTML  │ │ LaTeX │ … │ │
+          │  └─────────┘ └──────┘ └───────┘ └─────┘ └───┘ │
+          └──────────────────────────────────────────────┘
+                 ▼
+          output (string)
+```
+
+The model is the contract. Every formatter consumes the same tree; the
+parser and transform never reach past it.
+
+== The semantic fix
+
+The defining difference from AsciiMath is captured at the parser/model
+boundary, not in any one formatter.
+
+[cols="1,2,2"]
+|===
+| Input | AsciiMath | AsciiChem
+
+| `^14C`
+| `<msup><mi></mi><mn>14</mn></msup><mi>C</mi>` (empty base + sibling)
+| `Atom(element: "C", isotope: "14")` → `<msup><mi>C</mi><mn>14</mn></msup>`
+
+| `Ca^2+`
+| `<msup><mi>Ca</mi><mn>2+</mn></msup>` (charge as undifferentiated super)
+| `Atom(element: "Ca", charge: "2+")` → `<msup><mi>Ca</mi><mrow><mn>2</mn><mo>+</mo></mrow></msup>`
+
+| `1s^2 2s^2`
+| `msub/msup` soup, no orbital concept
+| `ElectronConfiguration(orbitals: [["1s","2"], ["2s","2"]])`
+|===
+
+The grammar enforces binding structurally. `prefixed_atom` consumes
+`^digits element` as a single unit; a bare `^digits` with no following
+element is rejected. The model carries the binding in a typed field.
+
+== Model classes
+
+[cols="1,3,3,3"]
+|===
+| Class | Role | Key fields | Invariants
+
+| `Formula`
+| Top-level container, root of every parse.
+| `nodes: Array<Node>`
+| `nodes` may be empty (e.g. parse error fallback).
+
+| `Atom`
+| A chemical atom.
+| `element: String`, `isotope: String?`, `subscript: String?`, `superscript: String?`, `charge: String?`, `oxidation_state: String?`
+| Exactly one of `{superscript, charge, oxidation_state}` is set; they are mutually exclusive views of the suffix super position.
+
+| `Molecule`
+| Ordered list of atoms/groups with optional stoichiometric coefficient.
+| `nodes: Array<Atom \| Group \| Bond \| ...>`, `coefficient: String?`
+| Multiplicity lives on inner atoms/groups, not on the molecule.
+
+| `Group`
+| Parenthesised sub-formula with outer multiplicity.
+| `nodes: Array`, `multiplicity: String?`, `bracket: :paren \| :square \| :brace`
+| Round-trip preserves bracket kind.
+
+| `Bond`
+| A bond between two adjacent nodes in a chain.
+| `kind: :single \| :Double \| :triple \| :wedge \| :hash \| :dative \| :wavy`
+| Endpoints are positional in the parent sequence.
+
+| `Reaction`
+| Reactants + arrow + products, with optional conditions.
+| `reactants: Array<Molecule>`, `products: Array<Molecule>`, `arrow: :forward \| :reverse \| :equilibrium \| :resonance`, `conditions: Conditions?`
+| Arrow kinds are exhaustive; adding a new kind is a single map entry.
+
+| `ElectronConfiguration`
+| Orbital occupancy plus optional term symbol.
+| `orbitals: Array<[orbital, occupancy]>`, `term_symbol: TermSymbol?`
+| Orbital labels match `^[0-9]+[spdfgh]$`.
+
+| `EmbeddedMath`
+| A Plurimath formula embedded in chemistry.
+| `formula: Plurimath::Math::Formula`, `source: String`
+| `source` is preserved verbatim for round-trip.
+
+| `Text`
+| Catch-all for runs not promoted to a typed node.
+| `content: String`
+| The grammar is total; unparseable fragments land here rather than failing.
+|===
+
+Every model class:
+
+* Inherits from `AsciiChem::Model::Node`.
+* Declares `value_attributes` returning the hash of fields that
+  participate in equality (avoids reflective instance variable access).
+* Implements `accept(visitor)` via the base class, which dispatches to
+  `visitor.visit_<snake_name>(self)`.
+
+== Extension points (OCP)
+
+The system is open for extension in three dimensions; each dimension
+requires edits in exactly one place.
+
+=== Adding a new construct
+
+1. Add a model class under `lib/asciichem/model/`, inheriting from
+   `Node`. Declare `value_attributes`.
+2. Add an autoload entry in `lib/asciichem/model.rb`.
+3. Add grammar productions in `lib/asciichem/grammar.rb`.
+4. Add a transform rule in `lib/asciichem/transform.rb`.
+5. Add `visit_<class>` methods to each formatter (the base class raises
+   `NotImplementedError` so gaps surface immediately).
+
+No existing model/parser/formatter code is modified.
+
+=== Adding a new output format
+
+1. Create `lib/asciichem/formatter/<name>.rb` with a class inheriting
+   from `AsciiChem::Formatter::Base`.
+2. Implement one `visit_<class>` method per model class.
+3. Add `autoload :<ClassCamel>, "asciichem/formatter/<name>"` to
+   `lib/asciichem/formatter.rb`.
+4. Optionally add `to_<name>` to `Model::Node`.
+
+The format is reachable via `AsciiChem::Formatter[<name>]` — no switch
+statement, no registry of instances. Adding the autoload entry is the
+only required change to an existing file.
+
+=== Adding a new arrow / bond / bracket kind
+
+Each enum (`Reaction::ARROWS`, `Bond::KINDS`, `Group#bracket`) is a
+constant hash. Adding a kind is a single entry; the formatter reads from
+the hash, not from a switch statement.
+
+== Plurimath interop
+
+Mathematics embedded in chemistry is delegated to
+{Plurimath}[https://github.com/plurimath/plurimath].
+
+* `EmbeddedMath` wraps a `Plurimath::Math::Formula`.
+* The grammar captures backtick-delimited runs as raw text and passes
+  them to `Plurimath::Asciimath.new(source).to_formula` at transform
+  time.
+* The MathML formatter calls the wrapped formula's `to_mathml` and
+  strips the outer `<math>` so the fragment slots into AsciiChem's
+  `<mrow>`.
+* The Text formatter emits the original backtick-delimited source
+  verbatim.
+
+AsciiChem does not reinvent math typography. Anywhere math appears in
+chemistry (rate laws, equilibrium constants, Arrhenius expressions),
+Plurimath handles it.
+
+== Glossary
+
+[cols="1,3"]
+|===
+| Term | Definition
+
+| Atom
+| A chemical atom with element symbol and optional isotope, charge,
+  oxidation state, or subscript multiplicity.
+
+| Molecule
+| An ordered sequence of atoms/groups plus an optional leading
+  stoichiometric coefficient.
+
+| Group
+| A parenthesised sub-formula with an outer multiplicity. Brackets
+  may be `()`, `[]`, or `{}`.
+
+| Bond
+| A connection between two adjacent nodes in a structural chain.
+  Single, double, triple, wedge, hash, dative, or wavy.
+
+| Reaction
+| A transformation with reactants, an arrow, and products, plus
+  optional conditions above/below the arrow.
+
+| ElectronConfiguration
+| A list of orbital/occupancy pairs plus an optional term symbol.
+
+| EmbeddedMath
+| A Plurimath formula embedded in chemistry text.
+
+| Prefix isotope
+| A mass number written before the element symbol, e.g. `^14C`. The
+  binding to the atom is the headline semantic fix over AsciiMath.
+
+| Stoichiometric coefficient
+| Leading digits on a molecule, e.g. the `2` in `2H_2O`.
+
+| Canonical form
+| The AsciiChem text that the Text formatter emits. Round-trip
+  conformance: `parse(s).to_text == s` for any canonical `s`.
+|===
+
+== Constraints honoured
+
+* No `require_relative` for internal code; `autoload` everywhere,
+  declared in the immediate parent namespace's file.
+* No `instance_variable_set` / `instance_variable_get`. Equality uses
+  declared `value_attributes`.
+* No `respond_to?` type checks. `is_a?` only.
+* No `send` to private methods. The visitor dispatch uses
+  `public_send` against public `visit_*` methods.
+* No `double()` in specs. Real instances or `Struct`s.
+* No hand-rolled model serialisation. The model is in-memory only;
+  rendering to MathML / HTML / etc. is one-way output via Nokogiri or
+  string building, not `(de)serialisation`.

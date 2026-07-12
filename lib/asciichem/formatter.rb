@@ -15,7 +15,10 @@ module AsciiChem
   # No edits to existing formatters — OCP.
   module Formatter
     autoload :Base, "asciichem/formatter/base"
+    autoload :Html, "asciichem/formatter/html"
+    autoload :Latex, "asciichem/formatter/latex"
     autoload :Mathml, "asciichem/formatter/mathml"
+    autoload :Svg, "asciichem/formatter/svg"
     autoload :Text, "asciichem/formatter/text"
 
     # Lookup by format name. Triggers autoload; raises FormatError if

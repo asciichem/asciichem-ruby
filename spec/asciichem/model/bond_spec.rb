@@ -24,4 +24,35 @@ RSpec.describe AsciiChem::Model::Bond do
       expect(described_class.new(kind: :dative).entity).to eq("→")
     end
   end
+
+  describe "parser integration" do
+    it "parses single bonds in linear chains" do
+      formula = AsciiChem.parse("H-O-H")
+      molecule = formula.nodes.first
+      expect(molecule.nodes.map(&:class).map(&:name)).to eq(%w[
+        AsciiChem::Model::Atom
+        AsciiChem::Model::Bond
+        AsciiChem::Model::Atom
+        AsciiChem::Model::Bond
+        AsciiChem::Model::Atom
+      ])
+    end
+
+    it "parses double bonds" do
+      formula = AsciiChem.parse("H_2C=CH_2")
+      bonds = formula.nodes.first.nodes.select { |n| n.is_a?(AsciiChem::Model::Bond) }
+      expect(bonds.first.kind).to eq(:double)
+    end
+
+    it "parses triple bonds" do
+      formula = AsciiChem.parse("HC#CH")
+      bonds = formula.nodes.first.nodes.select { |n| n.is_a?(AsciiChem::Model::Bond) }
+      expect(bonds.first.kind).to eq(:triple)
+    end
+
+    it "round-trips bonded molecules" do
+      expect(AsciiChem.parse("H-O-H").to_text).to eq("H-O-H")
+      expect(AsciiChem.parse("H_2C=CH_2").to_text).to eq("H_2C=CH_2")
+    end
+  end
 end
