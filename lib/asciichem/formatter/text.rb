@@ -30,12 +30,14 @@ module AsciiChem
 
       def visit_atom(atom)
         parts = []
+        parts << (":" * atom.lone_pairs) if atom.lone_pairs
         parts << "^#{atom.isotope}"        if atom.isotope
         parts << atom.element
         parts << "_#{atom.subscript}"      if atom.subscript
         parts << "^#{atom.superscript}"    if atom.superscript
         parts << "^#{atom.charge}"         if atom.charge
         parts << "^(#{atom.oxidation_state})" if atom.oxidation_state
+        parts << ("." * atom.radical_electrons) if atom.radical_electrons
         parts.join
       end
 

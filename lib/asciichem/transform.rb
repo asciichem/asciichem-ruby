@@ -37,8 +37,14 @@ module AsciiChem
 
     # -- atoms -----------------------------------------------------------
 
-    # Both prefixed and plain atoms flow through the same builder. The
-    # presence of `isotope` distinguishes them.
+    # Plain atom with no Lewis markers.
+    rule(element: simple(:el),
+        subscript: simple(:sub),
+        superscript: simple(:sup)) do
+      AtomBuilder.new(el, subscript: sub, superscript: sup).build
+    end
+
+    # Atom with isotope (no Lewis).
     rule(element: simple(:el),
         subscript: simple(:sub),
         superscript: simple(:sup),
@@ -46,10 +52,43 @@ module AsciiChem
       AtomBuilder.new(el, isotope: iso, subscript: sub, superscript: sup).build
     end
 
-    rule(element: simple(:el),
+    # Atom with lone pairs prefix (Lewis).
+    rule(lone_pairs: simple(:lp),
+        element: simple(:el),
         subscript: simple(:sub),
         superscript: simple(:sup)) do
-      AtomBuilder.new(el, subscript: sub, superscript: sup).build
+      AtomBuilder.new(el, subscript: sub, superscript: sup,
+                      lone_pairs: lp.to_s.length).build
+    end
+
+    # Atom with isotope + lone pairs prefix.
+    rule(lone_pairs: simple(:lp),
+        element: simple(:el),
+        subscript: simple(:sub),
+        superscript: simple(:sup),
+        isotope: simple(:iso)) do
+      AtomBuilder.new(el, isotope: iso, subscript: sub, superscript: sup,
+                      lone_pairs: lp.to_s.length).build
+    end
+
+    # Atom with radical electrons suffix.
+    rule(element: simple(:el),
+        subscript: simple(:sub),
+        superscript: simple(:sup),
+        radical_electrons: simple(:rad)) do
+      AtomBuilder.new(el, subscript: sub, superscript: sup,
+                      radical_electrons: rad.to_s.length).build
+    end
+
+    # Atom with lone pairs prefix AND radical suffix.
+    rule(lone_pairs: simple(:lp),
+        element: simple(:el),
+        subscript: simple(:sub),
+        superscript: simple(:sup),
+        radical_electrons: simple(:rad)) do
+      AtomBuilder.new(el, subscript: sub, superscript: sup,
+                      lone_pairs: lp.to_s.length,
+                      radical_electrons: rad.to_s.length).build
     end
 
     # -- bonds ------------------------------------------------------------
@@ -185,11 +224,14 @@ module AsciiChem
     # resulting atom — they are mutually exclusive views of the
     # superscript position.
     class AtomBuilder
-      def initialize(element, isotope: nil, subscript: nil, superscript: nil)
+      def initialize(element, isotope: nil, subscript: nil, superscript: nil,
+                     lone_pairs: nil, radical_electrons: nil)
         @element = element
         @isotope = isotope
         @subscript = subscript
         @superscript = superscript
+        @lone_pairs = lone_pairs
+        @radical_electrons = radical_electrons
       end
 
       def build
@@ -201,11 +243,20 @@ module AsciiChem
           subscript: strip_marker(@subscript, "_"),
           superscript: raw_superscript(charge, oxidation),
           charge: charge,
-          oxidation_state: oxidation
+          oxidation_state: oxidation,
+          lone_pairs: positive_int(@lone_pairs),
+          radical_electrons: positive_int(@radical_electrons)
         )
       end
 
       private
+
+      def positive_int(value)
+        return nil if value.nil?
+
+        n = value.to_i
+        n.positive? ? n : nil
+      end
 
       # Returns the raw superscript only when it isn't a charge or
       # oxidation state (otherwise those carry the info).
