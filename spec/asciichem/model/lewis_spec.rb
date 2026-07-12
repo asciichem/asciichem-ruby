@@ -69,7 +69,7 @@ RSpec.describe AsciiChem::Model::Atom do
     it "emits Lewis markers in MathML" do
       xml = AsciiChem.parse(":O").to_mathml
       expect(xml).to include(":")
-      expect(xml).to include("<mi>O</mi>")
+      expect(xml).to include('mathvariant="normal">O<')
     end
 
     it "emits Lewis markers in LaTeX inside ce{}" do

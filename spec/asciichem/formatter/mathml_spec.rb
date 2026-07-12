@@ -17,13 +17,13 @@ RSpec.describe AsciiChem::Formatter::Mathml do
   describe "atom rendering" do
     it "emits <mi> for a bare element" do
       xml = render("He")
-      expect(xml).to include("<mi>He</mi>")
+      expect(xml).to include('<mi mathvariant="normal">He</mi>')
     end
 
     it "binds subscript directly to the atom via <msub>" do
       xml = render("H_2")
       expect(xml).to include("<msub>")
-      expect(xml).to include("<mi>H</mi>")
+      expect(xml).to include('<mi mathvariant="normal">H</mi>')
       expect(xml).to include("<mn>2</mn>")
     end
 
@@ -32,7 +32,7 @@ RSpec.describe AsciiChem::Formatter::Mathml do
       # The fix: <msup><mi>C</mi><mn>14</mn></msup>, NOT
       # <msup><mi></mi><mn>14</mn></msup><mi>C</mi>.
       expect(xml).to include("<msup>")
-      expect(xml).to include("<mi>C</mi>")
+      expect(xml).to include('<mi mathvariant="normal">C</mi>')
       expect(xml).to include("<mn>14</mn>")
       expect(xml).not_to match(%r{<mi>\s*</mi>})
     end
@@ -40,7 +40,7 @@ RSpec.describe AsciiChem::Formatter::Mathml do
     it "renders a suffix charge as an <msup> with number + sign" do
       xml = render("Ca^2+")
       expect(xml).to include("<msup>")
-      expect(xml).to include("<mi>Ca</mi>")
+      expect(xml).to include('<mi mathvariant="normal">Ca</mi>')
       expect(xml).to include("<mn>2</mn>")
       expect(xml).to include("<mo>+</mo>")
     end
@@ -50,7 +50,7 @@ RSpec.describe AsciiChem::Formatter::Mathml do
     it "places the coefficient before the atoms" do
       xml = render("2H_2O")
       # The 2 coefficient should appear before the H.
-      expect(xml.index(%r{<mn>2</mn>}) < xml.index("<mi>H</mi>")).to be(true)
+      expect(xml.index(%r{<mn>2</mn>}) < xml.index('mathvariant="normal">H<')).to be(true)
     end
   end
 
