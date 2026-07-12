@@ -20,12 +20,7 @@ module AsciiChem
 
     # Run all registered checks against the model. Returns an array of
     # Diagnostic objects (empty if no issues).
-    #
-    # Each check self-registers when its file loads. Autoloads are
-    # triggered by iterating `constants` so every autoloaded check
-    # file has a chance to register before we read the registry.
     def self.run(formula)
-      constants.each { |name| const_get(name) }
       Registry.all.flat_map { |check| check.new.run(formula) }
     end
 
@@ -33,5 +28,9 @@ module AsciiChem
     def self.errors?(formula)
       run(formula).any? { |d| d.severity == :error }
     end
+
+    # Eagerly trigger every autoload in this module so check files can
+    # self-register. Runs once at module-load time.
+    constants.each { |name| const_get(name) }
   end
 end
