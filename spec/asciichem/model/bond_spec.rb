@@ -25,6 +25,31 @@ RSpec.describe AsciiChem::Model::Bond do
     end
   end
 
+  describe "all kind variants reachable via direct construction" do
+    it "supports wedge, hash, dative, wavy kinds" do
+      expect(described_class.new(kind: :wedge).kind).to eq(:wedge)
+      expect(described_class.new(kind: :hash).kind).to eq(:hash)
+      expect(described_class.new(kind: :dative).kind).to eq(:dative)
+      expect(described_class.new(kind: :wavy).kind).to eq(:wavy)
+    end
+
+    it "maps every kind to an ASCII spelling" do
+      described_class::KINDS.each_key do |kind|
+        bond = described_class.new(kind: kind)
+        expect(bond.ascii).to be_a(String)
+        expect(bond.ascii.length).to be > 0
+      end
+    end
+
+    it "maps every kind to a MathML entity" do
+      described_class::KINDS.each_key do |kind|
+        bond = described_class.new(kind: kind)
+        expect(bond.entity).to be_a(String)
+        expect(bond.entity.length).to be > 0
+      end
+    end
+  end
+
   describe "parser integration" do
     it "parses single bonds in linear chains" do
       formula = AsciiChem.parse("H-O-H")

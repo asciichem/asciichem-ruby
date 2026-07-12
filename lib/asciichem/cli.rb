@@ -45,15 +45,7 @@ module AsciiChem
     private
 
     def render(formula, format)
-      case format.to_sym
-      when :mathml then formula.to_mathml
-      when :text   then formula.to_text
-      when :html   then formula.to_html
-      when :latex  then formula.to_latex
-      when :svg    then formula.to_svg
-      else
-        raise AsciiChem::FormatError, "unknown format: #{format}"
-      end
+      AsciiChem::Formatter.render(format.to_sym, formula)
     end
   end
 end
