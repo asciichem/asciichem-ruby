@@ -19,6 +19,10 @@ module AsciiChem
         { nodes: nodes }
       end
 
+      def children
+        nodes
+      end
+
       def to_s
         "Formula[#{nodes.map(&:to_s).join(', ')}]"
       end

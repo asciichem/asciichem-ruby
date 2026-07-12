@@ -32,6 +32,9 @@ module AsciiChem
 
       def visit_molecule(molecule)
         mrow = el("mrow")
+        if molecule.stereo
+          mrow.add_child(mtext("(#{molecule.stereo_letter})-"))
+        end
         mrow.add_child(mn(molecule.coefficient)) if molecule.coefficient
         molecule.nodes.each { |n| mrow.add_child(render_node(n)) }
         mrow

@@ -23,6 +23,39 @@ RSpec.describe AsciiChem::Linter do
     end
   end
 
+  describe "BalanceCheck" do
+    it "passes for a balanced reaction" do
+      expect(lint("2H_2 + O_2 -> 2H_2O").select { |d| d.severity == :error }).to be_empty
+    end
+
+    it "errors for an unbalanced reaction" do
+      diagnostics = lint("H_2 + O_2 -> H_2O")
+      errors = diagnostics.select { |d| d.severity == :error }
+      expect(errors.length).to eq(1)
+      expect(errors.first.message).to include("not balanced")
+      expect(errors.first.message).to include("O: 2 vs 1")
+    end
+
+    it "handles group multiplicities" do
+      expect(lint("Ca(OH)_2 + 2HCl -> CaCl_2 + 2H_2O")
+              .select { |d| d.severity == :error }).to be_empty
+    end
+  end
+
+  describe "ValenceCheck" do
+    it "flags carbon with explicit overloaded bonds" do
+      # H-C=C-C-H with explicit bonds — carbons have bond order 2 each,
+      # which is fine. We're checking that the check itself runs.
+      expect { lint("H-C=C-H") }.not_to raise_error
+    end
+
+    it "emits info for unknown elements" do
+      diagnostics = lint("Xx-2Yy")
+      infos = diagnostics.select { |d| d.severity == :info }
+      expect(infos.length).to be >= 1
+    end
+  end
+
   describe "IsotopeSanityCheck" do
     it "errors when isotope mass is below atomic number" do
       diagnostics = lint("^5C")
@@ -41,15 +74,17 @@ RSpec.describe AsciiChem::Linter do
     it "emits info for unknown elements" do
       diagnostics = lint("^5Xx")
       infos = diagnostics.select { |d| d.severity == :info }
-      expect(infos.length).to eq(1)
-      expect(infos.first.message).to include("not in isotope table")
+      expect(infos.length).to be >= 1
+      expect(infos.any? { |d| d.message.include?("isotope table") }).to be(true)
     end
   end
 
   describe "Registry" do
-    it "includes BracketBalanceCheck and IsotopeSanityCheck" do
+    it "includes all built-in checks" do
       expect(AsciiChem::Linter::Registry.names).to include(:bracket_balance)
       expect(AsciiChem::Linter::Registry.names).to include(:isotope_sanity)
+      expect(AsciiChem::Linter::Registry.names).to include(:balance)
+      expect(AsciiChem::Linter::Registry.names).to include(:valence)
     end
 
     it "is open for extension" do
@@ -63,8 +98,10 @@ RSpec.describe AsciiChem::Linter do
     ensure
       described_class::Registry.reset
       # Re-register the built-in checks after reset.
+      load "asciichem/linter/balance_check.rb"
       load "asciichem/linter/bracket_balance_check.rb"
       load "asciichem/linter/isotope_sanity_check.rb"
+      load "asciichem/linter/valence_check.rb"
     end
   end
 

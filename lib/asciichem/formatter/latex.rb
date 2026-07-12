@@ -20,11 +20,12 @@ module AsciiChem
 
       def visit_molecule(molecule)
         prefix = blank?(molecule.coefficient) ? "" : molecule.coefficient.to_s
+        stereo = molecule.stereo ? "(#{molecule.stereo_letter})-" : ""
         body = molecule.nodes.map { |n| render_node(n) }.join
         if @inside_ce
-          "#{prefix}#{body}"
+          "#{stereo}#{prefix}#{body}"
         else
-          "\\ce{#{prefix}#{body}}"
+          "\\ce{#{stereo}#{prefix}#{body}}"
         end
       end
 

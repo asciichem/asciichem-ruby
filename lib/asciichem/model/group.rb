@@ -16,6 +16,10 @@ module AsciiChem
         { nodes: nodes, multiplicity: multiplicity, bracket: bracket }
       end
 
+      def children
+        nodes
+      end
+
       def to_s
         open, close = brackets
         inner = nodes.map(&:to_s).join(", ")

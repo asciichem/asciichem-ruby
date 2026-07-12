@@ -54,11 +54,33 @@ module AsciiChem
 
     # -- bonds ------------------------------------------------------------
 
-    rule(triple: simple(:_t))   { Model::Bond.new(kind: :triple) }
-    rule(double: simple(:_d))   { Model::Bond.new(kind: :double) }
-    rule(single: simple(:_s))   { Model::Bond.new(kind: :single) }
+    rule(quadruple: simple(:_q)) { Model::Bond.new(kind: :quadruple) }
+    rule(triple: simple(:_t))    { Model::Bond.new(kind: :triple) }
+    rule(wedge: simple(:_w))     { Model::Bond.new(kind: :wedge) }
+    rule(hash: simple(:_h))      { Model::Bond.new(kind: :hash) }
+    rule(dative: simple(:_d))    { Model::Bond.new(kind: :dative) }
+    rule(wavy: simple(:_wv))     { Model::Bond.new(kind: :wavy) }
+    rule(double: simple(:_d2))   { Model::Bond.new(kind: :double) }
+    rule(single: simple(:_s))    { Model::Bond.new(kind: :single) }
 
     # -- molecules -------------------------------------------------------
+
+    rule(stereo: simple(:letter),
+         coefficient: subtree(:coef),
+         units: subtree(:units)) do
+      Model::Molecule.new(
+        coefficient: CoefficientNormaliser.new(coef).to_s,
+        nodes: Array(units),
+        stereo: StereoNormaliser.normalise(letter)
+      )
+    end
+
+    rule(stereo: simple(:letter), units: subtree(:units)) do
+      Model::Molecule.new(
+        nodes: Array(units),
+        stereo: StereoNormaliser.normalise(letter)
+      )
+    end
 
     rule(coefficient: subtree(:coef), units: subtree(:units)) do
       Model::Molecule.new(
@@ -325,6 +347,13 @@ module AsciiChem
         products = Array(hash[:products])
         tail = arrows.zip(products)
         [first, tail]
+      end
+    end
+
+    # Maps the captured stereo letter to the model's stereo symbol.
+    module StereoNormaliser
+      def self.normalise(letter)
+        Model::Molecule::STEREO_LETTERS.fetch(letter.to_s) { :unknown }
       end
     end
 

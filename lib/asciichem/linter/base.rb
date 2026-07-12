@@ -5,11 +5,15 @@ module AsciiChem
     # Base class for linter checks. Subclasses implement `run(formula)`
     # and return an array of Diagnostic objects.
     #
-    # Self-registration: subclasses call `register(:name)` at the bottom
-    # of the file. This adds them to the Registry when the file loads.
+    # Self-registration: subclasses call `register(:name)` inside their
+    # class body. The Linter module triggers every autoload at load
+    # time so each check file has a chance to register before any API
+    # is queried.
     class Base
-      def self.register(name)
-        AsciiChem::Linter::Registry.add(name, self)
+      class << self
+        def register(name)
+          AsciiChem::Linter::Registry.add(name, self)
+        end
       end
 
       def run(_formula)
@@ -30,27 +34,18 @@ module AsciiChem
         Diagnostic.new(severity: :info, message: message, node: node)
       end
 
-      # Walk every model node in the formula, depth-first. Yields each
-      # node to the block.
+      # Depth-first walk over every node in the formula. Yields each
+      # node to the block. Uses `Node#children` — adding a new
+      # container class means defining `children` on it; no edits here.
       def walk(formula)
         return enum_for(:walk, formula) unless block_given?
 
-        formula.nodes.each { |n| walk_node(n) { |c| yield c } }
+        walk_node(formula) { |c| yield c }
       end
 
       def walk_node(node)
         yield node
-        case node
-        when AsciiChem::Model::Molecule
-          node.nodes.each { |c| walk_node(c) { |x| yield x } }
-        when AsciiChem::Model::Group
-          node.nodes.each { |c| walk_node(c) { |x| yield x } }
-        when AsciiChem::Model::Reaction
-          node.reactants.each { |c| walk_node(c) { |x| yield x } }
-          node.products.each { |c| walk_node(c) { |x| yield x } }
-        when AsciiChem::Model::ReactionCascade
-          node.steps.each { |c| walk_node(c) { |x| yield x } }
-        end
+        node.children.each { |c| walk_node(c) { |x| yield x } }
       end
     end
   end

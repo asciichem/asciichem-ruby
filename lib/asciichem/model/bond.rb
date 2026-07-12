@@ -7,13 +7,14 @@ module AsciiChem
       attr_accessor :kind
 
       KINDS = {
-        single:   { ascii: "-",  mathml_entity: "-" },
-        double:   { ascii: "=",  mathml_entity: "=" },
-        triple:   { ascii: "#",  mathml_entity: "≡" },
-        wedge:    { ascii: ">-", mathml_entity: "▸" },
-        hash:     { ascii: "-<", mathml_entity: "▾" },
-        dative:   { ascii: "->", mathml_entity: "→" },
-        wavy:     { ascii: "~",  mathml_entity: "∼" }
+        single:    { ascii: "-",  mathml_entity: "-" },
+        double:    { ascii: "=",  mathml_entity: "=" },
+        triple:    { ascii: "#",  mathml_entity: "≡" },
+        quadruple: { ascii: "##", mathml_entity: "≣" },
+        wedge:     { ascii: ">-", mathml_entity: "↑" },
+        hash:      { ascii: "-<", mathml_entity: "↓" },
+        dative:    { ascii: "~>", mathml_entity: "→" },
+        wavy:      { ascii: "~~", mathml_entity: "∼" }
       }.freeze
 
       def initialize(kind: :single)
