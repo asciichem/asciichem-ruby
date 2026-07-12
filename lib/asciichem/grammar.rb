@@ -27,9 +27,19 @@ module AsciiChem
 
     rule(:nodes) { node.repeat(1) }
 
-    rule(:node)  { reaction | electron_config | molecule | embedded_math | text_run.as(:text_run) }
+    rule(:node)  { reaction_cascade | reaction | electron_config | molecule | embedded_math | text_run.as(:text_run) }
 
     # -- reactions ---------------------------------------------------------
+
+    # A reaction cascade is two or more reactions chained together:
+    # the products of step N become the reactants of step N+1, with
+    # an arrow between them. The grammar reuses `reaction` for the
+    # first leg and `arrow >> terms` for each subsequent leg; the
+    # transform promotes the whole chain to a `ReactionCascade`.
+    rule(:reaction_cascade) do
+      (reaction.as(:first) >>
+        (arrow.as(:arrow) >> spaces? >> terms.as(:products)).repeat(1)).as(:cascade)
+    end
 
     rule(:reaction) do
       terms.as(:reactants) >>

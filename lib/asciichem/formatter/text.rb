@@ -60,6 +60,17 @@ module AsciiChem
         "#{left} #{arrow}#{above}#{below} #{right}"
       end
 
+      def visit_reaction_cascade(cascade)
+        return "" if cascade.steps.empty?
+
+        head = cascade.steps.first
+        out = "#{render_terms(head.reactants)} #{render_arrow_with_conditions(head)} #{render_terms(head.products)}"
+        cascade.steps.drop(1).each do |step|
+          out += " #{render_arrow_with_conditions(step)} #{render_terms(step.products)}"
+        end
+        out
+      end
+
       def visit_electron_configuration(ec)
         parts = ec.orbitals.map { |orb, occ| "#{orb}^#{occ}" }
         parts << ec.term_symbol.to_s if ec.term_symbol
@@ -78,6 +89,20 @@ module AsciiChem
 
       def render_node(node)
         node.accept(self)
+      end
+
+      def render_terms(terms)
+        terms.map { |n| render_node(n) }.join(" + ")
+      end
+
+      def render_arrow_with_conditions(reaction)
+        arrow = reaction.arrow_ascii
+        conds = reaction.conditions
+        return arrow unless conds
+
+        above = conds.above ? "[#{conds.above}]" : ""
+        below = conds.below ? "[#{conds.below}]" : ""
+        "#{arrow}#{above}#{below}"
       end
     end
   end

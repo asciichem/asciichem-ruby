@@ -15,6 +15,7 @@ module AsciiChem
   autoload :FormatError, "asciichem/errors"
   autoload :Formatter, "asciichem/formatter"
   autoload :Grammar, "asciichem/grammar"
+  autoload :Linter, "asciichem/linter"
   autoload :Model, "asciichem/model"
   autoload :Parser, "asciichem/parser"
   autoload :Transform, "asciichem/transform"
