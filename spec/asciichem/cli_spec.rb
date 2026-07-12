@@ -18,7 +18,7 @@ RSpec.describe AsciiChem::Cli do
     it "emits MathML by default" do
       out = run("convert", "-i", "H_2O")
       expect(out).to include("<math")
-      expect(out).to include("<mi>H</mi>")
+      expect(out).to include('mathvariant="normal">H<')
     end
 
     it "honours -t text" do
