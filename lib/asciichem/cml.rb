@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-require "chemml"
+require "chemicalml"
 
 module AsciiChem
   # CML support for AsciiChem. The translator converts between the
   # chemistry-semantic AsciiChem::Model and the CML wire format
-  # (modelled by Chemml::Cml).
+  # (modelled by ChemicalML::Cml).
   #
   # Two directions:
-  #   AsciiChem::Model -> Chemml::Cml::Document -> XML
-  #   XML -> Chemml::Cml::Document -> AsciiChem::Model
+  #   AsciiChem::Model -> ChemicalML::Cml::Document -> XML
+  #   XML -> ChemicalML::Cml::Document -> AsciiChem::Model
   #
   # The translator is the only place where the two model layers
   # touch. Each model stays independent; adding a new AsciiChem
@@ -23,7 +23,7 @@ module AsciiChem
 
     # Parse CML XML into an AsciiChem::Model::Formula.
     def self.parse(xml)
-      document = Chemml::Cml::Document.from_xml(xml)
+      document = ChemicalML::Cml::Document.from_xml(xml)
       Translator.to_asciichem(document)
     end
 
