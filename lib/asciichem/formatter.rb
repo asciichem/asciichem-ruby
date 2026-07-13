@@ -18,6 +18,7 @@ module AsciiChem
     autoload :Html, "asciichem/formatter/html"
     autoload :Latex, "asciichem/formatter/latex"
     autoload :Mathml, "asciichem/formatter/mathml"
+    autoload :StructuralSvg, "asciichem/formatter/structural_svg"
     autoload :Svg, "asciichem/formatter/svg"
     autoload :Text, "asciichem/formatter/text"
 
