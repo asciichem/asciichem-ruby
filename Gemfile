@@ -2,6 +2,11 @@
 
 source "https://rubygems.org"
 
+# Use the local chemml checkout during development so asciichem-ruby
+# tracks uncommitted chemml changes. The gemspec declares the released
+# dependency.
+gem "chemml", path: File.expand_path("../../lutaml/chemml", __dir__)
+
 gemspec
 
 group :development do

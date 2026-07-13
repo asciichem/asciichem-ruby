@@ -50,6 +50,10 @@ module AsciiChem
         AsciiChem::Formatter.render(:svg, self)
       end
 
+      def to_cml
+        AsciiChem::Cml.from_asciichem(self)
+      end
+
       # Subclasses override to expose the attributes that participate in
       # equality. Default: empty (so two bare Nodes are equal).
       def value_attributes

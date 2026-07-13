@@ -10,6 +10,7 @@ require "plurimath"
 #   AsciiChem::Cli.start    # CLI dispatch
 module AsciiChem
   autoload :Cli, "asciichem/cli"
+  autoload :Cml, "asciichem/cml"
   autoload :Error, "asciichem/errors"
   autoload :ParseError, "asciichem/errors"
   autoload :FormatError, "asciichem/errors"
