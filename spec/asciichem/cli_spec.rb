@@ -68,7 +68,7 @@ RSpec.describe AsciiChem::Cli do
   describe "version" do
     it "prints the version" do
       out = run("version")
-      expect(out.strip).to eq(AsciiChem::VERSION)
+      expect(out.strip).to eq("asciichem #{AsciiChem::VERSION}")
     end
   end
 end

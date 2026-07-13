@@ -3,9 +3,12 @@
 require "thor"
 
 module AsciiChem
-  # Thor-based command line interface.
+  # Thor-based command line interface. Invoked via the `asciichem`
+  # executable (exe/asciichem).
   class Cli < Thor
-    package_name "AsciiChem"
+    # Use lowercase 'asciichem' as the program name in help output
+    # and command banners, matching the executable name.
+    package_name "asciichem"
 
     desc "convert -i INPUT -t FORMAT", "Convert AsciiChem INPUT to FORMAT (mathml|text|html|latex|svg|cml)"
     method_option :input, aliases: "-i", type: :string, required: true,
@@ -61,9 +64,15 @@ module AsciiChem
       exit 1
     end
 
-    desc "version", "Print the AsciiChem gem version"
+    map %w[--version -v] => :version
+    desc "version", "Print the asciichem version"
     def version
-      puts AsciiChem::VERSION
+      puts "asciichem #{AsciiChem::VERSION}"
+    end
+
+    # Override banner to use lowercase program name consistently.
+    def self.banner(command, _namespace = nil, _subcommand = false)
+      "asciichem #{command.usage}"
     end
 
     private

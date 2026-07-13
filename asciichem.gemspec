@@ -31,6 +31,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "chemml", "~> 0.1"
+  spec.add_dependency "elkrb", "~> 1.0"
+  spec.add_dependency "nokogiri", "~> 1.16"
   spec.add_dependency "parslet", "~> 2.0"
   spec.add_dependency "plurimath", "~> 0.8"
   spec.add_dependency "thor", "~> 1.3"
