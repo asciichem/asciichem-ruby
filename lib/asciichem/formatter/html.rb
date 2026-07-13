@@ -9,7 +9,8 @@ module AsciiChem
     # Example: `H_2O` -> <code>H<sub>2</sub>O</code>.
     class Html < Base
       def visit_formula(formula)
-        formula.nodes.map { |n| render_node(n) }.join
+        inner = formula.nodes.map { |n| render_node(n) }.join
+        "<span class=\"asciichem\">#{inner}</span>"
       end
 
       def visit_molecule(molecule)

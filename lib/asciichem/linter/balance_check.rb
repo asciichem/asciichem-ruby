@@ -56,7 +56,6 @@ module AsciiChem
         raw = enumerate(molecule, 1)
         return nil if raw.nil?
 
-        raw.each_value { |v| v *= coefficient }
         raw.transform_values { |v| v * coefficient }
       end
 
