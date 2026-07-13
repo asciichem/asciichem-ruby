@@ -7,7 +7,7 @@ module AsciiChem
   class Cli < Thor
     package_name "AsciiChem"
 
-    desc "convert -i INPUT -t FORMAT", "Convert AsciiChem INPUT to FORMAT (mathml|text|html|latex|svg)"
+    desc "convert -i INPUT -t FORMAT", "Convert AsciiChem INPUT to FORMAT (mathml|text|html|latex|svg|cml)"
     method_option :input, aliases: "-i", type: :string, required: true,
                            desc: "AsciiChem source text"
     method_option :format, aliases: "-t", type: :string, default: "mathml",
@@ -21,6 +21,17 @@ module AsciiChem
     rescue AsciiChem::FormatError => e
       warn "Format error: #{e.message}"
       exit 2
+    end
+
+    desc "parse-cml -i INPUT", "Parse CML XML and emit AsciiChem text"
+    method_option :input, aliases: "-i", type: :string, required: true,
+                           desc: "CML XML source"
+    def parse_cml
+      formula = AsciiChem::Cml.parse(options[:input])
+      puts formula.to_text
+    rescue AsciiChem::Error => e
+      warn "CML parse error: #{e.message}"
+      exit 1
     end
 
     desc "roundtrip -i INPUT", "Parse and re-emit; exit non-zero if not equal"
@@ -58,6 +69,8 @@ module AsciiChem
     private
 
     def render(formula, format)
+      return formula.to_cml if format.to_sym == :cml
+
       AsciiChem::Formatter.render(format.to_sym, formula)
     end
   end

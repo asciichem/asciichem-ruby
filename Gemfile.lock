@@ -2,9 +2,16 @@ PATH
   remote: .
   specs:
     asciichem (0.2.0)
+      chemml (~> 0.1)
       parslet (~> 2.0)
       plurimath (~> 0.8)
       thor (~> 1.3)
+
+PATH
+  remote: /Users/mulgogi/src/lutaml/chemml
+  specs:
+    chemml (0.1.0)
+      lutaml-model (~> 0.8)
 
 GEM
   remote: https://rubygems.org/
@@ -213,6 +220,7 @@ DEPENDENCIES
   asciichem!
   benchmark (~> 0.4)
   benchmark-ips (~> 2.14)
+  chemml!
   rake (~> 13.2)
   rspec (~> 3.13)
   rubocop (~> 1.66)
@@ -229,6 +237,7 @@ CHECKSUMS
   bigdecimal (4.1.2) sha256=53d217666027eab4280346fba98e7d5b66baaae1b9c3c1c0ffe89d48188a3fbd
   bundler (4.0.14) sha256=d09a0a965cf772266a7e49e83610be7c2f4e49e61134c42a56804bb383cc24b8
   canon (0.2.12) sha256=9b87514fbf6c0f9f28d1e2746ea5837b08e24e50c30751dba27a89f86e8709af
+  chemml (0.1.0)
   concurrent-ruby (1.3.7) sha256=4412caec3a5ea2e5fdc52076724c071a81f2c0593d83b2ac8cbb8ca63b3151b0
   csv (3.3.5) sha256=6e5134ac3383ef728b7f02725d9872934f523cb40b961479f69cf3afa6c8e73f
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
