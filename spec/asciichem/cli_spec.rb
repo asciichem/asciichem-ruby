@@ -28,7 +28,7 @@ RSpec.describe AsciiChem::Cli do
 
     it "honours -t html" do
       out = run("convert", "-i", "H_2O", "-t", "html")
-      expect(out.strip).to eq("H<sub>2</sub>O")
+      expect(out.strip).to include("H<sub>2</sub>O")
     end
 
     it "honours -t latex" do

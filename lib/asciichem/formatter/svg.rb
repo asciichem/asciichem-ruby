@@ -115,9 +115,11 @@ module AsciiChem
       end
 
       def render_svg(width, height, rows)
+        title = rows.join(" ").gsub(/[<>&]/, "" => "")
         lines = []
         lines << %(<?xml version="1.0" encoding="UTF-8"?>)
-        lines << %(<svg xmlns="http://www.w3.org/2000/svg" width="#{width}" height="#{height}" viewBox="0 0 #{width} #{height}">)
+        lines << %(<svg xmlns="http://www.w3.org/2000/svg" width="#{width}" height="#{height}" viewBox="0 0 #{width} #{height}" role="img" aria-label="#{escape(title)}">)
+        lines << %(  <title>#{escape(title)}</title>)
         lines << %(  <rect width="100%" height="100%" fill="transparent"/>)
         rows.each_with_index do |row, idx|
           y = BASELINE + (idx * LINE_HEIGHT)

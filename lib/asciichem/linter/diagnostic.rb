@@ -2,12 +2,33 @@
 
 module AsciiChem
   module Linter
-    # A single linter finding. `severity` is `:error`, `:warning`, or
-    # `:info`. `node` is the model node the diagnostic refers to (may
-    # be nil for global issues).
     Diagnostic = Struct.new(:severity, :message, :node, keyword_init: true) do
       def to_s
-        "[#{severity}] #{message}"
+        context = node_context
+        if context
+          "[#{severity}] #{context}: #{message}"
+        else
+          "[#{severity}] #{message}"
+        end
+      end
+
+      private
+
+      def node_context
+        return nil unless node
+
+        case node
+        when AsciiChem::Model::Atom
+          "Atom(#{node.element})"
+        when AsciiChem::Model::Molecule
+          "Molecule"
+        when AsciiChem::Model::Reaction
+          "Reaction"
+        when AsciiChem::Model::Group
+          "Group"
+        else
+          node.class.name.split("::").last
+        end
       end
     end
   end

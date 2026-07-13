@@ -12,11 +12,14 @@ module AsciiChem
 
     desc "convert -i INPUT -t FORMAT", "Convert AsciiChem INPUT to FORMAT (mathml|text|html|latex|svg|cml)"
     method_option :input, aliases: "-i", type: :string, required: true,
-                           desc: "AsciiChem source text"
+                           desc: "AsciiChem source text (or '-' for stdin)"
+    method_option :file, aliases: "-f", type: :string,
+                          desc: "Read AsciiChem source from a file"
     method_option :format, aliases: "-t", type: :string, default: "mathml",
                             desc: "Output format"
     def convert
-      formula = AsciiChem.parse(options[:input])
+      source = read_source
+      formula = AsciiChem.parse(source)
       puts render(formula, options[:format])
     rescue AsciiChem::ParseError => e
       warn "Parse error: #{e.message}"
@@ -76,6 +79,13 @@ module AsciiChem
     end
 
     private
+
+    def read_source
+      return File.read(options[:file]) if options[:file]
+      return $stdin.read if options[:input] == "-"
+
+      options[:input]
+    end
 
     def render(formula, format)
       return formula.to_cml if format.to_sym == :cml

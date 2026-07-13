@@ -88,7 +88,7 @@ RSpec.describe AsciiChem::Model::Molecule do
 
     it "emits stereo in HTML as plain text" do
       html = AsciiChem.parse("(R)-CH_3").to_html
-      expect(html).to eq("(R)-CH<sub>3</sub>")
+      expect(html).to include("(R)-CH<sub>3</sub>")
     end
   end
 end

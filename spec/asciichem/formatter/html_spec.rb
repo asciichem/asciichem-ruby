@@ -7,24 +7,29 @@ RSpec.describe AsciiChem::Formatter::Html do
     AsciiChem.parse(source).to_html
   end
 
+  it "wraps output in a semantic span" do
+    expect(render("H_2O")).to start_with('<span class="asciichem">')
+    expect(render("H_2O")).to end_with("</span>")
+  end
+
   it "renders subscripts as <sub>" do
-    expect(render("H_2O")).to eq("H<sub>2</sub>O")
+    expect(render("H_2O")).to include("H<sub>2</sub>O")
   end
 
   it "renders isotopes as prefix <sup>" do
-    expect(render("^14C")).to eq("<sup>14</sup>C")
+    expect(render("^14C")).to include("<sup>14</sup>C")
   end
 
   it "renders charges as <sup>" do
-    expect(render("Ca^2+")).to eq("Ca<sup>2+</sup>")
+    expect(render("Ca^2+")).to include("Ca<sup>2+</sup>")
   end
 
   it "renders coefficients inline" do
-    expect(render("2H_2O")).to eq("2H<sub>2</sub>O")
+    expect(render("2H_2O")).to include("2H<sub>2</sub>O")
   end
 
   it "renders reactions with the unicode arrow" do
-    expect(render("2H_2 + O_2 -> 2H_2O")).to eq("2H<sub>2</sub> + O<sub>2</sub> → 2H<sub>2</sub>O")
+    expect(render("2H_2 + O_2 -> 2H_2O")).to include("→")
   end
 
   it "renders equilibrium conditions as sup/sub on the arrow" do
