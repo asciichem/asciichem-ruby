@@ -2,7 +2,7 @@
 
 module AsciiChem
   module Cml
-    # Adapter between AsciiChem::Model and Chemml::Cml. Two class
+    # Adapter between AsciiChem::Model and ChemicalML::Cml. Two class
     # methods, one per direction. No I/O — pure transformation.
     #
     # The translator uses a per-build ID counter so atom IDs are
@@ -10,7 +10,7 @@ module AsciiChem
     # require IDs to be a1/a2/a3 specifically, but stable IDs make
     # the round-trip conformance suite byte-equal modulo whitespace.
     class Translator
-      # AsciiChem::Model -> Chemml::Cml::Document
+      # AsciiChem::Model -> ChemicalML::Cml::Document
       def self.from_asciichem(formula)
         builder = FromBuilder.new
         molecules = []
@@ -28,10 +28,10 @@ module AsciiChem
             # A future linter check could warn on this.
           end
         end
-        Chemml::Cml::Document.new(molecules: molecules, reactions: reactions)
+        ChemicalML::Cml::Document.new(molecules: molecules, reactions: reactions)
       end
 
-      # Chemml::Cml::Document -> AsciiChem::Model::Formula
+      # ChemicalML::Cml::Document -> AsciiChem::Model::Formula
       def self.to_asciichem(document)
         nodes = []
         document.molecules.each { |mol| nodes << molecule_to_asciichem(mol) }
@@ -51,22 +51,22 @@ module AsciiChem
 
         def molecule(node)
           atoms, bonds = collect_atoms_and_bonds(node)
-          Chemml::Cml::Molecule.new(
+          ChemicalML::Cml::Molecule.new(
             id: @molecule_counter.next,
-            atom_array: Chemml::Cml::AtomArray.new(atoms: atoms),
-            bond_array: bonds.empty? ? nil : Chemml::Cml::BondArray.new(bonds: bonds)
+            atom_array: ChemicalML::Cml::AtomArray.new(atoms: atoms),
+            bond_array: bonds.empty? ? nil : ChemicalML::Cml::BondArray.new(bonds: bonds)
           )
         end
 
         def reaction(reaction)
-          Chemml::Cml::Reaction.new(
+          ChemicalML::Cml::Reaction.new(
             id: @reaction_counter.next,
             title: reaction.arrow.to_s,
             type: reaction.arrow.to_s,
-            reactant_list: Chemml::Cml::ReactantList.new(
+            reactant_list: ChemicalML::Cml::ReactantList.new(
               reactants: reaction.reactants.map { |m| substance_for(m) }
             ),
-            product_list: Chemml::Cml::ProductList.new(
+            product_list: ChemicalML::Cml::ProductList.new(
               products: reaction.products.map { |m| substance_for(m) }
             )
           )
@@ -75,8 +75,8 @@ module AsciiChem
         private
 
         def substance_for(molecule)
-          Chemml::Cml::Reactant.new(
-            substance: Chemml::Cml::Substance.new(
+          ChemicalML::Cml::Reactant.new(
+            substance: ChemicalML::Cml::Substance.new(
               molecule: molecule(molecule)
             )
           )
@@ -127,7 +127,7 @@ module AsciiChem
         end
 
         def atom_for(atom, id, multiplicity)
-          Chemml::Cml::Atom.new(
+          ChemicalML::Cml::Atom.new(
             id: id,
             element_type: atom.element,
             count: multiplicity_for(atom, multiplicity),
@@ -150,7 +150,7 @@ module AsciiChem
         end
 
         def bond_for(bond)
-          Chemml::Cml::Bond.new(
+          ChemicalML::Cml::Bond.new(
             id: @bond_counter.next,
             order: bond_order(bond.kind),
             atom_refs2: ""
@@ -158,7 +158,7 @@ module AsciiChem
         end
 
         def make_bond(from, to, order)
-          Chemml::Cml::Bond.new(
+          ChemicalML::Cml::Bond.new(
             id: @bond_counter.next,
             atom_refs2: "#{from} #{to}",
             order: order
