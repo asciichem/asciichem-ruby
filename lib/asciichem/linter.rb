@@ -13,9 +13,11 @@ module AsciiChem
     autoload :Base, "asciichem/linter/base"
     autoload :BalanceCheck, "asciichem/linter/balance_check"
     autoload :BracketBalanceCheck, "asciichem/linter/bracket_balance_check"
+    autoload :ElementValidationCheck, "asciichem/linter/element_validation_check"
     autoload :Diagnostic, "asciichem/linter/diagnostic"
     autoload :IsotopeSanityCheck, "asciichem/linter/isotope_sanity_check"
     autoload :Registry, "asciichem/linter/registry"
+    autoload :UnclosedRingCheck, "asciichem/linter/unclosed_ring_check"
     autoload :ValenceCheck, "asciichem/linter/valence_check"
 
     SEVERITIES = %i[error warning info].freeze

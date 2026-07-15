@@ -18,14 +18,27 @@ module AsciiChem
     #   `<=>`, `<->`).
     class Text < Base
       def visit_formula(formula)
-        formula.nodes.map { |n| render_node(n) }.join
+        formula.nodes.map { |n| render_node(n) }.join(" ")
       end
 
       def visit_molecule(molecule)
         prefix = molecule.coefficient.nil? || molecule.coefficient.empty? ? "" : molecule.coefficient.to_s
         stereo = molecule.stereo ? "(#{molecule.stereo_letter})-" : ""
         body = molecule.nodes.map { |n| render_node(n) }.join
-        "#{stereo}#{prefix}#{body}"
+        annotations = molecule_annotations(molecule)
+        "#{stereo}#{prefix}#{body}#{annotations}"
+      end
+
+      def molecule_annotations(molecule)
+        parts = []
+        molecule.names.each { |n| parts << %(@name("#{n.content}")) }
+        molecule.identifiers.each { |i| parts << %(@#{i.convention}("#{i.value}")) }
+        parts << %(@title("#{molecule.title}")) if molecule.title
+        molecule.formulas.each { |f| parts << %(@formula("#{f[:concise]}")) if f[:concise] }
+        molecule.labels.each { |l| parts << %(@label("#{l[:value]}")) if l[:value] }
+        molecule.properties.each { |p| parts << %(@#{p[:title]}("#{p[:value]}")) if p[:title] && p[:value] }
+        molecule.metadata.each { |m| parts << %(@meta("#{m[:name]}","#{m[:content]}")) }
+        parts.empty? ? "" : " #{parts.join}"
       end
 
       def visit_atom(atom)
@@ -38,7 +51,25 @@ module AsciiChem
         parts << "^#{atom.charge}"         if atom.charge
         parts << "^(#{atom.oxidation_state})" if atom.oxidation_state
         parts << ("." * atom.radical_electrons) if atom.radical_electrons
+        parts << atom.ring_closures.to_s if atom.ring_closures
+        parts << atom_annotation(atom)
         parts.join
+      end
+
+      def atom_annotation(atom)
+        annotation = +""
+        if atom.x2 && atom.y2
+          annotation << "@(#{format_coord(atom.x2)},#{format_coord(atom.y2)}"
+          annotation << ",#{format_coord(atom.z2)}" if atom.z2
+          annotation << ")"
+        elsif atom.atom_parity
+          annotation << "@#{atom.atom_parity}"
+        end
+        annotation
+      end
+
+      def format_coord(value)
+        value == value.to_i ? value.to_i.to_s : value.to_s
       end
 
       def visit_group(group)
@@ -85,7 +116,7 @@ module AsciiChem
       end
 
       def visit_text(text)
-        text.content
+        %("#{text.content}")
       end
 
       private

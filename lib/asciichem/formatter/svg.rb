@@ -41,6 +41,7 @@ module AsciiChem
         elsif atom.superscript
           parts << "^#{atom.superscript}"
         end
+        parts << atom.ring_closures.to_s if atom.ring_closures
         parts.join
       end
 

@@ -32,3 +32,19 @@ Style/Documentation:
   Exclude:
     - "lib/asciichem/formatter/*.rb"
     - "lib/asciichem/model/*.rb"
+
+# CML extension modules are cohesive by design — splitting them
+# would harm readability. They each house one side-channel (atom
+# attributes, top-level elements, group preservation) plus the
+# four-method collect/inject/extract/restore cycle.
+Metrics/ModuleLength:
+  Exclude:
+    - "lib/asciichem/cml/extensions.rb"
+    - "lib/asciichem/cml/group_extensions.rb"
+
+# Short names for chemistry primitives (`el` for element, `iso`
+# for isotope) match the grammar's term set.
+Naming/MethodParameterName:
+  Exclude:
+    - "lib/asciichem/cml/group_extensions.rb"
+    - "lib/asciichem/transform.rb"

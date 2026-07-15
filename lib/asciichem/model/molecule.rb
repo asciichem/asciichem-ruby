@@ -3,8 +3,9 @@
 module AsciiChem
   module Model
     # A molecule: an ordered sequence of atoms/groups with optional
-    # leading stoichiometric coefficient and optional stereochemistry
-    # marker (R/S/E/Z/α/β).
+    # leading stoichiometric coefficient, optional stereochemistry
+    # marker (R/S/E/Z/α/β), and optional names/identifiers for CML
+    # metadata round-trip.
     class Molecule < Node
       STEREO_LETTERS = {
         "R" => :R,
@@ -24,16 +25,29 @@ module AsciiChem
         alpha: "alpha", beta: "beta"
       }.freeze
 
-      attr_accessor :coefficient, :nodes, :stereo
+      attr_accessor :coefficient, :nodes, :stereo, :names, :identifiers,
+                    :title, :formulas, :properties, :labels, :metadata
 
-      def initialize(nodes:, coefficient: nil, stereo: nil)
+      def initialize(nodes:, coefficient: nil, stereo: nil,
+                     names: [], identifiers: [], title: nil,
+                     formulas: [], properties: [], labels: [], metadata: [])
         @nodes = nodes
         @coefficient = coefficient
         @stereo = stereo
+        @names = names
+        @identifiers = identifiers
+        @title = title
+        @formulas = formulas
+        @properties = properties
+        @labels = labels
+        @metadata = metadata
       end
 
       def value_attributes
-        { nodes: nodes, coefficient: coefficient, stereo: stereo }
+        { nodes: nodes, coefficient: coefficient, stereo: stereo,
+          names: names, identifiers: identifiers, title: title,
+          formulas: formulas, properties: properties, labels: labels,
+          metadata: metadata }
       end
 
       def children
@@ -47,7 +61,9 @@ module AsciiChem
       def to_s
         prefix = coefficient ? "#{coefficient}" : ""
         stereo_str = stereo ? "(#{stereo_letter})-" : ""
-        "#{stereo_str}#{prefix}Molecule[#{nodes.map(&:to_s).join(', ')}]"
+        name_str = names.empty? ? "" : " #{names.map(&:to_s).join(', ')}"
+        id_str = identifiers.empty? ? "" : " #{identifiers.map(&:to_s).join(', ')}"
+        "#{stereo_str}#{prefix}Molecule[#{nodes.map(&:to_s).join(', ')}]#{name_str}#{id_str}"
       end
     end
   end

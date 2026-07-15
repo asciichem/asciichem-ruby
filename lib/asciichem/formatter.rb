@@ -23,15 +23,21 @@ module AsciiChem
     autoload :Text, "asciichem/formatter/text"
 
     # Lookup by format name. Triggers autoload; raises FormatError if
-    # the name is not registered.
+    # the name is not registered. Accepts either snake_case
+    # (`:structural_svg`) or camelCase (`:mathml`) — both resolve to
+    # the matching constant.
     def self.[](name)
-      const_get(name.to_s.capitalize)
+      const_get(camelize(name.to_s))
     rescue NameError => e
       raise AsciiChem::FormatError, "unknown formatter #{name.inspect}: #{e.message}"
     end
 
     def self.render(name, node)
       self[name].new.render(node)
+    end
+
+    private_class_method def self.camelize(string)
+      string.split("_").map(&:capitalize).join
     end
   end
 end

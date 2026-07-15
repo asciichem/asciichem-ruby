@@ -38,6 +38,6 @@ RSpec.describe AsciiChem::Formatter::Html do
   end
 
   it "escapes HTML-significant characters in text" do
-    expect(render("a<b")).to include("&lt;")
+    expect(render('"a<b"')).to include("&lt;")
   end
 end

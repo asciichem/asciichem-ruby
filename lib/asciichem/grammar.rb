@@ -25,9 +25,57 @@ module AsciiChem
       spaces? >> nodes.as(:formula) >> spaces?
     end
 
-    rule(:nodes) { node.repeat(1) }
+    rule(:nodes) { node >> (spaces? >> node).repeat }
 
-    rule(:node)  { reaction_cascade | reaction | electron_config | molecule | embedded_math | text_run.as(:text_run) }
+    rule(:node)  { reaction_cascade | reaction | electron_config | annotated_molecule | molecule | embedded_math | text_run.as(:text_run) }
+
+    # Annotated molecule: a molecule followed by one or more
+    # `@key("value")` annotations for CML metadata (names,
+    # identifiers, title, formula, labels).
+    rule(:annotated_molecule) do
+      molecule.as(:mol) >> molecule_annotation.repeat(1).as(:annotations)
+    end
+
+    rule(:molecule_annotation) do
+      spaces?.maybe >>
+      (metadata_annotation | simple_annotation)
+    end
+
+    # Metadata: @meta("key","value") — two quoted args, comma-separated.
+    # Produces CML <metadata name="key" content="value"/>.
+    # Uses distinct capture keys (meta_key/meta_value) so the transform
+    # can distinguish metadata from regular @key("value") annotations.
+    rule(:metadata_annotation) do
+      str('@meta(') >> str('"') >>
+      (str('"').absent? >> any).repeat.as(:meta_key) >> str('"') >>
+      str(',') >> str('"') >>
+      (str('"').absent? >> any).repeat.as(:meta_value) >> str('"') >>
+      str(')')
+    end
+
+    # Simple annotation: @key("value") — one quoted arg.
+    # Known types (name, inchi, etc.) are handled specially by the
+    # transform. Unknown types become properties.
+    rule(:simple_annotation) do
+      str('@') >> annotation_type.as(:ann_type) >>
+      str('(') >> str('"') >>
+      (str('"').absent? >> any).repeat.as(:ann_value) >>
+      str('"') >> str(')')
+    end
+
+    # Known annotation types first; property_name is a catch-all so
+    # any lowercase word (e.g. "mw", "density", "logP") becomes a
+    # property annotation.
+    rule(:annotation_type) do
+      str('name') | str('title') | str('formula') | str('label') |
+      str('inchi') | str('smiles') | str('cas') | str('iupac') |
+      str('cid') | str('chebi') |
+      property_name
+    end
+
+    rule(:property_name) do
+      match('[a-z]').repeat(1)
+    end
 
     # -- reactions ---------------------------------------------------------
 
@@ -128,18 +176,54 @@ module AsciiChem
     # -- atoms -------------------------------------------------------------
 
     rule(:prefixed_atom) do
-      lewis_prefix.maybe >>
+      (lewis_prefix.maybe >>
         isotope_marker.as(:isotope) >>
         element_symbol.as(:element) >>
         atom_suffix >>
-        lewis_radicals.maybe
+        lewis_radicals.maybe >>
+        ring_closures.maybe.as(:ring_closures) >>
+        atom_annotation.maybe).as(:atom)
     end
 
     rule(:plain_atom) do
-      lewis_prefix.maybe >>
+      (lewis_prefix.maybe >>
         element_symbol.as(:element) >>
         atom_suffix >>
-        lewis_radicals.maybe
+        lewis_radicals.maybe >>
+        ring_closures.maybe.as(:ring_closures) >>
+        atom_annotation.maybe).as(:atom)
+    end
+
+    # Atom annotations: stereo parity (@R / @S) or 2D/3D coordinates
+    # (@(x,y) / @(x,y,z)). Both use the `@` prefix. An atom can carry
+    # at most one annotation in the grammar; multiple annotations
+    # would require compound syntax (deferred).
+    rule(:atom_annotation) do
+      coordinate_annotation | parity_annotation
+    end
+
+    rule(:parity_annotation) do
+      str('@') >> (str('R') | str('S')).as(:atom_parity)
+    end
+
+    rule(:coordinate_annotation) do
+      str('@(') >>
+        float_number.as(:x2) >> str(',') >>
+        float_number.as(:y2) >>
+        (str(',') >> float_number.as(:z2)).maybe >>
+        str(')')
+    end
+
+    rule(:float_number) do
+      str('-').maybe >> match('[0-9]').repeat(1) >> (str('.') >> match('[0-9]').repeat(0)).maybe
+    end
+
+    # Ring closure digits (SMILES-style). A digit suffix on an atom
+    # opens or closes a ring; two atoms with the same digit become
+    # bonded. Captured as a string (e.g. "1", "12") so multiple
+    # closures on one atom are preserved.
+    rule(:ring_closures) do
+      match('[0-9]').repeat(1)
     end
 
     rule(:atom_suffix) do
@@ -218,12 +302,7 @@ module AsciiChem
     end
 
     rule(:group_text_run) do
-      (str("`").absent? >>
-       plus.absent? >>
-       arrow_token.absent? >>
-       group_open.absent? >>
-       group_close.absent? >>
-       any).repeat(1)
+      str('"') >> (str('"').absent? >> any).repeat >> str('"')
     end
 
     rule(:group_open)  { str("(") | str("[") | str("{") }
@@ -234,7 +313,7 @@ module AsciiChem
     # -- electron configuration -------------------------------------------
 
     rule(:electron_config) do
-      (orbital.as(:orbital) >> str("^") >> digits.as(:occupancy)).repeat(2)
+      (orbital.as(:orbital) >> str("^") >> digits.as(:occupancy) >> spaces?.maybe).repeat(2).as(:electron_config)
     end
 
     rule(:orbital) { digits >> match("[spdfgh]") }
@@ -249,16 +328,11 @@ module AsciiChem
 
     # -- text (top level) -------------------------------------------------
 
-    # Excludes structural characters so group/reaction boundaries stay
-    # crisp. The trade-off is that free-form text cannot contain
-    # brackets or operators; chemistry rarely needs that.
+    # Free-form text uses `"..."` delimiters, matching AsciiMath's
+    # convention. The quoted content becomes a Text node with the
+    # surrounding quotes stripped (handled by the transform).
     rule(:text_run) do
-      (str("`").absent? >>
-       plus.absent? >>
-       arrow_token.absent? >>
-       group_open.absent? >>
-       group_close.absent? >>
-       any).repeat(1)
+      str('"') >> (str('"').absent? >> any).repeat >> str('"')
     end
 
     # -- primitives -------------------------------------------------------

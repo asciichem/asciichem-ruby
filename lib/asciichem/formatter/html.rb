@@ -30,6 +30,7 @@ module AsciiChem
         if atom.oxidation_state
           parts << "<sup>(#{escape(atom.oxidation_state)})</sup>"
         end
+        parts << escape(atom.ring_closures) if atom.ring_closures
         parts.join
       end
 

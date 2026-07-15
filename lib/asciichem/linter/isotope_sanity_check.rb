@@ -11,18 +11,6 @@ module AsciiChem
     class IsotopeSanityCheck < Base
       register :isotope_sanity
 
-      ATOMIC_NUMBERS = {
-        "H"  => 1, "He" => 2,
-        "Li" => 3, "Be" => 4, "B" => 5, "C" => 6, "N" => 7, "O" => 8, "F" => 9, "Ne" => 10,
-        "Na" => 11, "Mg" => 12, "Al" => 13, "Si" => 14, "P" => 15, "S" => 16, "Cl" => 17, "Ar" => 18,
-        "K"  => 19, "Ca" => 20,
-        "Fe" => 26, "Cu" => 29, "Zn" => 30,
-        "Br" => 35,
-        "Ag" => 47, "I"  => 53,
-        "Au" => 79, "Hg" => 80,
-        "Pb" => 82, "U"  => 92
-      }.freeze
-
       def run(formula)
         diagnostics = []
         walk(formula) do |node|
@@ -37,10 +25,10 @@ module AsciiChem
       private
 
       def check_atom(atom, diagnostics)
-        z = ATOMIC_NUMBERS[atom.element]
+        z = AsciiChem::PeriodicTable.atomic_number(atom.element)
         if z.nil?
           diagnostics << info(
-            "Element #{atom.element.inspect} not in isotope table; skipping isotope check",
+            "Element #{atom.element.inspect} not in periodic table; skipping isotope check",
             node: atom
           )
           return
