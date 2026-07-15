@@ -53,7 +53,17 @@ module AsciiChem
         # a single <msubsup> rather than nesting <msub> inside <msup>.
         base = wrap_sub_and_super(base, atom)
         base = wrap_lewis_suffix(base, atom)
+        base = wrap_ring_closures(base, atom)
         base
+      end
+
+      def wrap_ring_closures(base, atom)
+        return base unless atom.ring_closures
+
+        mrow = el("mrow")
+        mrow.add_child(base)
+        mrow.add_child(mn(atom.ring_closures))
+        mrow
       end
 
       def attach_isotope_prefix(base, atom)

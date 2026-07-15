@@ -83,6 +83,18 @@ module AsciiChem
           snake.downcase
         end
       end
+
+      # Human-readable label for linter diagnostics. Default: the
+      # class basename with words separated by spaces
+      # (`"Reaction Cascade"`, `"Electron Configuration"`).
+      # Subclasses with identifying fields override (e.g. `Atom`
+      # includes its element symbol). Keeping this on the model keeps
+      # the linter OCP-clean — adding a new model class means
+      # overriding the method on that class, not editing
+      # `Linter::Diagnostic`'s case statement.
+      def diagnostic_label
+        self.class.short_name.split("_").map(&:capitalize).join(" ")
+      end
     end
   end
 end

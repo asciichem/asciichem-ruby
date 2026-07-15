@@ -11,17 +11,6 @@ module AsciiChem
     class ValenceCheck < Base
       register :valence
 
-      MAX_VALENCES = {
-        "H" => 1, "He" => 0,
-        "Li" => 1, "Be" => 2, "B" => 3, "C" => 4, "N" => 3, "O" => 2, "F" => 1, "Ne" => 0,
-        "Na" => 1, "Mg" => 2, "Al" => 3, "Si" => 4, "P" => 5, "S" => 6, "Cl" => 1, "Ar" => 0,
-        "K" => 1, "Ca" => 2,
-        "Fe" => 6, "Cu" => 4, "Zn" => 2,
-        "Br" => 1, "I" => 1,
-        "Au" => 6, "Hg" => 2,
-        "Pb" => 4
-      }.freeze
-
       def run(formula)
         diagnostics = []
         # Walk molecules so we know which atom is the bonding context.
@@ -64,7 +53,7 @@ module AsciiChem
       end
 
       def check_atom(atom, incoming_bond_order, diagnostics)
-        max = MAX_VALENCES[atom.element]
+        max = AsciiChem::PeriodicTable.max_valence(atom.element)
         if max.nil?
           diagnostics << info(
             "Element #{atom.element.inspect} not in valence table; skipping",

@@ -18,7 +18,6 @@ module AsciiChem
     private
 
     def format_error(error)
-      cause = error.cause
       pos = error.message.match(/char (\d+)/)
       char = pos ? pos[1].to_i : 0
       snippet = text[[char - 10, 0].max, 20] || text

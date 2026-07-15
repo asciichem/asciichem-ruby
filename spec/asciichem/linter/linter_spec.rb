@@ -75,7 +75,7 @@ RSpec.describe AsciiChem::Linter do
       diagnostics = lint("^5Xx")
       infos = diagnostics.select { |d| d.severity == :info }
       expect(infos.length).to be >= 1
-      expect(infos.any? { |d| d.message.include?("isotope table") }).to be(true)
+      expect(infos.any? { |d| d.message.include?("periodic table") }).to be(true)
     end
   end
 
@@ -100,7 +100,9 @@ RSpec.describe AsciiChem::Linter do
       # Re-register the built-in checks after reset.
       load "asciichem/linter/balance_check.rb"
       load "asciichem/linter/bracket_balance_check.rb"
+      load "asciichem/linter/element_validation_check.rb"
       load "asciichem/linter/isotope_sanity_check.rb"
+      load "asciichem/linter/unclosed_ring_check.rb"
       load "asciichem/linter/valence_check.rb"
     end
   end
@@ -112,6 +114,35 @@ RSpec.describe AsciiChem::Linter do
 
     it "returns false when only warnings/info" do
       expect(described_class.errors?(AsciiChem.parse("H_2O"))).to be(false)
+    end
+  end
+
+  describe "ElementValidationCheck" do
+    it "emits no diagnostics for known elements" do
+      expect(lint("H_2O").select { |d| d.message.include?("Unknown element") }).to be_empty
+    end
+
+    it "warns on a typo element" do
+      diagnostics = lint("Hx_2O")
+      warnings = diagnostics.select { |d| d.severity == :warning }
+      expect(warnings.any? { |d| d.message.include?("Hx") }).to be(true)
+    end
+
+    it "uses the diagnostic_label of the offending atom" do
+      diagnostics = lint("Cy")
+      warnings = diagnostics.select { |d| d.severity == :warning }
+      expect(warnings.any? { |d| d.message.include?("Cy") }).to be(true)
+    end
+
+    it "accepts every element in the periodic table" do
+      AsciiChem::PeriodicTable.symbols.each do |symbol|
+        # Every known element should produce zero element-validation warnings.
+        diagnostics = lint(symbol)
+        element_warnings = diagnostics.select do |d|
+          d.severity == :warning && d.message.include?("Unknown element")
+        end
+        expect(element_warnings).to be_empty, "#{symbol} should be valid"
+      end
     end
   end
 end

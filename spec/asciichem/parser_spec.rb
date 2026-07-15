@@ -106,5 +106,97 @@ RSpec.describe AsciiChem::Parser do
         expect { formula }.to raise_error(AsciiChem::ParseError)
       end
     end
+
+    context "with electron configuration" do
+      let(:source) { "1s^2 2s^2" }
+
+      it "builds an ElectronConfiguration with the parsed orbital pairs" do
+        ec = formula.nodes.first
+        expect(ec).to be_a(AsciiChem::Model::ElectronConfiguration)
+        expect(ec.orbitals).to eq([["1s", "2"], ["2s", "2"]])
+      end
+    end
+
+    context "with multi-orbital electron configuration including 3d" do
+      let(:source) { "1s^2 2s^2 2p^6 3d^10 4s^2" }
+
+      it "preserves two-digit occupancies" do
+        ec = formula.nodes.first
+        expect(ec).to be_a(AsciiChem::Model::ElectronConfiguration)
+        expect(ec.orbitals).to include(["3d", "10"])
+      end
+    end
+
+    context "with a molecule followed by an electron configuration" do
+      let(:source) { "H_2O 1s^2 2s^2" }
+
+      it "separates the two as distinct top-level nodes" do
+        expect(formula.nodes.length).to eq(2)
+        expect(formula.nodes[0]).to be_a(AsciiChem::Model::Molecule)
+        expect(formula.nodes[1]).to be_a(AsciiChem::Model::ElectronConfiguration)
+      end
+    end
+
+    context "with embedded math" do
+      let(:source) { "`K_c = 1`" }
+
+      it "builds an EmbeddedMath node preserving the source" do
+        math = formula.nodes.first
+        expect(math).to be_a(AsciiChem::Model::EmbeddedMath)
+        expect(math.source).to eq("K_c = 1")
+      end
+    end
+
+    context "with embedded math after a molecule" do
+      let(:source) { "H_2O `K_c = 1`" }
+
+      it "preserves both nodes in order" do
+        expect(formula.nodes.length).to eq(2)
+        expect(formula.nodes[0]).to be_a(AsciiChem::Model::Molecule)
+        expect(formula.nodes[1]).to be_a(AsciiChem::Model::EmbeddedMath)
+      end
+    end
+
+    context "with double-quoted text" do
+      let(:source) { '"hello world"' }
+
+      it "builds a Text node with the quoted content" do
+        text = formula.nodes.first
+        expect(text).to be_a(AsciiChem::Model::Text)
+        expect(text.content).to eq("hello world")
+      end
+
+      it "round-trips through the text formatter" do
+        expect(formula.to_text).to eq(source)
+      end
+    end
+
+    context "with a molecule followed by quoted text" do
+      let(:source) { 'H_2O "at room temp"' }
+
+      it "splits into Molecule + Text" do
+        expect(formula.nodes.length).to eq(2)
+        expect(formula.nodes[0]).to be_a(AsciiChem::Model::Molecule)
+        expect(formula.nodes[1]).to be_a(AsciiChem::Model::Text)
+        expect(formula.nodes[1].content).to eq("at room temp")
+      end
+    end
+
+    context "with unquoted prose that isn't chemistry" do
+      let(:source) { "hello world" }
+
+      it "raises ParseError — text must be quoted" do
+        expect { formula }.to raise_error(AsciiChem::ParseError)
+      end
+    end
+
+    context "with quoted text containing HTML-significant characters" do
+      let(:source) { '"a < b && c > d"' }
+
+      it "preserves the literal characters in the Text node" do
+        text = formula.nodes.first
+        expect(text.content).to eq("a < b && c > d")
+      end
+    end
   end
 end

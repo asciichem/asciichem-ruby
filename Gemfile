@@ -2,16 +2,6 @@
 
 source "https://rubygems.org"
 
-# Use the local chemicalml checkout when available (dev); fall back to
-# the GitHub repo on CI / other machines. The gemspec declares the
-# released dependency.
-local_chemicalml = File.expand_path("../../lutaml/chemicalml", __dir__)
-if File.directory?(local_chemicalml)
-  gem "chemicalml", path: local_chemicalml
-else
-  gem "chemicalml", github: "lutaml/chemicalml"
-end
-
 gemspec
 
 group :development do

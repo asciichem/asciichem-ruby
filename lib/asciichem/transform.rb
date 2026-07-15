@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "parslet"
+require 'parslet'
 
 module AsciiChem
   # Converts a parse tree (from AsciiChem::Grammar) into a tree of
@@ -21,11 +21,11 @@ module AsciiChem
     # -- text -------------------------------------------------------------
 
     rule(text_run: simple(:text)) do
-      Model::Text.new(content: text.to_s)
+      Model::Text.new(content: TextNormaliser.strip_quotes(text.to_s))
     end
 
     rule(group_text_run: simple(:text)) do
-      Model::Text.new(content: text.to_s)
+      Model::Text.new(content: TextNormaliser.strip_quotes(text.to_s))
     end
 
     # -- embedded math ---------------------------------------------------
@@ -36,59 +36,14 @@ module AsciiChem
     end
 
     # -- atoms -----------------------------------------------------------
-
-    # Plain atom with no Lewis markers.
-    rule(element: simple(:el),
-        subscript: simple(:sub),
-        superscript: simple(:sup)) do
-      AtomBuilder.new(el, subscript: sub, superscript: sup).build
-    end
-
-    # Atom with isotope (no Lewis).
-    rule(element: simple(:el),
-        subscript: simple(:sub),
-        superscript: simple(:sup),
-        isotope: simple(:iso)) do
-      AtomBuilder.new(el, isotope: iso, subscript: sub, superscript: sup).build
-    end
-
-    # Atom with lone pairs prefix (Lewis).
-    rule(lone_pairs: simple(:lp),
-        element: simple(:el),
-        subscript: simple(:sub),
-        superscript: simple(:sup)) do
-      AtomBuilder.new(el, subscript: sub, superscript: sup,
-                      lone_pairs: lp.to_s.length).build
-    end
-
-    # Atom with isotope + lone pairs prefix.
-    rule(lone_pairs: simple(:lp),
-        element: simple(:el),
-        subscript: simple(:sub),
-        superscript: simple(:sup),
-        isotope: simple(:iso)) do
-      AtomBuilder.new(el, isotope: iso, subscript: sub, superscript: sup,
-                      lone_pairs: lp.to_s.length).build
-    end
-
-    # Atom with radical electrons suffix.
-    rule(element: simple(:el),
-        subscript: simple(:sub),
-        superscript: simple(:sup),
-        radical_electrons: simple(:rad)) do
-      AtomBuilder.new(el, subscript: sub, superscript: sup,
-                      radical_electrons: rad.to_s.length).build
-    end
-
-    # Atom with lone pairs prefix AND radical suffix.
-    rule(lone_pairs: simple(:lp),
-        element: simple(:el),
-        subscript: simple(:sub),
-        superscript: simple(:sup),
-        radical_electrons: simple(:rad)) do
-      AtomBuilder.new(el, subscript: sub, superscript: sup,
-                      lone_pairs: lp.to_s.length,
-                      radical_electrons: rad.to_s.length).build
+    #
+    # One rule covers every atom shape. The grammar wraps atoms in
+    # `.as(:atom)`, so the transform sees `{ atom: { element:...,
+    # isotope:..., subscript:..., superscript:..., lone_pairs:...,
+    # radical_electrons:... } }` with any of the optional keys absent.
+    # AtomBuilder.from_parse_tree normalises the variations.
+    rule(atom: subtree(:attrs)) do
+      AtomBuilder.from_parse_tree(attrs).build
     end
 
     # -- bonds ------------------------------------------------------------
@@ -132,6 +87,19 @@ module AsciiChem
       Model::Molecule.new(nodes: Array(units))
     end
 
+    # -- annotated molecules -------------------------------------------
+    #
+    # An annotated molecule wraps a built Model::Molecule with
+    # `@key("value")` metadata annotations. The grammar produces
+    # `{ mol: <Molecule>, annotations: [{ann_type:, ann_value:}, ...] }`.
+    # The transform receives the already-built Molecule (parslet
+    # transforms bottom-up) and applies the annotations.
+
+    rule(mol: simple(:mol), annotations: subtree(:anns)) do
+      AnnotationApplicator.new(mol, Array(anns)).apply
+      mol
+    end
+
     # -- groups ----------------------------------------------------------
 
     rule(open_bracket: simple(:open),
@@ -166,11 +134,71 @@ module AsciiChem
 
     # -- electron configuration ------------------------------------------
 
-    rule(orbitals: sequence(:pairs)) do
+    # Inner rule: each `{orbital:..., occupancy:...}` hash becomes a
+    # `[orbital, occupancy]` string pair. The outer rule then collects
+    # these into an ElectronConfiguration.
+    rule(orbital: simple(:orb), occupancy: simple(:occ)) do
+      [orb.to_s, occ.to_s]
+    end
+
+    rule(electron_config: subtree(:raw_pairs)) do
+      pairs = Array(raw_pairs).map { |pair| Array(pair) }
       Model::ElectronConfiguration.new(orbitals: pairs)
     end
 
     # -- internal helpers ------------------------------------------------
+
+    # Strips the surrounding `"..."` quotes from a quoted text match.
+    # Used by both `text_run` and `group_text_run` rules so the
+    # model never carries the delimiters — the formatter re-adds them
+    # on output.
+    module TextNormaliser
+      def self.strip_quotes(s)
+        s.start_with?('"') && s.end_with?('"') ? s[1..-2] : s
+      end
+    end
+
+    # Applies `@key("value")` molecule annotations to a built
+    # Model::Molecule. The annotation type determines which field is
+    # set: name → names[], inchi/smiles/cas → identifiers[], etc.
+    class AnnotationApplicator
+      IDENTIFIER_TYPES = %w[inchi smiles cas iupac cid chebi].freeze
+
+      def initialize(molecule, annotations)
+        @molecule = molecule
+        @annotations = annotations
+      end
+
+      def apply
+        @annotations.each { |ann| apply_one(ann) }
+      end
+
+      private
+
+      def apply_one(ann)
+        if ann[:meta_key]
+          @molecule.metadata << { name: ann[:meta_key].to_s,
+                                  content: ann[:meta_value].to_s }
+          return
+        end
+        type = ann[:ann_type].to_s
+        value = ann[:ann_value].to_s
+        case type
+        when 'name'
+          @molecule.names << Model::Name.new(content: value)
+        when 'title'
+          @molecule.title = value
+        when 'formula'
+          @molecule.formulas << { concise: value }
+        when 'label'
+          @molecule.labels << { value: value }
+        when *IDENTIFIER_TYPES
+          @molecule.identifiers << Model::Identifier.new(value: value, convention: type)
+        else
+          @molecule.properties << { title: type, value: value }
+        end
+      end
+    end
 
     # Lifts the inner nodes of a `formula` capture into a flat array.
     class FormulaNormaliser
@@ -213,7 +241,7 @@ module AsciiChem
         return nil if @node.nil?
 
         s = @node.to_s
-        s = s[1..] if s.start_with?("_")
+        s = s[1..] if s.start_with?('_')
         s
       end
     end
@@ -224,14 +252,71 @@ module AsciiChem
     # resulting atom — they are mutually exclusive views of the
     # superscript position.
     class AtomBuilder
+      # Construct from a parse-tree hash. The grammar wraps atoms in
+      # `.as(:atom)`, so the transform receives one hash with any of
+      # these keys present: `:element`, `:isotope`, `:subscript`,
+      # `:superscript`, `:lone_pairs`, `:radical_electrons`,
+      # `:ring_closures`. Absent keys default to nil. Lewis markers
+      # (`:lone_pairs`, `:radical_electrons`) are captured as
+      # colon/dot strings whose length is the count.
+      def self.from_parse_tree(attrs)
+        hash = attrs.is_a?(Hash) ? attrs : {}
+        new(
+          hash[:element],
+          isotope: hash[:isotope],
+          subscript: hash[:subscript],
+          superscript: hash[:superscript],
+          lone_pairs: lewis_count(hash[:lone_pairs]),
+          radical_electrons: lewis_count(hash[:radical_electrons]),
+          ring_closures: ring_closures_string(hash[:ring_closures]),
+          x2: float_or_nil(hash[:x2]),
+          y2: float_or_nil(hash[:y2]),
+          z2: float_or_nil(hash[:z2]),
+          atom_parity: hash[:atom_parity]&.to_s
+        )
+      end
+
+      def self.float_or_nil(value)
+        return nil if value.nil?
+
+        value.to_s.to_f
+      end
+      private_class_method :float_or_nil
+
+      # Convert a Lewis marker (string of `:` or `.`) to its count.
+      # nil/empty → nil.
+      def self.lewis_count(value)
+        return nil if value.nil?
+
+        length = value.to_s.length
+        length.positive? ? length : nil
+      end
+      private_class_method :lewis_count
+
+      # Normalise the ring-closures capture to a string or nil.
+      # parslet delivers the matched digit string or nil if `.maybe`
+      # produced nothing.
+      def self.ring_closures_string(value)
+        s = value.to_s
+        s.empty? ? nil : s
+      end
+      private_class_method :ring_closures_string
+
       def initialize(element, isotope: nil, subscript: nil, superscript: nil,
-                     lone_pairs: nil, radical_electrons: nil)
+                     lone_pairs: nil, radical_electrons: nil,
+                     ring_closures: nil,
+                     x2: nil, y2: nil, z2: nil, atom_parity: nil)
         @element = element
         @isotope = isotope
         @subscript = subscript
         @superscript = superscript
         @lone_pairs = lone_pairs
         @radical_electrons = radical_electrons
+        @ring_closures = ring_closures
+        @x2 = x2
+        @y2 = y2
+        @z2 = z2
+        @atom_parity = atom_parity
       end
 
       def build
@@ -240,12 +325,17 @@ module AsciiChem
         Model::Atom.new(
           element: @element.to_s,
           isotope: strip_marker(@isotope),
-          subscript: strip_marker(@subscript, "_"),
+          subscript: strip_marker(@subscript, '_'),
           superscript: raw_superscript(charge, oxidation),
           charge: charge,
           oxidation_state: oxidation,
           lone_pairs: positive_int(@lone_pairs),
-          radical_electrons: positive_int(@radical_electrons)
+          radical_electrons: positive_int(@radical_electrons),
+          ring_closures: @ring_closures,
+          x2: @x2,
+          y2: @y2,
+          z2: @z2,
+          atom_parity: @atom_parity
         )
       end
 
@@ -263,11 +353,11 @@ module AsciiChem
       def raw_superscript(charge, oxidation)
         return nil if charge || oxidation
 
-        strip_marker(@superscript, "^")
+        strip_marker(@superscript, '^')
       end
 
       def detected_charge
-        s = strip_marker(@superscript, "^")
+        s = strip_marker(@superscript, '^')
         return nil unless s
 
         match = s.match(/\A(?<n>\d*)(?<sign>[+-])\z/) ||
@@ -280,7 +370,7 @@ module AsciiChem
       end
 
       def detected_oxidation_state
-        s = strip_marker(@superscript, "^")
+        s = strip_marker(@superscript, '^')
         return nil unless s
 
         match = s.match(/\A\(([IVXLCDM]+)\)\z/)
@@ -294,7 +384,7 @@ module AsciiChem
 
         s = value.to_s
         s = s[1..] if marker && s.start_with?(marker)
-        s = s[1..] if s.start_with?("^", "_")
+        s = s[1..] if s.start_with?('^', '_')
         s.empty? ? nil : s
       end
     end
@@ -303,10 +393,10 @@ module AsciiChem
     # conditions.
     class ReactionBuilder
       ARROW_KINDS = {
-        "<=>" => :equilibrium,
-        "<->" => :resonance,
-        "->"  => :forward,
-        "<-"  => :reverse
+        '<=>' => :equilibrium,
+        '<->' => :resonance,
+        '->' => :forward,
+        '<-' => :reverse
       }.freeze
 
       def initialize(reactants, arrow, products)
@@ -387,8 +477,8 @@ module AsciiChem
       def canonicalise_array(arr)
         first = arr.find { |s| s.is_a?(Hash) && s.key?(:first) }[:first]
         tail = arr
-                 .select { |s| s.is_a?(Hash) && s.key?(:arrow) }
-                 .map { |s| [s[:arrow], s[:products]] }
+               .select { |s| s.is_a?(Hash) && s.key?(:arrow) }
+               .map { |s| [s[:arrow], s[:products]] }
         [first, tail]
       end
 
@@ -404,7 +494,7 @@ module AsciiChem
     # Maps the captured stereo letter to the model's stereo symbol.
     module StereoNormaliser
       def self.normalise(letter)
-        Model::Molecule::STEREO_LETTERS.fetch(letter.to_s) { :unknown }
+        Model::Molecule::STEREO_LETTERS.fetch(letter.to_s, :unknown)
       end
     end
 
@@ -412,9 +502,9 @@ module AsciiChem
     module Group
       def self.bracket_kind(char)
         case char
-        when "(" then :paren
-        when "[" then :square
-        when "{" then :brace
+        when '(' then :paren
+        when '[' then :square
+        when '{' then :brace
         else          :paren
         end
       end

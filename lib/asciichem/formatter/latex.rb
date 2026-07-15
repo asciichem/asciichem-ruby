@@ -43,6 +43,7 @@ module AsciiChem
           parts << "^#{wrap(atom.superscript)}"
         end
         parts << ("." * atom.radical_electrons) if atom.radical_electrons
+        parts << atom.ring_closures.to_s if atom.ring_closures
         parts.join
       end
 

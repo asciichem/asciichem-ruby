@@ -73,6 +73,20 @@ def mathml_bench(label, source)
   end
 end
 
+def cml_bench(label, source)
+  formula = AsciiChem.parse(source)
+  if HAVE_IPS
+    Benchmark.ips do |x|
+      x.config(time: 2, warmup: 1)
+      x.report("#{label} to_cml") { formula.to_cml }
+      x.report("#{label} cml parse") { AsciiChem::Cml.parse(formula.to_cml) }
+    end
+  else
+    Benchmark.realtime { 100.times { formula.to_cml } }
+      .then { |t| printf "  %-40s to_cml: %6.2f ms/call\n", label, t * 10 }
+  end
+end
+
 puts "AsciiChem #{AsciiChem::VERSION}  (benchmark-ips: #{HAVE_IPS})"
 puts
 
@@ -86,3 +100,7 @@ puts
 
 puts "== to_mathml =="
 CASES.each { |label, src| mathml_bench(label, src) }
+puts
+
+puts "== CML (to_cml + parse) =="
+CASES.first(5).each { |label, src| cml_bench(label, src) }
