@@ -27,7 +27,7 @@ RSpec.describe AsciiChem::Cml::GroupExtensions do
   describe ".inject and .extract" do
     it "round-trips group data through XML" do
       translation = AsciiChem::ModelAdapter.to_canonical_with_mapping(AsciiChem.parse("(OH)_2"))
-      wire_doc = Chemicalml::Cml::Translator.from_canonical(translation.document)
+      wire_doc = translation.document
       base_xml = wire_doc.to_xml
 
       collected = described_class.collect(translation.groups)
@@ -50,7 +50,7 @@ RSpec.describe AsciiChem::Cml::GroupExtensions do
       %w[[OH]_2 {OH}_2].each do |source|
         translation = AsciiChem::ModelAdapter.to_canonical_with_mapping(AsciiChem.parse(source))
         collected = described_class.collect(translation.groups)
-        wire_doc = Chemicalml::Cml::Translator.from_canonical(translation.document)
+        wire_doc = translation.document
         enriched = described_class.inject(wire_doc.to_xml, collected)
         extracted = described_class.extract(enriched)
         expected_bracket = source.start_with?("[") ? :square : :brace

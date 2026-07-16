@@ -9,17 +9,17 @@ module AsciiChem
     #
     # Mapping rules:
     #
-    # - `Formula`           -> `Chemicalml::Model::Document`.
-    # - `Molecule`          -> `Chemicalml::Model::Molecule`. Inner atoms
+    # - `Formula`           -> `Chemicalml::Cml::Document`.
+    # - `Molecule`          -> `Chemicalml::Cml::Molecule`. Inner atoms
     #                         collect IDs; bonds reference consecutive
     #                         IDs. Groups flatten with their multiplicity
     #                         applied to each contained atom's count.
-    # - `Atom`              -> `Chemicalml::Model::Atom` (element,
+    # - `Atom`              -> `Chemicalml::Cml::Atom` (element,
     #                         isotope, charge, count, lone pairs,
     #                         radical electrons).
-    # - `Bond`              -> `Chemicalml::Model::Bond` (kind, refs).
-    # - `Reaction`          -> `Chemicalml::Model::Reaction`.
-    # - `ReactionCascade`   -> `Chemicalml::Model::ReactionList`.
+    # - `Bond`              -> `Chemicalml::Cml::Bond` (kind, refs).
+    # - `Reaction`          -> `Chemicalml::Cml::Reaction`.
+    # - `ReactionCascade`   -> `Chemicalml::Cml::ReactionList`.
     # - `ElectronConfiguration`, `EmbeddedMath`, `Text` -> skipped
     #   (no canonical representation yet; a future extension can carry
     #   them as namespaced metadata).
@@ -52,7 +52,7 @@ module AsciiChem
             reaction_lists << reaction_cascade_to_canonical(node)
           end
         end
-        Chemicalml::Model::Document.new(
+        Chemicalml::Cml::Document.new(
           molecules: molecules,
           reactions: reactions,
           reaction_lists: reaction_lists
@@ -67,10 +67,10 @@ module AsciiChem
         walker = MoleculeWalker.new(@ids)
         atoms, bonds = walker.walk(molecule)
         @atom_mapping.merge!(walker.atom_mapping)
-        canonical_molecule = Chemicalml::Model::Molecule.new(
+        canonical_molecule = Chemicalml::Cml::Molecule.new(
           id: @ids.next(:molecule),
-          atoms: atoms,
-          bonds: bonds,
+          atom_array: atoms.empty? ? nil : Chemicalml::Cml::AtomArray.new(atoms: atoms),
+          bond_array: bonds.empty? ? nil : Chemicalml::Cml::BondArray.new(bonds: bonds),
           count: molecule.coefficient,
           formal_charge: total_formal_charge(atoms),
           names: map_names(molecule.names),
@@ -88,7 +88,7 @@ module AsciiChem
         return [] if names.nil? || names.empty?
 
         names.map do |n|
-          Chemicalml::Model::Name.new(
+          Chemicalml::Cml::Name.new(
             content: n.content,
             convention: n.convention,
             dict_ref: n.dict_ref
@@ -100,7 +100,7 @@ module AsciiChem
         return [] if identifiers.nil? || identifiers.empty?
 
         identifiers.map do |i|
-          Chemicalml::Model::Identifier.new(
+          Chemicalml::Cml::Identifier.new(
             value: i.value,
             convention: i.convention,
             dict_ref: i.dict_ref
@@ -112,7 +112,7 @@ module AsciiChem
         return [] if formulas.nil? || formulas.empty?
 
         formulas.map do |f|
-          Chemicalml::Model::Formula.new(
+          Chemicalml::Cml::Formula.new(
             concise: f[:concise],
             inline: f[:inline],
             formal_charge: f[:formal_charge],
@@ -128,7 +128,7 @@ module AsciiChem
         return [] if properties.nil? || properties.empty?
 
         properties.map do |p|
-          Chemicalml::Model::Property.new(
+          Chemicalml::Cml::Property.new(
             title: p[:title],
             value: build_scalar(p[:value]),
             dict_ref: p[:dict_ref],
@@ -140,7 +140,7 @@ module AsciiChem
       def build_scalar(value)
         return nil if value.nil?
 
-        Chemicalml::Model::Scalar.new(
+        Chemicalml::Cml::Scalar.new(
           value: value.to_s,
           dict_ref: nil
         )
@@ -150,7 +150,7 @@ module AsciiChem
         return [] if labels.nil? || labels.empty?
 
         labels.map do |l|
-          Chemicalml::Model::Label.new(
+          Chemicalml::Cml::Label.new(
             value: l[:value],
             dict_ref: l[:dict_ref],
             convention: l[:convention]
@@ -180,7 +180,7 @@ module AsciiChem
       # -- Reactions --------------------------------------------------
 
       def reaction_to_canonical(reaction)
-        Chemicalml::Model::Reaction.new(
+        Chemicalml::Cml::Reaction.new(
           id: @ids.next(:reaction),
           reactant_list: reactant_list_to_canonical(reaction.reactants),
           product_list: product_list_to_canonical(reaction.products),
@@ -193,26 +193,26 @@ module AsciiChem
       end
 
       def reaction_cascade_to_canonical(cascade)
-        Chemicalml::Model::ReactionList.new(
+        Chemicalml::Cml::ReactionList.new(
           reactions: cascade.steps.map { |s| reaction_to_canonical(s) }
         )
       end
 
       def reactant_list_to_canonical(reactants)
-        Chemicalml::Model::ReactantList.new(
+        Chemicalml::Cml::ReactantList.new(
           reactants: reactants.map { |m| participant_to_canonical(m, :reactant) }
         )
       end
 
       def product_list_to_canonical(products)
-        Chemicalml::Model::ProductList.new(
+        Chemicalml::Cml::ProductList.new(
           products: products.map { |m| participant_to_canonical(m, :product) }
         )
       end
 
       def participant_to_canonical(molecule, role)
-        Chemicalml::Model::Reactant.new(
-          substance: Chemicalml::Model::Substance.new(
+        Chemicalml::Cml::Reactant.new(
+          substance: Chemicalml::Cml::Substance.new(
             molecule: molecule_to_canonical(molecule),
             role: role
           )
@@ -264,7 +264,7 @@ module AsciiChem
         # into canonical atom IDs. Skips pairs that already have a
         # positional bond between them (degenerate case like `C1-C1`).
         def emit_ring_bonds(molecule)
-          existing_pair_keys = @bonds.map { |b| pair_key(b.atom_refs) }.to_set
+          existing_pair_keys = @bonds.map { |b| pair_key(b.atom_refs2.to_s.split) }.to_set
           AsciiChem::RingBonds.each_in(molecule) do |ring_bond|
             from_id = @atom_id_by_object_id[ring_bond.from_atom.object_id]
             to_id = @atom_id_by_object_id[ring_bond.to_atom.object_id]
@@ -273,10 +273,10 @@ module AsciiChem
             key = pair_key([from_id, to_id])
             next if existing_pair_keys.include?(key)
 
-            @bonds << Chemicalml::Model::Bond.new(
+            @bonds << Chemicalml::Cml::Bond.new(
               id: @ids.next(:bond),
-              atom_refs: [from_id, to_id],
-              kind: :single
+              atom_refs2: "#{from_id} #{to_id}",
+              order: "S"
             )
             existing_pair_keys << key
           end
@@ -325,7 +325,7 @@ module AsciiChem
           @group_stack.each { |record| record.atom_ids << id }
           attrs = {
             id: id,
-            element: atom.element,
+            element_type: atom.element,
             isotope: atom.isotope,
             formal_charge: atom.charge,
             count: effective_count(atom, multiplier),
@@ -333,17 +333,17 @@ module AsciiChem
             radical_electrons: atom.radical_electrons
           }
           merge_coordinates(attrs, atom)
-          @atoms << Chemicalml::Model::Atom.new(**attrs)
+          @atoms << Chemicalml::Cml::Atom.new(**attrs)
           emit_pending_bond(id) if @pending_bond_kind && @last_atom_id
           @last_atom_id = id
           @pending_bond_kind = nil
         end
 
         def emit_pending_bond(next_atom_id)
-          @bonds << Chemicalml::Model::Bond.new(
+          @bonds << Chemicalml::Cml::Bond.new(
             id: @ids.next(:bond),
-            atom_refs: [@last_atom_id, next_atom_id],
-            kind: @pending_bond_kind,
+            atom_refs2: "#{@last_atom_id} #{next_atom_id}",
+            order: BOND_ORDER_CODES.fetch(@pending_bond_kind, "S"),
             bond_stereo: bond_stereo_for(@pending_bond_kind)
           )
         end
@@ -351,13 +351,16 @@ module AsciiChem
         # CML bondStereo codes for stereo bonds. Wedge (coming out of
         # page) → "W"; hash (going into page) → "H". Other bond kinds
         # have no stereo meaning.
+        BOND_ORDER_CODES = { single: "S", double: "D", triple: "T",
+                              quadruple: "Q", wedge: "W", hash: "H",
+                              dative: "A", wavy: "V" }.freeze
         BOND_STEREO_CODES = { wedge: "W", hash: "H" }.freeze
 
         def bond_stereo_for(kind)
           code = BOND_STEREO_CODES[kind]
           return nil unless code
 
-          Chemicalml::Model::BondStereo.new(value: code)
+          Chemicalml::Cml::BondStereo.new(value: code)
         end
 
         def effective_count(atom, multiplier)

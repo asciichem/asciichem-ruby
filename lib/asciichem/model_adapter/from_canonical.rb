@@ -10,18 +10,18 @@ module AsciiChem
     #
     # Mapping rules:
     #
-    # - `Chemicalml::Model::Document`     -> `Formula`.
-    # - `Chemicalml::Model::Molecule`     -> `Molecule`. Atoms become
+    # - `Chemicalml::Cml::Document`     -> `Formula`.
+    # - `Chemicalml::Cml::Molecule`     -> `Molecule`. Atoms become
     #                                        AsciiChem atoms with
     #                                        subscript=count. Bonds
     #                                        re-insert between their
     #                                        endpoint positions.
-    # - `Chemicalml::Model::Atom`         -> `Atom` (element, isotope,
+    # - `Chemicalml::Cml::Atom`         -> `Atom` (element, isotope,
     #                                        charge, lone pairs,
     #                                        radical electrons).
-    # - `Chemicalml::Model::Bond`         -> `Bond` (kind enum).
-    # - `Chemicalml::Model::Reaction`     -> `Reaction`.
-    # - `Chemicalml::Model::ReactionList` -> `ReactionCascade`.
+    # - `Chemicalml::Cml::Bond`         -> `Bond` (kind enum).
+    # - `Chemicalml::Cml::Reaction`     -> `Reaction`.
+    # - `Chemicalml::Cml::ReactionList` -> `ReactionCascade`.
     #
     # Round-trip note: the canonical model is richer than AsciiChem's
     # (3D coordinates, metadata, etc.). Those fields are dropped on the
@@ -113,7 +113,7 @@ module AsciiChem
 
       def extract_scalar_value(value)
         return nil if value.nil?
-        return value.value if value.is_a?(Chemicalml::Model::Scalar)
+        return value.value if value.is_a?(Chemicalml::Cml::Scalar)
 
         value.to_s
       end
@@ -136,9 +136,19 @@ module AsciiChem
         AsciiChem::Model::Reaction.new(
           reactants: reactants_from_canonical(reaction.reactant_list),
           products: products_from_canonical(reaction.product_list),
-          arrow: reaction.arrow,
+          arrow: arrow_from_wire(reaction),
           conditions: conditions_from_canonical(reaction)
         )
+      end
+
+      def arrow_from_wire(reaction)
+        type = reaction.type || reaction.title
+        case type.to_s
+        when 'reverse' then :reverse
+        when 'equilibrium' then :equilibrium
+        when 'resonance' then :resonance
+        else :forward
+        end
       end
 
       def reaction_list_from_canonical(list)
@@ -159,12 +169,8 @@ module AsciiChem
         list.products.map { |p| molecule_from_canonical(p.substance.molecule) }
       end
 
-      def conditions_from_canonical(reaction)
-        above = reaction.conditions_above
-        below = reaction.conditions_below
-        return nil unless above || below
-
-        AsciiChem::Model::Reaction::Conditions.new(above: above, below: below)
+      def conditions_from_canonical(_reaction)
+        nil
       end
 
       # Rebuilds an AsciiChem::Model::Molecule's node list from a
@@ -180,7 +186,7 @@ module AsciiChem
         def initialize(molecule)
           @molecule = molecule
           @position_by_atom_id = {}
-          molecule.atoms.each_with_index do |atom, idx|
+          wire_atoms(molecule).each_with_index do |atom, idx|
             @position_by_atom_id[atom.id] = idx
           end
           @nodes = build_nodes
@@ -189,20 +195,26 @@ module AsciiChem
         private
 
         def build_nodes
-          atoms = @molecule.atoms.map { |a| atom_from_canonical(a) }
-          return atoms if @molecule.bonds.empty?
+          atoms = wire_atoms(@molecule).map { |a| atom_from_canonical(a) }
+          return atoms if wire_bonds(@molecule).empty?
 
           insert_bonds(atoms)
         end
 
+        def wire_atoms(molecule)
+          molecule.atom_array&.atoms || []
+        end
+
+        def wire_bonds(molecule)
+          molecule.bond_array&.bonds || []
+        end
+
         def atom_from_canonical(atom)
           AsciiChem::Model::Atom.new(
-            element: atom.element,
+            element: atom.element_type,
             isotope: atom.isotope,
             subscript: subscript_from_count(atom.count),
             charge: atom.formal_charge,
-            lone_pairs: atom.lone_pairs,
-            radical_electrons: atom.radical_electrons,
             **extract_coordinates(atom)
           )
         end
@@ -230,14 +242,14 @@ module AsciiChem
           result = atoms.dup
           # Insert in descending position order so earlier insertions
           # don't shift the indices of pending ones.
-          bonds_with_pos = @molecule.bonds.map { |b| [b, later_position(b)] }
+          bonds_with_pos = wire_bonds(@molecule).map { |b| [b, later_position(b)] }
           bonds_with_pos.sort_by { |(_, pos)| -pos }.each do |bond, pos|
             # Ring bonds connect non-adjacent atoms. They're represented
             # by the ring_closures digit carried via aci: extension on
             # the atoms, not as a positional bond in the node list.
             next if ring_bond?(bond)
 
-            result.insert(pos, AsciiChem::Model::Bond.new(kind: bond.kind))
+            result.insert(pos, AsciiChem::Model::Bond.new(kind: bond_kind_from_order(bond.order)))
           end
           result
         end
@@ -245,7 +257,7 @@ module AsciiChem
         # Position of the later endpoint of the bond — i.e. where the
         # bond marker should sit in the rebuilt linear sequence.
         def later_position(bond)
-          positions = bond.atom_refs.map { |id| @position_by_atom_id[id] }.compact
+          positions = bond.atom_refs2.to_s.split.map { |id| @position_by_atom_id[id] }.compact
           return 0 if positions.empty?
 
           positions.max
@@ -255,15 +267,25 @@ module AsciiChem
         # adjacent — its endpoints span a gap. Such bonds are
         # represented by ring_closures digits, not positional markers.
         def ring_bond?(bond)
-          positions = bond.atom_refs.map { |id| @position_by_atom_id[id] }.compact
+          positions = bond.atom_refs2.to_s.split.map { |id| @position_by_atom_id[id] }.compact
           return false if positions.length < 2
 
           positions.max - positions.min > 1
         end
 
         def first_position(bond)
-          positions = bond.atom_refs.map { |id| @position_by_atom_id[id] }.compact
+          positions = bond.atom_refs2.to_s.split.map { |id| @position_by_atom_id[id] }.compact
           positions.min || 0
+        end
+
+        ORDER_TO_KIND = {
+          'S' => :single, 'D' => :double, 'T' => :triple,
+          'Q' => :quadruple, 'W' => :wedge, 'H' => :hash,
+          'A' => :dative, 'V' => :wavy
+        }.freeze
+
+        def bond_kind_from_order(order)
+          ORDER_TO_KIND.fetch(order.to_s, :single)
         end
       end
       private_constant :MoleculeRebuilder
