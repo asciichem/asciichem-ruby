@@ -130,7 +130,7 @@ module AsciiChem
         properties.map do |p|
           Chemicalml::Cml::Property.new(
             title: p[:title],
-            value: build_scalar(p[:value]),
+            scalar: build_scalar(p[:value]),
             dict_ref: p[:dict_ref],
             convention: p[:convention]
           )
@@ -141,7 +141,7 @@ module AsciiChem
         return nil if value.nil?
 
         Chemicalml::Cml::Scalar.new(
-          value: value.to_s,
+          content: value.to_s,
           dict_ref: nil
         )
       end

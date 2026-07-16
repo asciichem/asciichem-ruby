@@ -104,7 +104,7 @@ module AsciiChem
         canonical_properties.map do |p|
           {
             title: p.title,
-            value: extract_scalar_value(p.value),
+            value: extract_scalar_value(p.scalar),
             dict_ref: p.dict_ref,
             convention: p.convention
           }
@@ -113,7 +113,7 @@ module AsciiChem
 
       def extract_scalar_value(value)
         return nil if value.nil?
-        return value.value if value.is_a?(Chemicalml::Cml::Scalar)
+        return value.content if value.is_a?(Chemicalml::Cml::Scalar)
 
         value.to_s
       end

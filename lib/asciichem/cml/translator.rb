@@ -24,6 +24,7 @@ module AsciiChem
           xml = translation.document.to_xml
           xml = inject_atom_extensions(xml, translation.atom_mapping)
           xml = inject_reaction_conditions(xml, formula)
+          xml = inject_metadata(xml, formula)
           inject_molecule_extensions(xml, formula, translation)
         end
 
@@ -32,12 +33,14 @@ module AsciiChem
           top_level = Extensions.extract_top_level(xml)
           atom_extensions = Extensions.extract(xml)
           group_extensions = GroupExtensions.extract(xml)
+          metadata_map = extract_metadata(xml)
           reaction_conditions = extract_reaction_conditions(xml)
           wire_doc = Chemicalml::Cml::Document.from_xml(xml)
           formula = AsciiChem::ModelAdapter.from_canonical(wire_doc)
           Extensions.restore(formula, wire_doc, atom_extensions)
           GroupExtensions.restore(formula, wire_doc, group_extensions)
           restore_reaction_conditions(formula, reaction_conditions)
+          restore_metadata(formula, metadata_map)
           Extensions.restore_top_level(formula, top_level)
           formula
         end
@@ -111,6 +114,65 @@ module AsciiChem
               above: data[:above],
               below: data[:below]
             )
+          end
+          formula
+        end
+
+        # Inject molecule metadata via aci: attributes on <molecule>.
+        # Each {name: "k", content: "v"} produces aci:meta-k="v".
+        def inject_metadata(xml, formula)
+          require 'nokogiri'
+          doc = Nokogiri::XML(xml)
+          root = doc.root
+          molecules = formula.nodes.select { |n| n.is_a?(AsciiChem::Model::Molecule) }
+          has_meta = molecules.any? { |m| !m.metadata.empty? }
+          return xml unless has_meta
+
+          root.add_namespace(Extensions::PREFIX, Extensions::NAMESPACE) unless root.namespaces.value?(Extensions::NAMESPACE)
+          molecules.each_with_index do |mol, idx|
+            next if mol.metadata.empty?
+
+            mol_el = root.at_xpath("//cml:molecule[@id='m#{idx + 1}']", cml: Extensions::CML_NS)
+            next unless mol_el
+
+            mol.metadata.each do |m|
+              mol_el["#{Extensions::PREFIX}:meta-#{m[:name]}"] = m[:content]
+            end
+          end
+          doc.to_xml
+        end
+
+        def extract_metadata(xml)
+          require 'nokogiri'
+          doc = Nokogiri::XML(xml)
+          result = {}
+          doc.xpath("//cml:molecule", cml: Extensions::CML_NS).each do |el|
+            id = el['id']
+            next unless id
+
+            meta = {}
+            el.attributes.each do |name, attr|
+              next unless name.start_with?('meta-')
+              next unless attr.namespace && attr.namespace.prefix == Extensions::PREFIX
+
+              key = name.sub('meta-', '')
+              meta[key] = attr.value
+            end
+            result[id] = meta unless meta.empty?
+          end
+          result
+        end
+
+        def restore_metadata(formula, metadata_map)
+          return formula if metadata_map.empty?
+
+          formula.nodes.each_with_index do |node, idx|
+            next unless node.is_a?(AsciiChem::Model::Molecule)
+
+            meta = metadata_map["m#{idx + 1}"]
+            next unless meta
+
+            meta.each { |name, content| node.metadata << { name: name, content: content } }
           end
           formula
         end
