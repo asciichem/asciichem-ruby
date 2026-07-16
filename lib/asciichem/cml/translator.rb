@@ -23,6 +23,7 @@ module AsciiChem
           translation = AsciiChem::ModelAdapter.to_canonical_with_mapping(formula)
           xml = translation.document.to_xml
           xml = inject_atom_extensions(xml, translation.atom_mapping)
+          xml = inject_reaction_conditions(xml, formula)
           inject_molecule_extensions(xml, formula, translation)
         end
 
@@ -31,10 +32,12 @@ module AsciiChem
           top_level = Extensions.extract_top_level(xml)
           atom_extensions = Extensions.extract(xml)
           group_extensions = GroupExtensions.extract(xml)
+          reaction_conditions = extract_reaction_conditions(xml)
           wire_doc = Chemicalml::Cml::Document.from_xml(xml)
           formula = AsciiChem::ModelAdapter.from_canonical(wire_doc)
           Extensions.restore(formula, wire_doc, atom_extensions)
           GroupExtensions.restore(formula, wire_doc, group_extensions)
+          restore_reaction_conditions(formula, reaction_conditions)
           Extensions.restore_top_level(formula, top_level)
           formula
         end
@@ -55,6 +58,61 @@ module AsciiChem
         def inject_atom_extensions(xml, atom_mapping)
           extensions = Extensions.collect(atom_mapping)
           Extensions.inject(xml, extensions)
+        end
+
+        # Inject reaction conditions via aci: attributes. Each Reaction
+        # in the formula with conditions produces aci:conditionsAbove
+        # and aci:conditionsBelow attributes on its <reaction> element.
+        def inject_reaction_conditions(xml, formula)
+          require 'nokogiri'
+          doc = Nokogiri::XML(xml)
+          root = doc.root
+          reactions = formula.nodes.select { |n| n.is_a?(AsciiChem::Model::Reaction) }
+          return xml if reactions.empty?
+
+          root.add_namespace(Extensions::PREFIX, Extensions::NAMESPACE) unless root.namespaces.value?(Extensions::NAMESPACE)
+          reactions.each_with_index do |reaction, idx|
+            next unless reaction.conditions
+
+            reaction_el = root.at_xpath("//cml:reaction[@id='r#{idx + 1}']", cml: Extensions::CML_NS)
+            next unless reaction_el
+
+            reaction_el["#{Extensions::PREFIX}:conditionsAbove"] = reaction.conditions.above if reaction.conditions.above
+            reaction_el["#{Extensions::PREFIX}:conditionsBelow"] = reaction.conditions.below if reaction.conditions.below
+          end
+          doc.to_xml
+        end
+
+        def extract_reaction_conditions(xml)
+          require 'nokogiri'
+          doc = Nokogiri::XML(xml)
+          result = {}
+          doc.xpath("//cml:reaction", cml: Extensions::CML_NS).each do |el|
+            id = el['id']
+            next unless id
+
+            above = el["#{Extensions::PREFIX}:conditionsAbove"]
+            below = el["#{Extensions::PREFIX}:conditionsBelow"]
+            result[id] = { above: above, below: below } if above || below
+          end
+          result
+        end
+
+        def restore_reaction_conditions(formula, conditions)
+          return formula if conditions.empty?
+
+          formula.nodes.each_with_index do |node, idx|
+            next unless node.is_a?(AsciiChem::Model::Reaction)
+
+            data = conditions["r#{idx + 1}"]
+            next unless data
+
+            node.conditions = AsciiChem::Model::Reaction::Conditions.new(
+              above: data[:above],
+              below: data[:below]
+            )
+          end
+          formula
         end
 
         def inject_molecule_extensions(xml, formula, translation)
