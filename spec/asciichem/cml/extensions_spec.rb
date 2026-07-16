@@ -55,7 +55,7 @@ RSpec.describe AsciiChem::Cml::Extensions do
     it "round-trips extension data through XML" do
       formula = AsciiChem.parse("Fe^(II)")
       translation = AsciiChem::ModelAdapter.to_canonical_with_mapping(formula)
-      wire_doc = Chemicalml::Cml::Translator.from_canonical(translation.document)
+      wire_doc = translation.document
       xml = wire_doc.to_xml
 
       extensions = described_class.collect(translation.atom_mapping)
@@ -74,7 +74,7 @@ RSpec.describe AsciiChem::Cml::Extensions do
     it "preserves the CML namespace" do
       formula = AsciiChem.parse("Fe^(II)")
       translation = AsciiChem::ModelAdapter.to_canonical_with_mapping(formula)
-      wire_doc = Chemicalml::Cml::Translator.from_canonical(translation.document)
+      wire_doc = translation.document
       xml = wire_doc.to_xml
       extensions = described_class.collect(translation.atom_mapping)
       enriched = described_class.inject(xml, extensions)
@@ -86,7 +86,7 @@ RSpec.describe AsciiChem::Cml::Extensions do
     it "does not declare aci: namespace when no extensions are present" do
       formula = AsciiChem.parse("H_2O")
       translation = AsciiChem::ModelAdapter.to_canonical_with_mapping(formula)
-      wire_doc = Chemicalml::Cml::Translator.from_canonical(translation.document)
+      wire_doc = translation.document
       xml = wire_doc.to_xml
 
       extensions = described_class.collect(translation.atom_mapping)
@@ -212,7 +212,7 @@ RSpec.describe AsciiChem::Cml::Extensions do
     it "round-trips top-level extensions through XML" do
       formula = AsciiChem.parse("1s^2 2s^2")
       translation = AsciiChem::ModelAdapter.to_canonical_with_mapping(formula)
-      wire_doc = Chemicalml::Cml::Translator.from_canonical(translation.document)
+      wire_doc = translation.document
       base_xml = wire_doc.to_xml
 
       top_level = described_class.collect_top_level(formula)

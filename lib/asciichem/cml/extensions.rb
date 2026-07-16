@@ -158,7 +158,7 @@ module AsciiChem
       # then reaction reactants+products, then cascade reactions.
       def self.flatten_canonical_atoms(canonical_doc)
         atoms = []
-        canonical_doc.molecules.each { |m| atoms.concat(m.atoms) }
+        canonical_doc.molecules.each { |m| atoms.concat((m.atom_array&.atoms || [])) }
         canonical_doc.reactions.each do |reaction|
           atoms.concat(flatten_reaction_atoms(reaction))
         end
@@ -172,8 +172,8 @@ module AsciiChem
         atoms = []
         reactants = reaction.reactant_list
         products = reaction.product_list
-        reactants&.reactants&.each { |r| atoms.concat(r.substance.molecule.atoms) }
-        products&.products&.each { |p| atoms.concat(p.substance.molecule.atoms) }
+        reactants&.reactants&.each { |r| atoms.concat(r.substance.molecule.atom_array&.atoms || []) }
+        products&.products&.each { |p| atoms.concat(p.substance.molecule.atom_array&.atoms || []) }
         atoms
       end
       private_class_method :flatten_reaction_atoms
