@@ -27,7 +27,29 @@ module AsciiChem
 
     rule(:nodes) { node >> (spaces? >> node).repeat }
 
-    rule(:node)  { reaction_cascade | reaction | electron_config | annotated_molecule | molecule | embedded_math | text_run.as(:text_run) }
+    rule(:node)  { reaction_cascade | reaction | electron_config | crystal | annotated_molecule | molecule | embedded_math | text_run.as(:text_run) }
+
+    # -- crystallography -------------------------------------------------
+
+    # crystal[Name](a=X,b=Y,...,sg=SG){atoms with @f(x,y,z)}
+    rule(:crystal) do
+      str('crystal') >>
+        crystal_name.maybe >>
+        crystal_params.maybe >>
+        crystal_body.maybe
+    end
+
+    rule(:crystal_name) do
+      str('[') >> (str(']').absent? >> any).repeat.as(:crystal_name) >> str(']')
+    end
+
+    rule(:crystal_params) do
+      str('(') >> (str(')').absent? >> any).repeat.as(:crystal_params) >> str(')')
+    end
+
+    rule(:crystal_body) do
+      str('{') >> (str('}').absent? >> any).repeat.as(:crystal_body) >> str('}')
+    end
 
     # Annotated molecule: a molecule followed by one or more
     # `@key("value")` annotations for CML metadata (names,

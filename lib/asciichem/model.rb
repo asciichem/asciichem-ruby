@@ -8,6 +8,7 @@ module AsciiChem
   module Model
     autoload :Atom, "asciichem/model/atom"
     autoload :Bond, "asciichem/model/bond"
+    autoload :Crystal, "asciichem/model/crystal"
     autoload :ElectronConfiguration, "asciichem/model/electron_configuration"
     autoload :EmbeddedMath, "asciichem/model/embedded_math"
     autoload :Formula, "asciichem/model/formula"

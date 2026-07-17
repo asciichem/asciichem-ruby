@@ -123,6 +123,23 @@ module AsciiChem
         %("#{text.content}")
       end
 
+      def visit_crystal(crystal)
+        parts = ["crystal"]
+        parts << "[#{crystal.name}]" if crystal.name
+        params = []
+        params << "a=#{crystal.a}" if crystal.a
+        params << "b=#{crystal.b}" if crystal.b
+        params << "c=#{crystal.c}" if crystal.c
+        params << "alpha=#{crystal.alpha}" if crystal.alpha
+        params << "beta=#{crystal.beta}" if crystal.beta
+        params << "gamma=#{crystal.gamma}" if crystal.gamma
+        params << "sg=#{crystal.spacegroup}" if crystal.spacegroup
+        parts << "(#{params.join(',')})" unless params.empty?
+        atom_strs = crystal.atoms.map { |a| render_node(a) }
+        parts << "{#{atom_strs.join(' ')}}" unless atom_strs.empty?
+        parts.join
+      end
+
       private
 
       def render_node(node)

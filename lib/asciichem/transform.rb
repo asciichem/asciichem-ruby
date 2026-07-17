@@ -146,7 +146,74 @@ module AsciiChem
       Model::ElectronConfiguration.new(orbitals: pairs)
     end
 
+    # -- crystals -------------------------------------------------------
+    #
+    # Grammar captures crystal_name, crystal_params, and crystal_body
+    # as optional strings. CrystalBuilder parses them into the model.
+
+    rule(crystal_name: subtree(:name),
+         crystal_params: subtree(:params),
+         crystal_body: subtree(:body)) do
+      CrystalBuilder.new(name, params, body).build
+    end
+
     # -- internal helpers ------------------------------------------------
+
+    # Builds a Crystal from parsed grammar captures. The grammar
+    # captures the name, params, and body as raw strings; this class
+    # parses them into the model fields.
+    class CrystalBuilder
+      def initialize(name, params_str, body_str)
+        @name = strip_parslet(name)
+        @params_str = strip_parslet(params_str)
+        @body_str = strip_parslet(body_str)
+      end
+
+      def build
+        params = parse_params(@params_str)
+        atoms = parse_atoms(@body_str)
+        Model::Crystal.new(
+          name: @name,
+          a: params['a'],
+          b: params['b'],
+          c: params['c'],
+          alpha: params['alpha'],
+          beta: params['beta'],
+          gamma: params['gamma'],
+          spacegroup: params['sg'],
+          atoms: atoms
+        )
+      end
+
+      private
+
+      def strip_parslet(value)
+        return nil if value.nil?
+
+        s = value.to_s.strip
+        s.empty? ? nil : s
+      end
+
+      def parse_params(str)
+        return {} unless str
+
+        str.split(',').each_with_object({}) do |pair, memo|
+          key, val = pair.strip.split('=', 2)
+          memo[key] = val&.strip if key
+        end
+      end
+
+      def parse_atoms(str)
+        return [] unless str
+
+        formula = AsciiChem.parse(str)
+        formula.nodes.flat_map do |node|
+          next [] unless node.is_a?(Model::Molecule)
+
+          node.nodes.select { |n| n.is_a?(Model::Atom) }
+        end
+      end
+    end
 
     # Strips the surrounding `"..."` quotes from a quoted text match.
     # Used by both `text_run` and `group_text_run` rules so the
