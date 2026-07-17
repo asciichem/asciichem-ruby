@@ -182,7 +182,7 @@ module AsciiChem
         atom_suffix >>
         lewis_radicals.maybe >>
         ring_closures.maybe.as(:ring_closures) >>
-        atom_annotation.maybe).as(:atom)
+        atom_annotation).as(:atom)
     end
 
     rule(:plain_atom) do
@@ -191,15 +191,18 @@ module AsciiChem
         atom_suffix >>
         lewis_radicals.maybe >>
         ring_closures.maybe.as(:ring_closures) >>
-        atom_annotation.maybe).as(:atom)
+        atom_annotation).as(:atom)
     end
 
-    # Atom annotations: stereo parity (@R / @S) or 2D/3D coordinates
-    # (@(x,y) / @(x,y,z)). Both use the `@` prefix. An atom can carry
-    # at most one annotation in the grammar; multiple annotations
-    # would require compound syntax (deferred).
+    # Atom annotations: each is independently optional via .maybe.
+    # Order matters: @(x,y) → @R/@S → @m(N) → @t("...") → @f(x,y,z).
+    # Example: C@(10,20)@R@m(2)@t("C1")@f(0.5,0.5,0.5)
     rule(:atom_annotation) do
-      coordinate_annotation | parity_annotation
+      coordinate_annotation.maybe >>
+      parity_annotation.maybe >>
+      multiplicity_annotation.maybe >>
+      atom_title_annotation.maybe >>
+      fractional_annotation.maybe
     end
 
     rule(:parity_annotation) do
@@ -212,6 +215,27 @@ module AsciiChem
         float_number.as(:y2) >>
         (str(',') >> float_number.as(:z2)).maybe >>
         str(')')
+    end
+
+    # Spin multiplicity: @m(2) for doublet, @m(1) for singlet
+    rule(:multiplicity_annotation) do
+      str('@m(') >> match('[0-9]').repeat(1).as(:spin_multiplicity) >> str(')')
+    end
+
+    # Atom title/label: @t("C1")
+    rule(:atom_title_annotation) do
+      str('@t(') >> str('"') >>
+      (str('"').absent? >> any).repeat.as(:atom_title) >>
+      str('"') >> str(')')
+    end
+
+    # Fractional coordinates (crystallographic): @f(0.5,0.25,0.75)
+    rule(:fractional_annotation) do
+      str('@f(') >>
+        float_number.as(:x_fract) >> str(',') >>
+        float_number.as(:y_fract) >> str(',') >>
+        float_number.as(:z_fract) >>
+      str(')')
     end
 
     rule(:float_number) do

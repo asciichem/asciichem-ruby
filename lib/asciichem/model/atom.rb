@@ -20,13 +20,17 @@ module AsciiChem
                     :charge, :oxidation_state,
                     :lone_pairs, :radical_electrons,
                     :ring_closures,
-                    :x2, :y2, :z2, :atom_parity
+                    :x2, :y2, :z2, :atom_parity,
+                    :spin_multiplicity, :atom_title,
+                    :x_fract, :y_fract, :z_fract
 
       def initialize(element:, isotope: nil, subscript: nil,
                      superscript: nil, charge: nil, oxidation_state: nil,
                      lone_pairs: nil, radical_electrons: nil,
                      ring_closures: nil,
-                     x2: nil, y2: nil, z2: nil, atom_parity: nil)
+                     x2: nil, y2: nil, z2: nil, atom_parity: nil,
+                     spin_multiplicity: nil, atom_title: nil,
+                     x_fract: nil, y_fract: nil, z_fract: nil)
         @element = element
         @isotope = isotope
         @subscript = subscript
@@ -40,6 +44,11 @@ module AsciiChem
         @y2 = y2
         @z2 = z2
         @atom_parity = atom_parity
+        @spin_multiplicity = spin_multiplicity
+        @atom_title = atom_title
+        @x_fract = x_fract
+        @y_fract = y_fract
+        @z_fract = z_fract
       end
 
       def value_attributes
@@ -48,7 +57,9 @@ module AsciiChem
           oxidation_state: oxidation_state,
           lone_pairs: lone_pairs, radical_electrons: radical_electrons,
           ring_closures: ring_closures,
-          x2: x2, y2: y2, z2: z2, atom_parity: atom_parity }
+          x2: x2, y2: y2, z2: z2, atom_parity: atom_parity,
+          spin_multiplicity: spin_multiplicity, atom_title: atom_title,
+          x_fract: x_fract, y_fract: y_fract, z_fract: z_fract }
       end
 
       def diagnostic_label

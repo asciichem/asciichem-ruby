@@ -330,9 +330,12 @@ module AsciiChem
             formal_charge: atom.charge,
             count: effective_count(atom, multiplier),
             lone_pairs: atom.lone_pairs,
-            radical_electrons: atom.radical_electrons
+            radical_electrons: atom.radical_electrons,
+            spin_multiplicity: atom.spin_multiplicity,
+            title: atom.atom_title
           }
           merge_coordinates(attrs, atom)
+          merge_fractional_coords(attrs, atom)
           @atoms << Chemicalml::Cml::Atom.new(**attrs)
           emit_pending_bond(id) if @pending_bond_kind && @last_atom_id
           @last_atom_id = id
@@ -384,6 +387,14 @@ module AsciiChem
             attrs[:x2] = atom.x2
             attrs[:y2] = atom.y2
           end
+        end
+
+        def merge_fractional_coords(attrs, atom)
+          return unless atom.x_fract && atom.y_fract && atom.z_fract
+
+          attrs[:xFract] = atom.x_fract
+          attrs[:yFract] = atom.y_fract
+          attrs[:zFract] = atom.z_fract
         end
 
         def combine(left, right)
