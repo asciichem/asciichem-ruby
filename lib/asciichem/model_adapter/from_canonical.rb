@@ -215,7 +215,10 @@ module AsciiChem
             isotope: atom.isotope,
             subscript: subscript_from_count(atom.count),
             charge: atom.formal_charge,
-            **extract_coordinates(atom)
+            spin_multiplicity: atom.spin_multiplicity,
+            atom_title: atom.title,
+            **extract_coordinates(atom),
+            **extract_fractional(atom)
           )
         end
 
@@ -230,6 +233,14 @@ module AsciiChem
           else
             {}
           end
+        end
+
+        def extract_fractional(atom)
+          return {} unless atom.xFract && atom.yFract && atom.zFract
+
+          { x_fract: atom.xFract.to_f,
+            y_fract: atom.yFract.to_f,
+            z_fract: atom.zFract.to_f }
         end
 
         def subscript_from_count(count)

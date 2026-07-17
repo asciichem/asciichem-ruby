@@ -272,7 +272,12 @@ module AsciiChem
           x2: float_or_nil(hash[:x2]),
           y2: float_or_nil(hash[:y2]),
           z2: float_or_nil(hash[:z2]),
-          atom_parity: hash[:atom_parity]&.to_s
+          atom_parity: hash[:atom_parity]&.to_s,
+          spin_multiplicity: hash[:spin_multiplicity]&.to_s,
+          atom_title: hash[:atom_title]&.to_s,
+          x_fract: float_or_nil(hash[:x_fract]),
+          y_fract: float_or_nil(hash[:y_fract]),
+          z_fract: float_or_nil(hash[:z_fract])
         )
       end
 
@@ -305,7 +310,9 @@ module AsciiChem
       def initialize(element, isotope: nil, subscript: nil, superscript: nil,
                      lone_pairs: nil, radical_electrons: nil,
                      ring_closures: nil,
-                     x2: nil, y2: nil, z2: nil, atom_parity: nil)
+                     x2: nil, y2: nil, z2: nil, atom_parity: nil,
+                     spin_multiplicity: nil, atom_title: nil,
+                     x_fract: nil, y_fract: nil, z_fract: nil)
         @element = element
         @isotope = isotope
         @subscript = subscript
@@ -317,6 +324,11 @@ module AsciiChem
         @y2 = y2
         @z2 = z2
         @atom_parity = atom_parity
+        @spin_multiplicity = spin_multiplicity
+        @atom_title = atom_title
+        @x_fract = x_fract
+        @y_fract = y_fract
+        @z_fract = z_fract
       end
 
       def build
@@ -335,7 +347,12 @@ module AsciiChem
           x2: @x2,
           y2: @y2,
           z2: @z2,
-          atom_parity: @atom_parity
+          atom_parity: @atom_parity,
+          spin_multiplicity: @spin_multiplicity,
+          atom_title: @atom_title,
+          x_fract: @x_fract,
+          y_fract: @y_fract,
+          z_fract: @z_fract
         )
       end
 

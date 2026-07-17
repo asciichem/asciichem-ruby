@@ -57,15 +57,19 @@ module AsciiChem
       end
 
       def atom_annotation(atom)
-        annotation = +""
+        parts = []
         if atom.x2 && atom.y2
-          annotation << "@(#{format_coord(atom.x2)},#{format_coord(atom.y2)}"
-          annotation << ",#{format_coord(atom.z2)}" if atom.z2
-          annotation << ")"
-        elsif atom.atom_parity
-          annotation << "@#{atom.atom_parity}"
+          coord = "@(#{format_coord(atom.x2)},#{format_coord(atom.y2)}"
+          coord << ",#{format_coord(atom.z2)}" if atom.z2
+          parts << "#{coord})"
         end
-        annotation
+        parts << "@#{atom.atom_parity}" if atom.atom_parity
+        parts << "@m(#{atom.spin_multiplicity})" if atom.spin_multiplicity
+        parts << %(@t("#{atom.atom_title}")) if atom.atom_title
+        if atom.x_fract && atom.y_fract && atom.z_fract
+          parts << "@f(#{format_coord(atom.x_fract)},#{format_coord(atom.y_fract)},#{format_coord(atom.z_fract)})"
+        end
+        parts.join
       end
 
       def format_coord(value)
