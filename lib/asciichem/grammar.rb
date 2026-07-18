@@ -27,7 +27,7 @@ module AsciiChem
 
     rule(:nodes) { node >> (spaces? >> node).repeat }
 
-    rule(:node)  { reaction_cascade | reaction | electron_config | crystal | spectrum | annotated_molecule | molecule | embedded_math | text_run.as(:text_run) }
+    rule(:node)  { reaction_cascade | reaction | electron_config | crystal | spectrum | calculation | zmatrix | mechanism | annotated_molecule | molecule | embedded_math | text_run.as(:text_run) }
 
     # -- crystallography -------------------------------------------------
 
@@ -71,6 +71,45 @@ module AsciiChem
 
     rule(:spectrum_body) do
       str('{') >> (str('}').absent? >> any).repeat.as(:spectrum_body) >> str('}')
+    end
+
+    # -- computational chemistry ----------------------------------------
+
+    # calc(method/basis){key: value units}
+    rule(:calculation) do
+      (str('calc') >>
+        calc_params.maybe >>
+        calc_body.maybe).as(:calc_node)
+    end
+
+    rule(:calc_params) do
+      str('(') >> (str(')').absent? >> any).repeat.as(:calc_params) >> str(')')
+    end
+
+    rule(:calc_body) do
+      str('{') >> (str('}').absent? >> any).repeat.as(:calc_body) >> str('}')
+    end
+
+    # -- Z-Matrix -------------------------------------------------------
+
+    rule(:zmatrix) do
+      (str('zmatrix') >>
+        zmatrix_body.maybe).as(:zmatrix_node)
+    end
+
+    rule(:zmatrix_body) do
+      str('{') >> (str('}').absent? >> any).repeat.as(:zmatrix_body) >> str('}')
+    end
+
+    # -- reaction mechanisms --------------------------------------------
+
+    rule(:mechanism) do
+      (str('mechanism') >>
+        mechanism_body.maybe).as(:mechanism_node)
+    end
+
+    rule(:mechanism_body) do
+      str('{') >> (str('}').absent? >> any).repeat.as(:mechanism_body) >> str('}')
     end
 
     # Annotated molecule: a molecule followed by one or more

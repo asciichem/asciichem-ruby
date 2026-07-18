@@ -158,7 +158,47 @@ module AsciiChem
         parts.join
       end
 
-      private
+      def visit_calculation(calc)
+        parts = ["calc"]
+        params = []
+        params << calc.method if calc.method
+        params << calc.basis if calc.basis
+        parts << "(#{params.join('/')})" unless params.empty?
+        unless calc.properties.empty?
+          lines = calc.properties.map do |p|
+            line = "#{p[:title]}: #{p[:value]}"
+            line += " #{p[:units]}" if p[:units]
+            line
+          end
+          parts << "{\n  #{lines.join("\n  ")}\n}"
+        end
+        parts.join
+      end
+
+      def visit_z_matrix(zm)
+        parts = ["zmatrix"]
+        unless zm.rows.empty?
+          lines = zm.rows.map do |row|
+            tokens = [row.atom]
+            tokens << row.ref1 << row.distance if row.ref1
+            tokens << row.ref2 << row.angle if row.ref2
+            tokens << row.ref3 << row.dihedral if row.ref3
+            tokens.compact.join("  ")
+          end
+          parts << "{\n  #{lines.join("\n  ")}\n}"
+        end
+        parts.join
+      end
+
+      def visit_mechanism(mech)
+        parts = ["mechanism"]
+        unless mech.steps.empty? && mech.spectators.empty?
+          lines = mech.steps.map { |s| "#{s[:label]}: #{s[:reaction]}" }
+          mech.spectators.each { |sp| lines << "spectator: #{sp}" }
+          parts << "{\n  #{lines.join("\n  ")}\n}"
+        end
+        parts.join
+      end
 
       def render_node(node)
         node.accept(self)

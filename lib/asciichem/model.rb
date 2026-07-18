@@ -8,12 +8,14 @@ module AsciiChem
   module Model
     autoload :Atom, "asciichem/model/atom"
     autoload :Bond, "asciichem/model/bond"
+    autoload :Calculation, "asciichem/model/calculation"
     autoload :Crystal, "asciichem/model/crystal"
     autoload :ElectronConfiguration, "asciichem/model/electron_configuration"
     autoload :EmbeddedMath, "asciichem/model/embedded_math"
     autoload :Formula, "asciichem/model/formula"
     autoload :Group, "asciichem/model/group"
     autoload :Identifier, "asciichem/model/identifier"
+    autoload :Mechanism, "asciichem/model/mechanism"
     autoload :Molecule, "asciichem/model/molecule"
     autoload :Name, "asciichem/model/name"
     autoload :Node, "asciichem/model/node"
@@ -21,5 +23,6 @@ module AsciiChem
     autoload :ReactionCascade, "asciichem/model/reaction_cascade"
     autoload :Spectrum, "asciichem/model/spectrum"
     autoload :Text, "asciichem/model/text"
+    autoload :ZMatrix, "asciichem/model/zmatrix"
   end
 end
