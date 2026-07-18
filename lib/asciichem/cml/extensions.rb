@@ -245,9 +245,40 @@ module AsciiChem
         TopLevelHandler.new(
           node_class: AsciiChem::Model::Text,
           element_name: 'text',
-          # Text formatter emits `"content"` (with quotes). Re-parsing
-          # that yields the original Text node — round-trip-safe by
-          # construction.
+          serialize: ->(node) { text_render(node) },
+          deserialize: ->(content) { AsciiChem.parse(content).nodes.first }
+        ),
+        # -- beyond-formulas constructs (Phase 1-5) -------------------
+        # Each carries its text representation inside an aci: element.
+        # On parse, the text is re-parsed to rebuild the construct.
+        # DRY: all five share the same serialize/deserialize pattern.
+        TopLevelHandler.new(
+          node_class: AsciiChem::Model::Crystal,
+          element_name: 'crystal',
+          serialize: ->(node) { text_render(node) },
+          deserialize: ->(content) { AsciiChem.parse(content).nodes.first }
+        ),
+        TopLevelHandler.new(
+          node_class: AsciiChem::Model::Spectrum,
+          element_name: 'spectrum',
+          serialize: ->(node) { text_render(node) },
+          deserialize: ->(content) { AsciiChem.parse(content).nodes.first }
+        ),
+        TopLevelHandler.new(
+          node_class: AsciiChem::Model::Calculation,
+          element_name: 'calculation',
+          serialize: ->(node) { text_render(node) },
+          deserialize: ->(content) { AsciiChem.parse(content).nodes.first }
+        ),
+        TopLevelHandler.new(
+          node_class: AsciiChem::Model::ZMatrix,
+          element_name: 'zmatrix',
+          serialize: ->(node) { text_render(node) },
+          deserialize: ->(content) { AsciiChem.parse(content).nodes.first }
+        ),
+        TopLevelHandler.new(
+          node_class: AsciiChem::Model::Mechanism,
+          element_name: 'mechanism',
           serialize: ->(node) { text_render(node) },
           deserialize: ->(content) { AsciiChem.parse(content).nodes.first }
         )
