@@ -151,10 +151,24 @@ module AsciiChem
     # Grammar captures crystal_name, crystal_params, and crystal_body
     # as optional strings. CrystalBuilder parses them into the model.
 
-    rule(crystal_name: subtree(:name),
-         crystal_params: subtree(:params),
-         crystal_body: subtree(:body)) do
-      CrystalBuilder.new(name, params, body).build
+    rule(crystal_node: subtree(:data)) do
+      hash = data.is_a?(Hash) ? data : {}
+      CrystalBuilder.new(
+        hash[:crystal_name],
+        hash[:crystal_params],
+        hash[:crystal_body]
+      ).build
+    end
+
+    # -- spectra --------------------------------------------------------
+
+    rule(spectrum_node: subtree(:data)) do
+      hash = data.is_a?(Hash) ? data : {}
+      SpectrumBuilder.new(
+        hash[:spectrum_type],
+        hash[:spectrum_params],
+        hash[:spectrum_body]
+      ).build
     end
 
     # -- internal helpers ------------------------------------------------
@@ -212,6 +226,69 @@ module AsciiChem
 
           node.nodes.select { |n| n.is_a?(Model::Atom) }
         end
+      end
+    end
+
+    # Builds a Spectrum from parsed grammar captures. Parses peak
+    # lines from the body string.
+    class SpectrumBuilder
+      def initialize(type_str, params_str, body_str)
+        @type = strip_value(type_str)
+        @params_str = strip_value(params_str)
+        @body_str = strip_value(body_str)
+      end
+
+      def build
+        Model::Spectrum.new(
+          type: @type,
+          params: parse_params(@params_str),
+          peaks: parse_peaks(@body_str)
+        )
+      end
+
+      private
+
+      def strip_value(value)
+        return nil if value.nil?
+
+        s = value.to_s.strip
+        s.empty? ? nil : s
+      end
+
+      def parse_params(str)
+        return {} unless str
+
+        str.split(',').each_with_object({}) do |pair, memo|
+          key, val = pair.strip.split('=', 2)
+          memo[key] = val&.strip if key
+        end
+      end
+
+      def parse_peaks(str)
+        return [] unless str
+
+        str.split("\n").filter_map { |line| parse_peak(line.strip) }
+      end
+
+      def parse_peak(line)
+        return nil if line.empty?
+
+        assignment = nil
+        match = line.match(/"([^"]*)"/)
+        if match
+          assignment = match[1]
+          line = line.sub(/"[^"]*"/, '').strip
+        end
+
+        pos, rest = line.split(':', 2)
+        tokens = rest&.strip&.split(/\s+/) || []
+
+        {
+          position: pos&.strip,
+          intensity: tokens[0],
+          multiplicity: tokens[1],
+          assignment: assignment
+        }
       end
     end
 

@@ -27,16 +27,16 @@ module AsciiChem
 
     rule(:nodes) { node >> (spaces? >> node).repeat }
 
-    rule(:node)  { reaction_cascade | reaction | electron_config | crystal | annotated_molecule | molecule | embedded_math | text_run.as(:text_run) }
+    rule(:node)  { reaction_cascade | reaction | electron_config | crystal | spectrum | annotated_molecule | molecule | embedded_math | text_run.as(:text_run) }
 
     # -- crystallography -------------------------------------------------
 
     # crystal[Name](a=X,b=Y,...,sg=SG){atoms with @f(x,y,z)}
     rule(:crystal) do
-      str('crystal') >>
+      (str('crystal') >>
         crystal_name.maybe >>
         crystal_params.maybe >>
-        crystal_body.maybe
+        crystal_body.maybe).as(:crystal_node)
     end
 
     rule(:crystal_name) do
@@ -49,6 +49,28 @@ module AsciiChem
 
     rule(:crystal_body) do
       str('{') >> (str('}').absent? >> any).repeat.as(:crystal_body) >> str('}')
+    end
+
+    # -- spectroscopy ---------------------------------------------------
+
+    # spectrum[type](params){peak data}
+    rule(:spectrum) do
+        (str('spectrum') >>
+        spectrum_type.maybe >>
+        spectrum_params.maybe >>
+        spectrum_body.maybe).as(:spectrum_node)
+    end
+
+    rule(:spectrum_type) do
+      str('[') >> (str(']').absent? >> any).repeat.as(:spectrum_type) >> str(']')
+    end
+
+    rule(:spectrum_params) do
+      str('(') >> (str(')').absent? >> any).repeat.as(:spectrum_params) >> str(')')
+    end
+
+    rule(:spectrum_body) do
+      str('{') >> (str('}').absent? >> any).repeat.as(:spectrum_body) >> str('}')
     end
 
     # Annotated molecule: a molecule followed by one or more
