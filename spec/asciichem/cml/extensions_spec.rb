@@ -164,12 +164,17 @@ RSpec.describe AsciiChem::Cml::Extensions do
       expect(described_class::TOP_LEVEL_HANDLERS).to be_frozen
     end
 
-    it "covers ElectronConfiguration, EmbeddedMath, and Text" do
+    it "covers all top-level constructs including beyond-formulas" do
       classes = described_class::TOP_LEVEL_HANDLERS.map(&:node_class)
       expect(classes).to contain_exactly(
         AsciiChem::Model::ElectronConfiguration,
         AsciiChem::Model::EmbeddedMath,
-        AsciiChem::Model::Text
+        AsciiChem::Model::Text,
+        AsciiChem::Model::Crystal,
+        AsciiChem::Model::Spectrum,
+        AsciiChem::Model::Calculation,
+        AsciiChem::Model::ZMatrix,
+        AsciiChem::Model::Mechanism
       )
     end
 
