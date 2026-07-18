@@ -140,6 +140,24 @@ module AsciiChem
         parts.join
       end
 
+      def visit_spectrum(spectrum)
+        parts = ["spectrum"]
+        parts << "[#{spectrum.type}]" if spectrum.type
+        params = spectrum.params.map { |k, v| "#{k}=#{v}" }.join(',')
+        parts << "(#{params})" unless params.empty?
+        peak_lines = spectrum.peaks.map do |peak|
+          line = "#{peak[:position]}: #{peak[:intensity]}"
+          line += " #{peak[:multiplicity]}" if peak[:multiplicity]
+          line += %( "#{peak[:assignment]}") if peak[:assignment]
+          line
+        end
+        unless peak_lines.empty?
+          body = peak_lines.join("\n  ")
+          parts << "{\n  #{body}\n}"
+        end
+        parts.join
+      end
+
       private
 
       def render_node(node)

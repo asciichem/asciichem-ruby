@@ -19,6 +19,7 @@ module AsciiChem
     autoload :Node, "asciichem/model/node"
     autoload :Reaction, "asciichem/model/reaction"
     autoload :ReactionCascade, "asciichem/model/reaction_cascade"
+    autoload :Spectrum, "asciichem/model/spectrum"
     autoload :Text, "asciichem/model/text"
   end
 end
