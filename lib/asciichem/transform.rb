@@ -171,6 +171,27 @@ module AsciiChem
       ).build
     end
 
+    # -- computational chemistry ----------------------------------------
+
+    rule(calc_node: subtree(:data)) do
+      hash = data.is_a?(Hash) ? data : {}
+      CalculationBuilder.new(hash[:calc_params], hash[:calc_body]).build
+    end
+
+    # -- Z-Matrix -------------------------------------------------------
+
+    rule(zmatrix_node: subtree(:data)) do
+      hash = data.is_a?(Hash) ? data : {}
+      ZMatrixBuilder.new(hash[:zmatrix_body]).build
+    end
+
+    # -- reaction mechanisms --------------------------------------------
+
+    rule(mechanism_node: subtree(:data)) do
+      hash = data.is_a?(Hash) ? data : {}
+      MechanismBuilder.new(hash[:mechanism_body]).build
+    end
+
     # -- internal helpers ------------------------------------------------
 
     # Builds a Crystal from parsed grammar captures. The grammar
@@ -289,6 +310,141 @@ module AsciiChem
           multiplicity: tokens[1],
           assignment: assignment
         }
+      end
+    end
+
+    # Builds a Calculation from grammar captures.
+    # Params: "method/basis" string. Body: key-value lines.
+    class CalculationBuilder
+      def initialize(params_str, body_str)
+        @params_str = strip_value(params_str)
+        @body_str = strip_value(body_str)
+      end
+
+      def build
+        method, basis = parse_method_basis(@params_str)
+        Model::Calculation.new(
+          method: method,
+          basis: basis,
+          properties: parse_properties(@body_str)
+        )
+      end
+
+      private
+
+      def strip_value(value)
+        return nil if value.nil?
+
+        s = value.to_s.strip
+        s.empty? ? nil : s
+      end
+
+      def parse_method_basis(str)
+        return [nil, nil] unless str
+
+        parts = str.split('/', 2)
+        [parts[0]&.strip, parts[1]&.strip]
+      end
+
+      def parse_properties(str)
+        return [] unless str
+
+        str.split("\n").filter_map do |line|
+          line = line.strip
+          next nil if line.empty?
+
+          key, rest = line.split(':', 2)
+          next nil unless key
+
+          tokens = rest&.strip&.split(/\s+/) || []
+          { title: key.strip, value: tokens[0], units: tokens[1] }
+        end
+      end
+    end
+
+    # Builds a ZMatrix from grammar captures.
+    # Each body line: atom [ref1 distance] [ref2 angle] [ref3 dihedral]
+    class ZMatrixBuilder
+      def initialize(body_str)
+        @body_str = strip_value(body_str)
+      end
+
+      def build
+        Model::ZMatrix.new(rows: parse_rows(@body_str))
+      end
+
+      private
+
+      def strip_value(value)
+        return nil if value.nil?
+
+        s = value.to_s.strip
+        s.empty? ? nil : s
+      end
+
+      def parse_rows(str)
+        return [] unless str
+
+        str.split("\n").filter_map { |line| parse_row(line.strip) }
+      end
+
+      def parse_row(line)
+        return nil if line.empty?
+
+        tokens = line.split(/\s+/)
+        Model::ZMatrix::ZRow.new(
+          atom: tokens[0],
+          ref1: tokens[1],
+          distance: tokens[2],
+          ref2: tokens[3],
+          angle: tokens[4],
+          ref3: tokens[5],
+          dihedral: tokens[6]
+        )
+      end
+    end
+
+    # Builds a Mechanism from grammar captures.
+    # Each body line: key: value (step1: reaction, spectator: ion)
+    class MechanismBuilder
+      def initialize(body_str)
+        @body_str = strip_value(body_str)
+      end
+
+      def build
+        steps = []
+        spectators = []
+        parse_entries(@body_str).each do |key, value|
+          if key == 'spectator'
+            spectators.concat(value.split(/\s+/).map(&:strip))
+          else
+            steps << { label: key, reaction: value }
+          end
+        end
+        Model::Mechanism.new(steps: steps, spectators: spectators)
+      end
+
+      private
+
+      def strip_value(value)
+        return nil if value.nil?
+
+        s = value.to_s.strip
+        s.empty? ? nil : s
+      end
+
+      def parse_entries(str)
+        return [] unless str
+
+        str.split("\n").filter_map do |line|
+          line = line.strip
+          next nil if line.empty?
+
+          key, val = line.split(':', 2)
+          next nil unless key && val
+
+          [key.strip, val.strip]
+        end
       end
     end
 
