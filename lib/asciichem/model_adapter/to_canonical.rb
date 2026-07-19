@@ -113,13 +113,13 @@ module AsciiChem
 
         formulas.map do |f|
           Chemicalml::Cml::Formula.new(
-            concise: f[:concise],
-            inline: f[:inline],
-            formal_charge: f[:formal_charge],
-            count: f[:count],
-            title: f[:title],
-            convention: f[:convention],
-            dict_ref: f[:dict_ref]
+            concise: f.concise,
+            inline: f.inline,
+            formal_charge: f.formal_charge,
+            count: f.count,
+            title: f.title,
+            convention: f.convention,
+            dict_ref: f.dict_ref
           )
         end
       end
@@ -129,10 +129,10 @@ module AsciiChem
 
         properties.map do |p|
           Chemicalml::Cml::Property.new(
-            title: p[:title],
-            scalar: build_scalar(p[:value]),
-            dict_ref: p[:dict_ref],
-            convention: p[:convention]
+            title: p.title,
+            scalar: build_scalar(p.value),
+            dict_ref: p.dict_ref,
+            convention: p.convention
           )
         end
       end
@@ -151,9 +151,9 @@ module AsciiChem
 
         labels.map do |l|
           Chemicalml::Cml::Label.new(
-            value: l[:value],
-            dict_ref: l[:dict_ref],
-            convention: l[:convention]
+            value: l.value,
+            dict_ref: l.dict_ref,
+            convention: l.convention
           )
         end
       end
@@ -346,21 +346,13 @@ module AsciiChem
           @bonds << Chemicalml::Cml::Bond.new(
             id: @ids.next(:bond),
             atom_refs2: "#{@last_atom_id} #{next_atom_id}",
-            order: BOND_ORDER_CODES.fetch(@pending_bond_kind, "S"),
+            order: AsciiChem::Model::Bond::CML_ORDER_CODES.fetch(@pending_bond_kind, "S"),
             bond_stereo: bond_stereo_for(@pending_bond_kind)
           )
         end
 
-        # CML bondStereo codes for stereo bonds. Wedge (coming out of
-        # page) → "W"; hash (going into page) → "H". Other bond kinds
-        # have no stereo meaning.
-        BOND_ORDER_CODES = { single: "S", double: "D", triple: "T",
-                              quadruple: "Q", wedge: "W", hash: "H",
-                              dative: "A", wavy: "V" }.freeze
-        BOND_STEREO_CODES = { wedge: "W", hash: "H" }.freeze
-
         def bond_stereo_for(kind)
-          code = BOND_STEREO_CODES[kind]
+          code = AsciiChem::Model::Bond::CML_STEREO_CODES[kind]
           return nil unless code
 
           Chemicalml::Cml::BondStereo.new(value: code)
@@ -425,8 +417,7 @@ module AsciiChem
       # translation pass (a1, a2, b1, m1, r1, ...) so re-running the
       # adapter on equivalent input yields byte-equal output.
       class IdRegistry
-        PREFIXES = { atom: "a", bond: "b", molecule: "m",
-                     reaction: "r", group: "g" }.freeze
+        PREFIXES = AsciiChem::Cml::ID_PREFIXES
 
         def initialize
           @counters = Hash.new(0)
