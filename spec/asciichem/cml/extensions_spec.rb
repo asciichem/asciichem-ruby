@@ -144,28 +144,32 @@ RSpec.describe AsciiChem::Cml::Extensions do
   end
 
   describe "FIELDS registry" do
+    let(:fields) { described_class::AtomAttributes::FIELDS }
+
     it "is frozen (extension point, not runtime-mutable)" do
-      expect(described_class::FIELDS).to be_frozen
+      expect(fields).to be_frozen
     end
 
     it "covers all aci: extension fields" do
-      expect(described_class::FIELDS.keys)
+      expect(fields.keys)
         .to contain_exactly(:oxidation_state, :lone_pairs, :radical_electrons, :ring_closures, :atom_parity)
     end
 
     it "maps each Ruby attribute to a distinct wire name" do
-      wire_names = described_class::FIELDS.values
+      wire_names = fields.values
       expect(wire_names).to eq(wire_names.uniq)
     end
   end
 
   describe "TOP_LEVEL_HANDLERS registry" do
+    let(:handlers) { described_class::TopLevel::HANDLERS }
+
     it "is frozen" do
-      expect(described_class::TOP_LEVEL_HANDLERS).to be_frozen
+      expect(handlers).to be_frozen
     end
 
     it "covers all top-level constructs including beyond-formulas" do
-      classes = described_class::TOP_LEVEL_HANDLERS.map(&:node_class)
+      classes = handlers.map(&:node_class)
       expect(classes).to contain_exactly(
         AsciiChem::Model::ElectronConfiguration,
         AsciiChem::Model::EmbeddedMath,
@@ -179,7 +183,7 @@ RSpec.describe AsciiChem::Cml::Extensions do
     end
 
     it "maps each handler to a distinct element name" do
-      element_names = described_class::TOP_LEVEL_HANDLERS.map(&:element_name)
+      element_names = handlers.map(&:element_name)
       expect(element_names).to eq(element_names.uniq)
     end
   end
