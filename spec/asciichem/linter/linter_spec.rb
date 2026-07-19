@@ -100,6 +100,7 @@ RSpec.describe AsciiChem::Linter do
       # Re-register the built-in checks after reset.
       load "asciichem/linter/balance_check.rb"
       load "asciichem/linter/bracket_balance_check.rb"
+      load "asciichem/linter/charge_balance_check.rb"
       load "asciichem/linter/crystal_sanity_check.rb"
       load "asciichem/linter/element_validation_check.rb"
       load "asciichem/linter/isotope_sanity_check.rb"
