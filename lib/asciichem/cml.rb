@@ -23,8 +23,22 @@ module AsciiChem
   #   AsciiChem::Cml.from_asciichem(formula)  # => CML XML string
   #   AsciiChem::Cml.parse(xml)               # => AsciiChem::Model::Formula
   module Cml
+    # Single source of truth for canonical ID prefixes used in CML
+    # output (`a1`, `b1`, `m1`, `r1`, `g1`). Referenced by
+    # ModelAdapter::ToCanonical::IdRegistry (which generates IDs) and
+    # by extension modules (which reference IDs when injecting aci:
+    # attributes onto molecules/reactions). Keeping the table here
+    # means both sides stay in sync if a prefix ever changes.
+    ID_PREFIXES = {
+      atom: "a", bond: "b", molecule: "m",
+      reaction: "r", group: "g"
+    }.freeze
+
+    autoload :ConditionsExtensions, "asciichem/cml/conditions_extensions"
     autoload :Extensions, "asciichem/cml/extensions"
     autoload :GroupExtensions, "asciichem/cml/group_extensions"
+    autoload :MetadataExtensions, "asciichem/cml/metadata_extensions"
+    autoload :OpaqueExtensions, "asciichem/cml/opaque_extensions"
     autoload :Translator, "asciichem/cml/translator"
 
     # Serialise an AsciiChem::Model::Formula to CML XML.
