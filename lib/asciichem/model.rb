@@ -19,6 +19,7 @@ module AsciiChem
     autoload :Molecule, "asciichem/model/molecule"
     autoload :Name, "asciichem/model/name"
     autoload :Node, "asciichem/model/node"
+    autoload :OpaqueCml, "asciichem/model/opaque_cml"
     autoload :Reaction, "asciichem/model/reaction"
     autoload :ReactionCascade, "asciichem/model/reaction_cascade"
     autoload :Spectrum, "asciichem/model/spectrum"
