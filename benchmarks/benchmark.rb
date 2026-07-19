@@ -31,7 +31,12 @@ CASES = {
   "equilibrium (Haber)" => "N_2 + 3H_2 <=>[Fe][400°C] 2NH_3",
   "cascade (A -> B -> C -> D)" => "A -> B -> C -> D",
   "electron config" => "1s^2 2s^2 2p^6 3s^2 3p^6 4s^2 3d^10",
-  "bonds (H-O-H=O#H)" => "H-O-H=O#H"
+  "bonds (H-O-H=O#H)" => "H-O-H=O#H",
+  "crystal (NaCl)" => "crystal[NaCl](a=5.64,b=5.64,c=5.64,alpha=90,beta=90,gamma=90,sg=Fm-3m){Na@f(0,0,0) Cl@f(0.5,0.5,0.5)}",
+  "spectrum (NMR)" => %(spectrum[nmr](type=1H,solvent=CDCl3){1.2: 3H s "CH3"}),
+  "calculation (DFT)" => "calc(b3lyp/6-31G*){energy: -234.5 Hartree}",
+  "zmatrix (methane)" => "zmatrix{\n  C1\n  H2 C1 1.09\n  H3 C1 1.09 H2 109.5\n  H4 C1 1.09 H2 109.5 H3 120.0\n}",
+  "mechanism (2-step)" => "mechanism{\n  step1: A + B -> C\n  step2: C -> D + E\n  spectator: Na+\n}"
 }.freeze
 
 def parse_bench(label, source)

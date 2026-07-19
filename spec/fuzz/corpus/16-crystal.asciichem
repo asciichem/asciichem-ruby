@@ -1,0 +1,13 @@
+crystal[NaCl]
+crystal[NaCl]()
+crystal[NaCl](a=5.64)
+crystal[NaCl](a=5.64,b=5.64,c=5.64)
+crystal[NaCl](a=5.64,b=5.64,c=5.64,alpha=90,beta=90,gamma=90)
+crystal[NaCl](a=5.64,sg=Fm-3m)
+crystal[NaCl](a=5.64,sg=Fm-3m){}
+crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0)}
+crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0) Cl@f(0.5,0.5,0.5)}
+crystal(x)
+crystal[](a=1)
+crystal(a=1,b=2,c=3)
+crystal[](sg=P21/c)

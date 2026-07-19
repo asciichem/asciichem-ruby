@@ -1,0 +1,21 @@
+mechanism
+mechanism{}
+mechanism{
+  step1: A -> B
+}
+mechanism{
+  step1: A -> B
+  step2: B -> C
+}
+mechanism{
+  step1: A + B -> C
+  step2: C -> D + E
+}
+mechanism{
+  step1: A -> B
+  spectator: Na+
+}
+mechanism{
+  step1: 2H_2 + O_2 -> 2H_2O
+  spectator: Pt
+}
