@@ -1,0 +1,14 @@
+spectrum
+spectrum[nmr]
+spectrum[nmr]()
+spectrum[nmr](type=1H)
+spectrum[nmr](type=1H,solvent=CDCl3)
+spectrum[nmr](type=1H,solvent=CDCl3){}
+spectrum[nmr](type=1H,solvent=CDCl3){1.2: 3H}
+spectrum[nmr](type=1H,solvent=CDCl3){1.2: 3H s}
+spectrum[nmr](type=1H,solvent=CDCl3){1.2: 3H s "CH3"}
+spectrum[ir]
+spectrum[ir]{3300: 100 "O-H"}
+spectrum[ms]
+spectrum[ms]{18: 100% "M+"}
+spectrum[uv]{260: 12000 "n->pi*"}

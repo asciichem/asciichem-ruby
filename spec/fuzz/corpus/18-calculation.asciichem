@@ -1,0 +1,11 @@
+calc
+calc(b3lyp)
+calc(b3lyp/6-31G*)
+calc(b3lyp/6-31G*){}
+calc(b3lyp/6-31G*){energy: -234.5}
+calc(b3lyp/6-31G*){energy: -234.5 Hartree}
+calc(b3lyp/6-31G*){energy: -234.5 dipole: [0.1, 0.2, 0.3]}
+calc(hf/sto-3g){energy: -76.0 Hartree}
+calc(mp2/cc-pVTZ){energy: -76.4}
+calc(){x: 1}
+calc(){}calc(){}

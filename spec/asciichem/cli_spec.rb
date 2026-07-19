@@ -71,5 +71,53 @@ RSpec.describe AsciiChem::Cli do
       expect(out.strip).to eq("asciichem #{AsciiChem::VERSION}")
     end
   end
+
+  describe "beyond-formulas constructs through CLI" do
+    it "converts a Crystal to MathML" do
+      out = run("convert", "-i", "crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0)}", "-t", "mathml")
+      expect(out).to include("<math")
+      expect(out).to include("crystal")
+    end
+
+    it "converts a Spectrum to HTML" do
+      out = run("convert", "-i", %(spectrum[nmr](type=1H){1.2: 3H s "CH3"}), "-t", "html")
+      expect(out).to include("asciichem-spectrum")
+    end
+
+    it "converts a Calculation to LaTeX" do
+      out = run("convert", "-i", "calc(b3lyp){energy: -234.5}", "-t", "latex")
+      expect(out).to include("\\text{calc}")
+    end
+
+    it "converts a ZMatrix to text" do
+      out = run("convert", "-i", "zmatrix{\n  C1\n  H2 C1 1.09\n}", "-t", "text")
+      expect(out).to include("zmatrix")
+    end
+
+    it "converts a Mechanism to text" do
+      out = run("convert", "-i", "mechanism{\n  step1: A -> B\n}", "-t", "text")
+      expect(out).to include("mechanism")
+    end
+
+    it "lints CrystalSanityCheck errors via CLI" do
+      expect { described_class.start(["lint", "-i", "crystal[x](a=-1){Na@f(0,0,0)}"]) }
+        .to raise_error(SystemExit) do |e|
+          expect(e.status).to eq(1)
+        end
+    end
+
+    it "lints ZMatrixReferenceCheck errors via CLI" do
+      expect { described_class.start(["lint", "-i", "zmatrix{\n  H1 C2 1.0\n  C2\n}"]) }
+        .to raise_error(SystemExit) do |e|
+          expect(e.status).to eq(1)
+        end
+    end
+
+    it "round-trips a Crystal through CML via the CLI" do
+      out = run("convert", "-i", "crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0)}", "-t", "cml")
+      expect(out).to include("<cml")
+      expect(out).to include("aci:crystal")
+    end
+  end
 end
 
