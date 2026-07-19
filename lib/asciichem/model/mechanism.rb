@@ -11,6 +11,9 @@ module AsciiChem
     #     spectator: Na+
     #   }
     class Mechanism < Node
+      # A single step in the mechanism, identified by a label.
+      Step = Struct.new(:label, :reaction, keyword_init: true)
+
       attr_accessor :steps, :spectators
 
       def initialize(steps: [], spectators: [])

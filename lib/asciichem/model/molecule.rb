@@ -7,6 +7,17 @@ module AsciiChem
     # marker (R/S/E/Z/α/β), and optional names/identifiers for CML
     # metadata round-trip.
     class Molecule < Node
+      # A computed or measured property on a molecule (e.g. mw, bp).
+      Property = Struct.new(:title, :value, :units, :dict_ref,
+                            :convention, keyword_init: true)
+      # A key-value metadata pair (provenance, instrument, etc.).
+      Meta = Struct.new(:name, :content, keyword_init: true)
+      # A display label attached to the molecule.
+      Label = Struct.new(:value, :dict_ref, :convention, keyword_init: true)
+      # A CML concise formula on the molecule.
+      Formula = Struct.new(:concise, :inline, :formal_charge, :count,
+                           :title, :convention, :dict_ref, keyword_init: true)
+
       STEREO_LETTERS = {
         "R" => :R,
         "S" => :S,

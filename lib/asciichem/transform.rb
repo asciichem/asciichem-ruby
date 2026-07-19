@@ -11,6 +11,21 @@ module AsciiChem
   # isotope prefix from suffix charge) is encoded in the grammar, not
   # here.
   class Transform < Parslet::Transform
+    # Shared helpers for Builder classes. Each builder parses a raw
+    # string captured by the grammar into typed model fields. The
+    # strip_value helper normalises parslet's quirky representation
+    # of "zero matches" (an empty array) into nil so the rest of the
+    # builder logic can treat nil as "absent".
+    module BuilderHelpers
+      def strip_value(value)
+        return nil if value.nil?
+        return nil if value.is_a?(Array) && value.empty?
+
+        s = value.to_s.strip
+        s.empty? ? nil : s
+      end
+    end
+
     # -- top level --------------------------------------------------------
 
     rule(formula: subtree(:subtree)) do
@@ -198,10 +213,12 @@ module AsciiChem
     # captures the name, params, and body as raw strings; this class
     # parses them into the model fields.
     class CrystalBuilder
+      include BuilderHelpers
+
       def initialize(name, params_str, body_str)
-        @name = strip_parslet(name)
-        @params_str = strip_parslet(params_str)
-        @body_str = strip_parslet(body_str)
+        @name = strip_value(name)
+        @params_str = strip_value(params_str)
+        @body_str = strip_value(body_str)
       end
 
       def build
@@ -221,13 +238,6 @@ module AsciiChem
       end
 
       private
-
-      def strip_parslet(value)
-        return nil if value.nil?
-
-        s = value.to_s.strip
-        s.empty? ? nil : s
-      end
 
       def parse_params(str)
         return {} unless str
@@ -253,6 +263,8 @@ module AsciiChem
     # Builds a Spectrum from parsed grammar captures. Parses peak
     # lines from the body string.
     class SpectrumBuilder
+      include BuilderHelpers
+
       def initialize(type_str, params_str, body_str)
         @type = strip_value(type_str)
         @params_str = strip_value(params_str)
@@ -268,13 +280,6 @@ module AsciiChem
       end
 
       private
-
-      def strip_value(value)
-        return nil if value.nil?
-
-        s = value.to_s.strip
-        s.empty? ? nil : s
-      end
 
       def parse_params(str)
         return {} unless str
@@ -304,18 +309,19 @@ module AsciiChem
         pos, rest = line.split(':', 2)
         tokens = rest&.strip&.split(/\s+/) || []
 
-        {
+        Model::Spectrum::Peak.new(
           position: pos&.strip,
           intensity: tokens[0],
           multiplicity: tokens[1],
           assignment: assignment
-        }
+        )
       end
     end
 
     # Builds a Calculation from grammar captures.
     # Params: "method/basis" string. Body: key-value lines.
     class CalculationBuilder
+      include BuilderHelpers
       def initialize(params_str, body_str)
         @params_str = strip_value(params_str)
         @body_str = strip_value(body_str)
@@ -331,13 +337,6 @@ module AsciiChem
       end
 
       private
-
-      def strip_value(value)
-        return nil if value.nil?
-
-        s = value.to_s.strip
-        s.empty? ? nil : s
-      end
 
       def parse_method_basis(str)
         return [nil, nil] unless str
@@ -357,7 +356,11 @@ module AsciiChem
           next nil unless key
 
           tokens = rest&.strip&.split(/\s+/) || []
-          { title: key.strip, value: tokens[0], units: tokens[1] }
+          Model::Calculation::Property.new(
+            title: key.strip,
+            value: tokens[0],
+            units: tokens[1]
+          )
         end
       end
     end
@@ -365,6 +368,7 @@ module AsciiChem
     # Builds a ZMatrix from grammar captures.
     # Each body line: atom [ref1 distance] [ref2 angle] [ref3 dihedral]
     class ZMatrixBuilder
+      include BuilderHelpers
       def initialize(body_str)
         @body_str = strip_value(body_str)
       end
@@ -374,13 +378,6 @@ module AsciiChem
       end
 
       private
-
-      def strip_value(value)
-        return nil if value.nil?
-
-        s = value.to_s.strip
-        s.empty? ? nil : s
-      end
 
       def parse_rows(str)
         return [] unless str
@@ -407,6 +404,7 @@ module AsciiChem
     # Builds a Mechanism from grammar captures.
     # Each body line: key: value (step1: reaction, spectator: ion)
     class MechanismBuilder
+      include BuilderHelpers
       def initialize(body_str)
         @body_str = strip_value(body_str)
       end
@@ -418,20 +416,13 @@ module AsciiChem
           if key == 'spectator'
             spectators.concat(value.split(/\s+/).map(&:strip))
           else
-            steps << { label: key, reaction: value }
+            steps << Model::Mechanism::Step.new(label: key, reaction: value)
           end
         end
         Model::Mechanism.new(steps: steps, spectators: spectators)
       end
 
       private
-
-      def strip_value(value)
-        return nil if value.nil?
-
-        s = value.to_s.strip
-        s.empty? ? nil : s
-      end
 
       def parse_entries(str)
         return [] unless str
@@ -477,8 +468,10 @@ module AsciiChem
 
       def apply_one(ann)
         if ann[:meta_key]
-          @molecule.metadata << { name: ann[:meta_key].to_s,
-                                  content: ann[:meta_value].to_s }
+          @molecule.metadata << Model::Molecule::Meta.new(
+            name: ann[:meta_key].to_s,
+            content: ann[:meta_value].to_s
+          )
           return
         end
         type = ann[:ann_type].to_s
@@ -489,13 +482,13 @@ module AsciiChem
         when 'title'
           @molecule.title = value
         when 'formula'
-          @molecule.formulas << { concise: value }
+          @molecule.formulas << Model::Molecule::Formula.new(concise: value)
         when 'label'
-          @molecule.labels << { value: value }
+          @molecule.labels << Model::Molecule::Label.new(value: value)
         when *IDENTIFIER_TYPES
           @molecule.identifiers << Model::Identifier.new(value: value, convention: type)
         else
-          @molecule.properties << { title: type, value: value }
+          @molecule.properties << Model::Molecule::Property.new(title: type, value: value)
         end
       end
     end

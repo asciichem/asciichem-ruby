@@ -86,7 +86,7 @@ module AsciiChem
         return [] if canonical_formulas.nil? || canonical_formulas.empty?
 
         canonical_formulas.map do |f|
-          {
+          AsciiChem::Model::Molecule::Formula.new(
             concise: f.concise,
             inline: f.inline,
             formal_charge: f.formal_charge,
@@ -94,7 +94,7 @@ module AsciiChem
             title: f.title,
             convention: f.convention,
             dict_ref: f.dict_ref
-          }
+          )
         end
       end
 
@@ -102,12 +102,12 @@ module AsciiChem
         return [] if canonical_properties.nil? || canonical_properties.empty?
 
         canonical_properties.map do |p|
-          {
+          AsciiChem::Model::Molecule::Property.new(
             title: p.title,
             value: extract_scalar_value(p.scalar),
             dict_ref: p.dict_ref,
             convention: p.convention
-          }
+          )
         end
       end
 
@@ -122,11 +122,11 @@ module AsciiChem
         return [] if canonical_labels.nil? || canonical_labels.empty?
 
         canonical_labels.map do |l|
-          {
+          AsciiChem::Model::Molecule::Label.new(
             value: l.value,
             dict_ref: l.dict_ref,
             convention: l.convention
-          }
+          )
         end
       end
 
@@ -289,14 +289,8 @@ module AsciiChem
           positions.min || 0
         end
 
-        ORDER_TO_KIND = {
-          'S' => :single, 'D' => :double, 'T' => :triple,
-          'Q' => :quadruple, 'W' => :wedge, 'H' => :hash,
-          'A' => :dative, 'V' => :wavy
-        }.freeze
-
         def bond_kind_from_order(order)
-          ORDER_TO_KIND.fetch(order.to_s, :single)
+          AsciiChem::Model::Bond::KIND_BY_CML_ORDER.fetch(order.to_s, :single)
         end
       end
       private_constant :MoleculeRebuilder

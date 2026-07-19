@@ -10,6 +10,10 @@ module AsciiChem
     #     dipole: [0.1, 0.2, 0.3] Debye
     #   }
     class Calculation < Node
+      # A single computed property: e.g. energy, dipole moment, charge.
+      Property = Struct.new(:title, :value, :units, :dict_ref,
+                            :convention, keyword_init: true)
+
       attr_accessor :method, :basis, :properties
 
       def initialize(method: nil, basis: nil, properties: [])

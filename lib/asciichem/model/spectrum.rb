@@ -18,6 +18,11 @@ module AsciiChem
     #     18: 100% "M+"
     #   }
     class Spectrum < Node
+      # A single spectroscopic peak. Fields are optional (e.g. MS peaks
+      # have no multiplicity; IR peaks may have no assignment).
+      Peak = Struct.new(:position, :intensity, :multiplicity,
+                        :assignment, keyword_init: true)
+
       attr_accessor :type, :params, :peaks
 
       def initialize(type: nil, params: {}, peaks: [])
