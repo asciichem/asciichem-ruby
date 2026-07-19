@@ -194,18 +194,21 @@ RSpec.describe AsciiChem::Cml::GroupExtensions do
     end
   end
 
-  describe "BRACKET_TO_WIRE registry" do
+  describe "Group::BRACKETS registry" do
+    let(:brackets) { AsciiChem::Model::Group::BRACKETS }
+
     it "is frozen" do
-      expect(described_class::BRACKET_TO_WIRE).to be_frozen
+      expect(brackets).to be_frozen
     end
 
     it "covers paren, square, brace" do
-      expect(described_class::BRACKET_TO_WIRE.keys)
+      expect(brackets.keys)
         .to contain_exactly(:paren, :square, :brace)
     end
 
-    it "is invertible" do
-      expect(described_class::WIRE_TO_BRACKET).to eq(described_class::BRACKET_TO_WIRE.invert)
+    it "is invertible via BRACKET_BY_WIRE" do
+      expect(AsciiChem::Model::Group::BRACKET_BY_WIRE)
+        .to eq(brackets.to_h { |k, v| [v[:wire], k] })
     end
   end
 end

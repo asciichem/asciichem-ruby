@@ -36,10 +36,6 @@ module AsciiChem
       PREFIX = 'aci'
       CML_NS = 'http://www.xml-cml.org/schema'
 
-      # AsciiChem bracket symbols → wire strings.
-      BRACKET_TO_WIRE = { paren: 'paren', square: 'square', brace: 'brace' }.freeze
-      WIRE_TO_BRACKET = BRACKET_TO_WIRE.invert.freeze
-
       # -- AsciiChem -> CML ------------------------------------------
 
       # Build the group extensions map: `{ molecule_id => [group_record, ...] }`.
@@ -71,7 +67,8 @@ module AsciiChem
       def self.build_group_element(doc, record)
         el = doc.create_element("#{PREFIX}:group")
         el['multiplicity'] = record.multiplicity.to_s if record.multiplicity
-        el['bracket'] = BRACKET_TO_WIRE.fetch(record.bracket, 'paren')
+        el['bracket'] = AsciiChem::Model::Group::BRACKETS
+          .fetch(record.bracket, AsciiChem::Model::Group::BRACKETS[:paren])[:wire]
         el['atomRefs'] = record.atom_ids.join(' ')
         el
       end
@@ -105,7 +102,7 @@ module AsciiChem
         atom_ids = (el['atomRefs'] || '').split
         {
           multiplicity: el['multiplicity'],
-          bracket: WIRE_TO_BRACKET.fetch(el['bracket'], :paren),
+          bracket: AsciiChem::Model::Group::BRACKET_BY_WIRE.fetch(el['bracket'], :paren),
           atom_ids: atom_ids
         }
       end

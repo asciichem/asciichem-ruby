@@ -11,6 +11,28 @@ module AsciiChem
     #     Cl@f(0.5,0.5,0.5)
     #   }
     class Crystal < Node
+      # The six unit-cell parameters in canonical iteration order.
+      # Single source of truth for "what fields count as cell params".
+      CELL_PARAMS = %i[a b c alpha beta gamma].freeze
+      # Lengths vs angles — both subsets of CELL_PARAMS. Naming the
+      # split lets the linter iterate without re-deriving subsets.
+      LENGTH_FIELDS = %i[a b c].freeze
+      ANGLE_FIELDS = %i[alpha beta gamma].freeze
+
+      # Per-format labels for cell parameters. Single source of truth
+      # for "what's the label for :alpha in MathML" — every formatter
+      # consults this hash instead of inlining its own.
+      CELL_LABELS = {
+        text:   { a: 'a', b: 'b', c: 'c',
+                  alpha: 'alpha', beta: 'beta', gamma: 'gamma' },
+        mathml: { a: 'a', b: 'b', c: 'c',
+                  alpha: 'α', beta: 'β', gamma: 'γ' },
+        html:   { a: 'a', b: 'b', c: 'c',
+                  alpha: 'α', beta: 'β', gamma: 'γ' },
+        latex:  { a: 'a', b: 'b', c: 'c',
+                  alpha: '\\alpha', beta: '\\beta', gamma: '\\gamma' }
+      }.freeze
+
       attr_accessor :name, :a, :b, :c, :alpha, :beta, :gamma,
                     :spacegroup, :atoms
 
@@ -26,6 +48,18 @@ module AsciiChem
         @gamma = gamma
         @spacegroup = spacegroup
         @atoms = atoms
+      end
+
+      # Yield `[label, value]` pairs for every set cell parameter,
+      # in canonical order (a, b, c, alpha, beta, gamma), using the
+      # label set for the given format. Formatters use this instead
+      # of inlining their own label hashes.
+      def each_cell_param(format)
+        labels = CELL_LABELS.fetch(format)
+        CELL_PARAMS.each do |attr|
+          value = public_send(attr)
+          yield labels[attr], value if value
+        end
       end
 
       def value_attributes
@@ -44,12 +78,7 @@ module AsciiChem
 
       def to_s
         params = []
-        params << "a=#{a}" if a
-        params << "b=#{b}" if b
-        params << "c=#{c}" if c
-        params << "alpha=#{alpha}" if alpha
-        params << "beta=#{beta}" if beta
-        params << "gamma=#{gamma}" if gamma
+        each_cell_param(:text) { |label, value| params << "#{label}=#{value}" }
         params << "sg=#{spacegroup}" if spacegroup
         "crystal[#{name}](#{params.join(',')}){#{atoms.map(&:to_s).join(' ')}}"
       end
