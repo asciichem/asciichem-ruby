@@ -231,4 +231,38 @@ RSpec.describe "Value objects on Model classes" do
       end
     end
   end
+
+  describe AsciiChem::Model::Molecule do
+    describe "#atom_count" do
+      it "counts a single atom" do
+        mol = AsciiChem.parse("H").nodes.first
+        expect(mol.atom_count).to eq(1)
+      end
+
+      it "counts atoms with subscripts" do
+        mol = AsciiChem.parse("H_2O").nodes.first
+        expect(mol.atom_count).to eq(3)
+      end
+
+      it "counts atoms in groups" do
+        mol = AsciiChem.parse("(OH)_2").nodes.first
+        expect(mol.atom_count).to eq(4)
+      end
+
+      it "counts atoms in groups with leading molecule" do
+        mol = AsciiChem.parse("Ca(OH)_2").nodes.first
+        expect(mol.atom_count).to eq(5)
+      end
+
+      it "counts atoms in nested groups" do
+        mol = AsciiChem.parse("((H)_2O)_3").nodes.first
+        expect(mol.atom_count).to eq(9)
+      end
+
+      it "returns 0 for an empty molecule" do
+        mol = AsciiChem::Model::Molecule.new(nodes: [])
+        expect(mol.atom_count).to eq(0)
+      end
+    end
+  end
 end

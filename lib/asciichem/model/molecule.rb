@@ -65,8 +65,51 @@ module AsciiChem
         nodes
       end
 
+      # Total atom count, recursing through groups and nested molecules
+      # with subscripts and multiplicities applied. `H_2O` returns 3;
+      # `(OH)_2` returns 4; `2H_2O` returns 6 (coefficient multiplies).
+      #
+      # Single source of truth for "how many atoms in this molecule".
+      # Used by linter checks (charge balance) and any caller that
+      # needs an atom count without reimplementing the recursion.
+      def atom_count
+        nodes.sum { |node| atom_count_of(node) }
+      end
+
       def stereo_letter
         STEREO_TO_LETTER.fetch(stereo) if stereo
+      end
+
+      private
+
+      def atom_count_of(node)
+        case node
+        when AsciiChem::Model::Atom
+          subscript_count(node)
+        when AsciiChem::Model::Group
+          group_count(node)
+        when AsciiChem::Model::Molecule
+          nested_molecule_count(node)
+        else
+          0
+        end
+      end
+
+      def subscript_count(atom)
+        sub = atom.subscript&.to_i
+        sub && sub.positive? ? sub : 1
+      end
+
+      def group_count(group)
+        inner = group.nodes.sum { |n| atom_count_of(n) }
+        mult = group.multiplicity&.to_i
+        mult && mult.positive? ? inner * mult : inner
+      end
+
+      def nested_molecule_count(mol)
+        coefficient = mol.coefficient&.to_i
+        coeff = coefficient && coefficient.positive? ? coefficient : 1
+        mol.atom_count * coeff
       end
 
       def to_s

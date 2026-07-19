@@ -13,6 +13,7 @@ module AsciiChem
     autoload :Base, "asciichem/linter/base"
     autoload :BalanceCheck, "asciichem/linter/balance_check"
     autoload :BracketBalanceCheck, "asciichem/linter/bracket_balance_check"
+    autoload :ChargeBalanceCheck, "asciichem/linter/charge_balance_check"
     autoload :CrystalSanityCheck, "asciichem/linter/crystal_sanity_check"
     autoload :ElementValidationCheck, "asciichem/linter/element_validation_check"
     autoload :Diagnostic, "asciichem/linter/diagnostic"

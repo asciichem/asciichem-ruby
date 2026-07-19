@@ -165,6 +165,7 @@ RSpec.describe "AsciiChem edge cases" do
       expect(AsciiChem::Linter::Registry.names).to contain_exactly(
         :balance,
         :bracket_balance,
+        :charge_balance,
         :crystal_sanity,
         :element_validation,
         :isotope_sanity,
