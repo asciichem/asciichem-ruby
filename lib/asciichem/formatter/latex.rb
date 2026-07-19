@@ -108,6 +108,88 @@ module AsciiChem
         text.content
       end
 
+      # -- Beyond-formulas constructs --------------------------------
+      #
+      # Each renders as `\text{kind}[label]{ tabular body }` — clean
+      # inline LaTeX that survives both pdflatex and xelatex. Avoids
+      # mhchem's \ce{} for non-chemistry fields (cell params, peaks).
+
+      def visit_crystal(crystal)
+        parts = ["\\text{crystal}"]
+        parts << "[#{wrap_latex(crystal.name)}]" if crystal.name
+        cell_pairs = cell_pairs_for(crystal)
+        parts << latex_tabular(cell_pairs) unless cell_pairs.empty?
+        unless crystal.atoms.empty?
+          rows = crystal.atoms.map { |a| [render_node(a)] }
+          parts << latex_tabular(rows, columns: 1)
+        end
+        parts.join
+      end
+
+      def visit_spectrum(spectrum)
+        parts = ["\\text{spectrum}"]
+        parts << "[#{wrap_latex(spectrum.type)}]" if spectrum.type
+        unless spectrum.params.empty?
+          parts << latex_tabular(spectrum.params.to_a)
+        end
+        unless spectrum.peaks.empty?
+          rows = spectrum.peaks.map do |peak|
+            cells = [peak.position.to_s, peak.intensity.to_s]
+            cells << peak.multiplicity.to_s if peak.multiplicity
+            cells << %("#{peak.assignment}") if peak.assignment
+            cells
+          end
+          parts << latex_tabular(rows)
+        end
+        parts.join
+      end
+
+      def visit_calculation(calc)
+        parts = ["\\text{calc}"]
+        if calc.method || calc.basis
+          label = [calc.method, calc.basis].compact.join("/")
+          parts << "[#{wrap_latex(label)}]"
+        end
+        unless calc.properties.empty?
+          rows = calc.properties.map do |p|
+            cells = [p.title.to_s, p.value.to_s]
+            cells << p.units.to_s if p.units
+            cells
+          end
+          parts << latex_tabular(rows)
+        end
+        parts.join
+      end
+
+      def visit_z_matrix(zm)
+        parts = ["\\text{zmatrix}"]
+        return parts.join if zm.rows.empty?
+
+        rows = zm.rows.map do |row|
+          cells = [row.atom.to_s]
+          cells << row.ref1.to_s << row.distance.to_s if row.ref1
+          cells << row.ref2.to_s << row.angle.to_s if row.ref2
+          cells << row.ref3.to_s << row.dihedral.to_s if row.ref3
+          cells
+        end
+        parts << latex_tabular(rows)
+        parts.join
+      end
+
+      def visit_mechanism(mech)
+        parts = ["\\text{mechanism}"]
+        return parts.join if mech.steps.empty? && mech.spectators.empty?
+
+        rows = mech.steps.map { |s| [s.label.to_s, s.reaction.to_s] }
+        mech.spectators.each { |sp| rows << ["spectator", sp.to_s] }
+        parts << latex_tabular(rows)
+        parts.join
+      end
+
+      def visit_opaque_cml(opaque)
+        "\\text{[opaque: #{opaque.element_name}]}"
+      end
+
       private
 
       def render_node(node)
@@ -167,6 +249,41 @@ module AsciiChem
         return "" if value.nil? || value.to_s.empty?
 
         "[#{value}]"
+      end
+
+      # -- Beyond-formulas helpers -----------------------------------
+
+      # Wrap content in \text{} if it contains spaces or special chars,
+      # so tabular cells render cleanly in both pdflatex and xelatex.
+      def wrap_latex(content)
+        s = content.to_s
+        return s if s.match?(/\A[a-zA-Z0-9+\-\/.*]+\z/)
+
+        "\\text{#{s}}"
+      end
+
+      # Build a tabular environment from rows of cells. Column count
+      # is the max row length (rows may be ragged, e.g. ZMatrix rows).
+      def latex_tabular(rows, columns: nil)
+        return "" if rows.nil? || rows.empty?
+
+        cols = columns || rows.map { |r| Array(r).length }.max
+        alignment = "l" * cols
+        body = rows.map do |cells|
+          padded = Array(cells).first(cols)
+          padded.fill("", padded.length...cols)
+          "#{padded.join(' & ')} \\\\"
+        end.join("\n")
+        "\\begin{tabular}{#{alignment}}\n#{body}\n\\end{tabular}"
+      end
+
+      # Cell parameter [label, value] pairs for a Crystal. Uses
+      # Crystal#each_cell_param for single-source-of-truth labels
+      # (LaTeX uses \\alpha for the Greek angle names).
+      def cell_pairs_for(crystal)
+        pairs = []
+        crystal.each_cell_param(:latex) { |label, value| pairs << [label, value.to_s] }
+        pairs
       end
     end
   end

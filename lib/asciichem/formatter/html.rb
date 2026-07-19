@@ -88,6 +88,101 @@ module AsciiChem
         escape(text.content)
       end
 
+      # -- Beyond-formulas constructs --------------------------------
+      #
+      # Each renders as a semantic <span class="asciichem-<kind>"> with
+      # nested <dl> for key/value pairs and <ol> for ordered lists.
+      # Class hooks let downstream CSS style per-construct.
+
+      def visit_crystal(crystal)
+        parts = [%(<span class="asciichem-crystal">)]
+        parts << %(<span class="asciichem-name">[#{escape(crystal.name)}]</span>) if crystal.name
+        parts << cell_param_dl(crystal)
+        unless crystal.atoms.empty?
+          parts << '<ol class="asciichem-atoms">'
+          crystal.atoms.each { |a| parts << "<li>#{render_node(a)}</li>" }
+          parts << '</ol>'
+        end
+        parts << '</span>'
+        parts.join
+      end
+
+      def visit_spectrum(spectrum)
+        parts = [%(<span class="asciichem-spectrum">)]
+        parts << %(<span class="asciichem-type">[#{escape(spectrum.type)}]</span>) if spectrum.type
+        parts << kv_dl(spectrum.params) unless spectrum.params.empty?
+        unless spectrum.peaks.empty?
+          parts << '<table class="asciichem-peaks">'
+          parts << '<thead><tr><th>position</th><th>intensity</th><th>multiplicity</th><th>assignment</th></tr></thead>'
+          parts << '<tbody>'
+          spectrum.peaks.each do |peak|
+            parts << '<tr>'
+            parts << "<td>#{escape(peak.position)}</td>"
+            parts << "<td>#{escape(peak.intensity)}</td>"
+            parts << "<td>#{escape(peak.multiplicity)}</td>"
+            parts << "<td>#{escape(peak.assignment)}</td>"
+            parts << '</tr>'
+          end
+          parts << '</tbody></table>'
+        end
+        parts << '</span>'
+        parts.join
+      end
+
+      def visit_calculation(calc)
+        parts = [%(<span class="asciichem-calc">)]
+        if calc.method || calc.basis
+          label = [calc.method, calc.basis].compact.join("/")
+          parts << %(<span class="asciichem-method">[#{escape(label)}]</span>)
+        end
+        unless calc.properties.empty?
+          parts << '<dl class="asciichem-properties">'
+          calc.properties.each do |p|
+            value = escape(p.value)
+            value += " #{escape(p.units)}" if p.units
+            parts << "<dt>#{escape(p.title)}</dt><dd>#{value}</dd>"
+          end
+          parts << '</dl>'
+        end
+        parts << '</span>'
+        parts.join
+      end
+
+      def visit_z_matrix(zm)
+        parts = [%(<span class="asciichem-zmatrix">)]
+        return parts.join + '</span>' if zm.rows.empty?
+
+        parts << '<table class="asciichem-rows"><tbody>'
+        zm.rows.each do |row|
+          cells = [row.atom]
+          cells << row.ref1 << row.distance if row.ref1
+          cells << row.ref2 << row.angle if row.ref2
+          cells << row.ref3 << row.dihedral if row.ref3
+          parts << "<tr>#{cells.map { |c| "<td>#{escape(c)}</td>" }.join}</tr>"
+        end
+        parts << '</tbody></table></span>'
+        parts.join
+      end
+
+      def visit_mechanism(mech)
+        parts = [%(<span class="asciichem-mechanism">)]
+        return parts.join + '</span>' if mech.steps.empty? && mech.spectators.empty?
+
+        parts << '<dl class="asciichem-steps">'
+        mech.steps.each do |s|
+          parts << "<dt>#{escape(s.label)}</dt><dd>#{escape(s.reaction)}</dd>"
+        end
+        mech.spectators.each do |sp|
+          parts << "<dt>spectator</dt><dd>#{escape(sp)}</dd>"
+        end
+        parts << '</dl></span>'
+        parts.join
+      end
+
+      def visit_opaque_cml(opaque)
+        %(<!-- opaque: #{escape(opaque.element_name)} -->)
+      end
+
       private
 
       def render_node(node)
@@ -105,6 +200,28 @@ module AsciiChem
               .gsub("<", "&lt;")
               .gsub(">", "&gt;")
               .gsub('"', "&quot;")
+      end
+
+      # -- Beyond-formulas helpers -----------------------------------
+
+      # Cell parameters as <dl>. Uses Crystal#each_cell_param for
+      # single-source-of-truth labels.
+      def cell_param_dl(crystal)
+        pairs = []
+        crystal.each_cell_param(:html) { |label, value| pairs << [label, value] }
+        kv_dl(pairs)
+      end
+
+      # Generic key-value pairs as <dl>.
+      def kv_dl(pairs)
+        return "" if pairs.nil? || pairs.empty?
+
+        parts = ['<dl>']
+        pairs.each do |key, value|
+          parts << "<dt>#{escape(key)}</dt><dd>#{escape(value)}</dd>"
+        end
+        parts << '</dl>'
+        parts.join
       end
     end
   end

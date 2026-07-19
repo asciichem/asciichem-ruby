@@ -161,14 +161,17 @@ RSpec.describe "AsciiChem edge cases" do
   end
 
   describe "linter coverage" do
-    it "registers all six built-in checks" do
+    it "registers all built-in checks" do
       expect(AsciiChem::Linter::Registry.names).to contain_exactly(
         :balance,
         :bracket_balance,
+        :crystal_sanity,
         :element_validation,
         :isotope_sanity,
+        :spectrum_peaks,
         :unclosed_ring,
-        :valence
+        :valence,
+        :zmatrix_references
       )
     end
 
