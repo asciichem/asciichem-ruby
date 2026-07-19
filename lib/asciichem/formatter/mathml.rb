@@ -213,6 +213,100 @@ module AsciiChem
         mtext(text.content)
       end
 
+      # -- Beyond-formulas constructs --------------------------------
+      #
+      # Each renders as `<mrow><mi>kind</mi>...<mtable>...</mtable></mrow>`.
+      # The leading mi identifies the construct; the mtable lays out
+      # structured data. Atoms and reactions inside (e.g. crystal atoms,
+      # mechanism steps) reuse the existing visit_atom / visit_reaction
+      # methods — model-driven polymorphism.
+
+      def visit_crystal(crystal)
+        mrow = el("mrow")
+        mrow.add_child(mi("crystal"))
+        mrow.add_child(named_bracket(crystal.name)) if crystal.name
+        unless cell_parameters(crystal).empty?
+          mrow.add_child(simple_table(cell_parameters(crystal)))
+        end
+        unless crystal.atoms.empty?
+          atom_rows = crystal.atoms.each_with_index.map do |atom, i|
+            [mn(i + 1), render_node(atom)]
+          end
+          mrow.add_child(simple_table(atom_rows))
+        end
+        mrow
+      end
+
+      def visit_spectrum(spectrum)
+        mrow = el("mrow")
+        mrow.add_child(mi("spectrum"))
+        mrow.add_child(named_bracket(spectrum.type)) if spectrum.type
+        unless spectrum.params.empty?
+          rows = spectrum.params.map do |key, value|
+            [mi(key.to_s), mtext(value.to_s)]
+          end
+          mrow.add_child(simple_table(rows))
+        end
+        unless spectrum.peaks.empty?
+          peak_rows = spectrum.peaks.map do |peak|
+            row = [mn(peak.position), mn(peak.intensity)]
+            row << mi(peak.multiplicity) if peak.multiplicity
+            row << mtext(peak.assignment) if peak.assignment
+            row
+          end
+          mrow.add_child(simple_table(peak_rows))
+        end
+        mrow
+      end
+
+      def visit_calculation(calc)
+        mrow = el("mrow")
+        mrow.add_child(mi("calc"))
+        if calc.method || calc.basis
+          mrow.add_child(named_bracket([calc.method, calc.basis].compact.join("/")))
+        end
+        unless calc.properties.empty?
+          rows = calc.properties.map do |p|
+            cells = [mi(p.title), mn(p.value)]
+            cells << mi(p.units) if p.units
+            cells
+          end
+          mrow.add_child(simple_table(rows))
+        end
+        mrow
+      end
+
+      def visit_z_matrix(zm)
+        mrow = el("mrow")
+        mrow.add_child(mi("zmatrix"))
+        return mrow if zm.rows.empty?
+
+        rows = zm.rows.map do |row|
+          cells = [mi(row.atom)]
+          cells << mi(row.ref1) << mn(row.distance) if row.ref1
+          cells << mi(row.ref2) << mn(row.angle) if row.ref2
+          cells << mi(row.ref3) << mn(row.dihedral) if row.ref3
+          cells
+        end
+        mrow.add_child(simple_table(rows))
+        mrow
+      end
+
+      def visit_mechanism(mech)
+        mrow = el("mrow")
+        mrow.add_child(mi("mechanism"))
+        return mrow if mech.steps.empty? && mech.spectators.empty?
+
+        rows = mech.steps.map { |s| [mi(s.label), mtext(s.reaction)] }
+        mech.spectators.each { |sp| rows << [mi("spectator"), mtext(sp)] }
+        mrow.add_child(simple_table(rows))
+        mrow
+      end
+
+      def visit_opaque_cml(opaque)
+        mtext("<!-- #{opaque.element_name} -->")
+      end
+
       private
 
       def render_node(node)
@@ -303,6 +397,46 @@ module AsciiChem
 
       def mtext(content)
         e = el("mtext"); e.content = content.to_s; e
+      end
+
+      # -- Beyond-formulas helpers -----------------------------------
+
+      # Build `[content]` as <mrow><mo>[</mo>...<mo>]</mo></mrow>.
+      # Used for construct names/labels (e.g. crystal[NaCl]).
+      def named_bracket(content)
+        mrow = el("mrow")
+        mrow.add_child(mo("["))
+        mrow.add_child(mtext(content))
+        mrow.add_child(mo("]"))
+        mrow
+      end
+
+      # Build a flat <mtable> from rows of cells. Each cell is an
+      # existing MathML element (mi/mn/mo/mtext); they get wrapped in
+      # <mtd>, the row in <mtr>. Empty input returns an empty <mrow>.
+      def simple_table(rows)
+        table = el("mtable")
+        rows.each do |cells|
+          tr = el("mtr")
+          Array(cells).each { |c| tr.add_child(wrap_in_mtd(c)) }
+          table.add_child(tr)
+        end
+        table
+      end
+
+      def wrap_in_mtd(cell)
+        td = el("mtd")
+        td.add_child(cell)
+        td
+      end
+
+      # Build `[label, mn(value)]` pairs for the cell parameters that
+      # are set on this Crystal. Uses Crystal#each_cell_param as the
+      # single source of label and ordering truth.
+      def cell_parameters(crystal)
+        result = []
+        crystal.each_cell_param(:mathml) { |label, value| result << [mi(label), mn(value)] }
+        result
       end
     end
   end

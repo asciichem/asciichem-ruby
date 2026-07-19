@@ -34,10 +34,10 @@ module AsciiChem
         molecule.names.each { |n| parts << %(@name("#{n.content}")) }
         molecule.identifiers.each { |i| parts << %(@#{i.convention}("#{i.value}")) }
         parts << %(@title("#{molecule.title}")) if molecule.title
-        molecule.formulas.each { |f| parts << %(@formula("#{f[:concise]}")) if f[:concise] }
-        molecule.labels.each { |l| parts << %(@label("#{l[:value]}")) if l[:value] }
-        molecule.properties.each { |p| parts << %(@#{p[:title]}("#{p[:value]}")) if p[:title] && p[:value] }
-        molecule.metadata.each { |m| parts << %(@meta("#{m[:name]}","#{m[:content]}")) }
+        molecule.formulas.each { |f| parts << %(@formula("#{f.concise}")) if f.concise }
+        molecule.labels.each { |l| parts << %(@label("#{l.value}")) if l.value }
+        molecule.properties.each { |p| parts << %(@#{p.title}("#{p.value}")) if p.title && p.value }
+        molecule.metadata.each { |m| parts << %(@meta("#{m.name}","#{m.content}")) }
         parts.empty? ? "" : " #{parts.join}"
       end
 
@@ -146,9 +146,9 @@ module AsciiChem
         params = spectrum.params.map { |k, v| "#{k}=#{v}" }.join(',')
         parts << "(#{params})" unless params.empty?
         peak_lines = spectrum.peaks.map do |peak|
-          line = "#{peak[:position]}: #{peak[:intensity]}"
-          line += " #{peak[:multiplicity]}" if peak[:multiplicity]
-          line += %( "#{peak[:assignment]}") if peak[:assignment]
+          line = "#{peak.position}: #{peak.intensity}"
+          line += " #{peak.multiplicity}" if peak.multiplicity
+          line += %( "#{peak.assignment}") if peak.assignment
           line
         end
         unless peak_lines.empty?
@@ -166,8 +166,8 @@ module AsciiChem
         parts << "(#{params.join('/')})" unless params.empty?
         unless calc.properties.empty?
           lines = calc.properties.map do |p|
-            line = "#{p[:title]}: #{p[:value]}"
-            line += " #{p[:units]}" if p[:units]
+            line = "#{p.title}: #{p.value}"
+            line += " #{p.units}" if p.units
             line
           end
           parts << "{\n  #{lines.join("\n  ")}\n}"
@@ -193,11 +193,15 @@ module AsciiChem
       def visit_mechanism(mech)
         parts = ["mechanism"]
         unless mech.steps.empty? && mech.spectators.empty?
-          lines = mech.steps.map { |s| "#{s[:label]}: #{s[:reaction]}" }
+          lines = mech.steps.map { |s| "#{s.label}: #{s.reaction}" }
           mech.spectators.each { |sp| lines << "spectator: #{sp}" }
           parts << "{\n  #{lines.join("\n  ")}\n}"
         end
         parts.join
+      end
+
+      def visit_opaque_cml(opaque)
+        %(<!-- opaque: #{opaque.element_name} -->)
       end
 
       def render_node(node)
