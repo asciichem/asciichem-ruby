@@ -265,4 +265,52 @@ RSpec.describe "Value objects on Model classes" do
       end
     end
   end
+
+  describe AsciiChem::Model::Reaction do
+    describe ".ARROW_BY_WIRE" do
+      it "maps each wire name back to its arrow kind" do
+        expect(described_class::ARROW_BY_WIRE["forward"]).to eq(:forward)
+        expect(described_class::ARROW_BY_WIRE["reverse"]).to eq(:reverse)
+        expect(described_class::ARROW_BY_WIRE["equilibrium"]).to eq(:equilibrium)
+        expect(described_class::ARROW_BY_WIRE["resonance"]).to eq(:resonance)
+      end
+
+      it "is the inverse of the ARROWS hash's wire field" do
+        inverse = described_class::ARROWS.to_h { |k, v| [v[:wire], k] }
+        expect(described_class::ARROW_BY_WIRE).to eq(inverse)
+      end
+    end
+
+    describe "#arrow_wire" do
+      it "returns the wire name for forward reactions" do
+        reaction = AsciiChem.parse("A -> B").nodes.first
+        expect(reaction.arrow_wire).to eq("forward")
+      end
+
+      it "returns the wire name for equilibrium" do
+        reaction = AsciiChem.parse("A <=> B").nodes.first
+        expect(reaction.arrow_wire).to eq("equilibrium")
+      end
+
+      it "returns the wire name for resonance" do
+        reaction = AsciiChem.parse("A <-> B").nodes.first
+        expect(reaction.arrow_wire).to eq("resonance")
+      end
+    end
+
+    describe ".arrow_from_wire" do
+      it "returns the matching arrow kind for known wires" do
+        expect(described_class.arrow_from_wire("forward")).to eq(:forward)
+        expect(described_class.arrow_from_wire("reverse")).to eq(:reverse)
+      end
+
+      it "defaults to :forward for unknown wires" do
+        expect(described_class.arrow_from_wire("custom")).to eq(:forward)
+      end
+
+      it "handles nil wire gracefully" do
+        expect(described_class.arrow_from_wire(nil)).to eq(:forward)
+      end
+    end
+  end
 end
