@@ -187,8 +187,8 @@ module AsciiChem
           arrow: reaction.arrow,
           conditions_above: conditions_above(reaction),
           conditions_below: conditions_below(reaction),
-          title: reaction.arrow.to_s,
-          type: reaction.arrow.to_s
+          title: reaction.arrow_wire,
+          type: reaction.arrow_wire
         )
       end
 

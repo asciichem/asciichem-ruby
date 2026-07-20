@@ -142,13 +142,7 @@ module AsciiChem
       end
 
       def arrow_from_wire(reaction)
-        type = reaction.type || reaction.title
-        case type.to_s
-        when 'reverse' then :reverse
-        when 'equilibrium' then :equilibrium
-        when 'resonance' then :resonance
-        else :forward
-        end
+        AsciiChem::Model::Reaction.arrow_from_wire(reaction.type || reaction.title)
       end
 
       def reaction_list_from_canonical(list)
