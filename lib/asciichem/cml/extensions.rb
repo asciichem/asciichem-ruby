@@ -26,6 +26,16 @@ module AsciiChem
       PREFIX = 'aci'
       CML_NS = 'http://www.xml-cml.org/schema'
 
+      # Ensure the aci: namespace is declared on `root`. Single source
+      # of truth for the "if not present, add it" pattern. Every
+      # extension module that injects aci: attributes or elements
+      # calls this instead of inlining its own check.
+      def self.ensure_namespace(root)
+        return if root.namespaces.value?(NAMESPACE)
+
+        root.add_namespace(PREFIX, NAMESPACE)
+      end
+
       autoload :AtomAttributes, 'asciichem/cml/extensions/atom_attributes'
       autoload :TopLevel, 'asciichem/cml/extensions/top_level'
 
