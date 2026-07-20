@@ -21,9 +21,6 @@ module AsciiChem
     #   - GroupExtensions (group structure)
     #   - Metadata (via Extensions inject_metadata)
     module OpaqueExtensions
-      CML_NS = "http://www.xml-cml.org/schema"
-      ACI_NS = "https://asciichem.org/cml-ext"
-
       # Walk a formula and collect OpaqueCml nodes with their positions
       # in the formula.nodes array. Non-OpaqueCml nodes are skipped.
       def self.collect(formula)
@@ -111,13 +108,13 @@ module AsciiChem
 
       def self.cml_namespace?(element)
         ns = element.namespace
-        ns && ns.href == CML_NS
+        ns && ns.href == Extensions::CML_NS
       end
       private_class_method :cml_namespace?
 
       def self.aci_namespace?(element)
         ns = element.namespace
-        ns && ns.href == ACI_NS
+        ns && ns.href == Extensions::NAMESPACE
       end
       private_class_method :aci_namespace?
 

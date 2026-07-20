@@ -32,10 +32,6 @@ module AsciiChem
     # (rounding to nil when the result is 1) and wraps the atoms in an
     # AsciiChem::Model::Group.
     module GroupExtensions
-      NAMESPACE = 'https://asciichem.org/cml-ext'
-      PREFIX = 'aci'
-      CML_NS = 'http://www.xml-cml.org/schema'
-
       # -- AsciiChem -> CML ------------------------------------------
 
       # Build the group extensions map: `{ molecule_id => [group_record, ...] }`.
@@ -52,10 +48,11 @@ module AsciiChem
 
         doc = Nokogiri::XML(xml)
         root = doc.root
-        root.add_namespace(PREFIX, NAMESPACE) unless namespace_declared?(root)
+        Extensions.ensure_namespace(root)
 
         groups_by_molecule.each do |molecule_id, groups|
-          molecule_el = root.at_xpath("//cml:molecule[@id='#{molecule_id}']", cml: CML_NS)
+          molecule_el = root.at_xpath("//cml:molecule[@id='#{molecule_id}']",
+                                      cml: Extensions::CML_NS)
           next unless molecule_el
 
           groups.each { |record| molecule_el.add_child(build_group_element(doc, record)) }
@@ -65,7 +62,7 @@ module AsciiChem
       end
 
       def self.build_group_element(doc, record)
-        el = doc.create_element("#{PREFIX}:group")
+        el = doc.create_element("#{Extensions::PREFIX}:group")
         el['multiplicity'] = record.multiplicity.to_s if record.multiplicity
         el['bracket'] = AsciiChem::Model::Group::BRACKETS
           .fetch(record.bracket, AsciiChem::Model::Group::BRACKETS[:paren])[:wire]
@@ -73,11 +70,6 @@ module AsciiChem
         el
       end
       private_class_method :build_group_element
-
-      def self.namespace_declared?(root)
-        root.namespaces.value?(NAMESPACE)
-      end
-      private_class_method :namespace_declared?
 
       # -- CML -> AsciiChem ------------------------------------------
 
@@ -87,8 +79,9 @@ module AsciiChem
       def self.extract(xml)
         doc = Nokogiri::XML(xml)
         result = Hash.new { |h, k| h[k] = [] }
-        doc.xpath('//cml:molecule', cml: CML_NS).each do |mol_el|
-          group_els = mol_el.xpath("./#{PREFIX}:group", PREFIX => NAMESPACE)
+        doc.xpath('//cml:molecule', cml: Extensions::CML_NS).each do |mol_el|
+          group_els = mol_el.xpath("./#{Extensions::PREFIX}:group",
+                                   Extensions::PREFIX => Extensions::NAMESPACE)
           next if group_els.empty?
 
           mol_el['id']&.then do |molecule_id|

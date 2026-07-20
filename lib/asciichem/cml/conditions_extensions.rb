@@ -27,7 +27,7 @@ module AsciiChem
 
         doc = Nokogiri::XML(xml)
         root = doc.root
-        ensure_namespace(root)
+        Extensions.ensure_namespace(root)
         apply_conditions(root, conditions_map)
         doc.to_xml
       end
@@ -120,12 +120,6 @@ module AsciiChem
           return unless data[:below]
 
           reaction_el["#{Extensions::PREFIX}:conditionsBelow"] = data[:below]
-        end
-
-        def ensure_namespace(root)
-          return if root.namespaces.value?(Extensions::NAMESPACE)
-
-          root.add_namespace(Extensions::PREFIX, Extensions::NAMESPACE)
         end
       end
     end

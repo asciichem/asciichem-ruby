@@ -30,7 +30,7 @@ module AsciiChem
 
         doc = Nokogiri::XML(xml)
         root = doc.root
-        ensure_namespace(root)
+        Extensions.ensure_namespace(root)
         apply_metadata(root, metadata_map)
         doc.to_xml
       end
@@ -138,12 +138,6 @@ module AsciiChem
 
             memo[name.sub(META_PREFIX, '')] = attr.value
           end
-        end
-
-        def ensure_namespace(root)
-          return if root.namespaces.value?(Extensions::NAMESPACE)
-
-          root.add_namespace(Extensions::PREFIX, Extensions::NAMESPACE)
         end
       end
     end
