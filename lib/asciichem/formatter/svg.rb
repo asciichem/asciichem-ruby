@@ -5,10 +5,10 @@ module AsciiChem
     # Renders a Model tree as a linear SVG. The SVG draws the formula
     # along a horizontal baseline with elements at fixed spacing.
     #
-    # This is the v1 fallback for environments that want a self-contained
-    # vector output without MathML. True 2D structural diagrams (skeletal
-    # formulae, rings, stereo wedges) require `mn/elk-rb` integration
-    # (TODO 13); this formatter does not attempt that.
+    # This is the linear fallback for environments that want a
+    # self-contained vector output without MathML. True 2D structural
+    # diagrams (skeletal formulae, rings, stereo wedges) require
+    # `mn/elk-rb` integration — see Formatter::StructuralSvg.
     class Svg < Base
       LINE_HEIGHT = 40
       CHAR_WIDTH  = 14
@@ -99,6 +99,38 @@ module AsciiChem
         text.content
       end
 
+      # -- Beyond-formulas constructs --------------------------------
+      #
+      # Svg is a linear text-in-SVG-wrapper formatter. For constructs
+      # without a natural 2D representation, render the canonical text
+      # form (same approach as visit_electron_configuration and
+      # visit_embedded_math above). The Text formatter is the
+      # canonicaliser; round-trip-safe by construction.
+
+      def visit_crystal(crystal)
+        AsciiChem::Formatter.render(:text, crystal)
+      end
+
+      def visit_spectrum(spectrum)
+        AsciiChem::Formatter.render(:text, spectrum)
+      end
+
+      def visit_calculation(calc)
+        AsciiChem::Formatter.render(:text, calc)
+      end
+
+      def visit_z_matrix(zm)
+        AsciiChem::Formatter.render(:text, zm)
+      end
+
+      def visit_mechanism(mech)
+        AsciiChem::Formatter.render(:text, mech)
+      end
+
+      def visit_opaque_cml(_opaque)
+        ""
+      end
+
       private
 
       def render_node(node)
@@ -106,8 +138,8 @@ module AsciiChem
       end
 
       def layout_rows(nodes)
-        # v1: one row. Multi-row layout deferred until 2D structural
-        # support arrives (TODO 13).
+        # Linear layout: one row. Multi-row layout would require 2D
+        # structural support — see Formatter::StructuralSvg.
         [nodes.map { |n| render_node(n) }.join]
       end
 
