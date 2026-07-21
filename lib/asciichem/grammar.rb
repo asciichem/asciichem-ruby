@@ -225,7 +225,33 @@ module AsciiChem
     end
 
     rule(:units) { (unit | bond).repeat(1) }
-    rule(:unit)  { prefixed_atom | group | plain_atom }
+    rule(:unit)  { prefixed_atom | group | hydrogen_atom | plain_atom }
+
+    # Hydrogen special case: H cannot form ring closures (only 1 bond),
+    # so bare digits after H are unambiguously subscripts. This lets
+    # users write `H2O` instead of `H_2O` for the common formula case
+    # without conflicting with SMILES-style ring closures on other
+    # elements (`C1-C-C1` is still cyclohexane-style).
+    #
+    # The `match('[a-z]').absent?` lookahead prevents this rule from
+    # stealing the H from `He`, `Ho`, etc. — those fall through to
+    # plain_atom which matches the full element symbol greedily.
+    rule(:hydrogen_atom) do
+      (lewis_prefix.maybe >>
+        str('H').as(:element) >>
+        match('[a-z]').absent? >>
+        h_subscript.maybe.as(:subscript) >>
+        superscript_marker.maybe.as(:superscript) >>
+        lewis_radicals.maybe >>
+        atom_annotation).as(:atom)
+    end
+
+    # Subscript on hydrogen: explicit `_digits` OR bare `digits`
+    # (implicit). Both produce the same `:subscript` capture. Bare
+    # digits are safe here because H can't ring-close.
+    rule(:h_subscript) do
+      (str('_') >> subscript_value) | digits
+    end
 
     # Bonds appear inside molecules as separators between units.
     # Supported kinds, in alternation order (longest match first to
