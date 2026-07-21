@@ -10,7 +10,36 @@ module AsciiChem
   # `Element` and populating it across `ELEMENTS` — no other code
   # changes.
   module PeriodicTable
-    Element = Struct.new(:symbol, :atomic_number, :max_valence, keyword_init: true)
+    Element = Struct.new(:symbol, :atomic_number, :max_valence,
+                         :atomic_mass, keyword_init: true)
+
+    # IUPAC 2021 standard atomic weights (isotope-averaged) for the
+    # most common elements. nil for elements where data isn't yet
+    # populated — callers should treat nil as "unknown".
+    ATOMIC_MASSES = {
+      "H" => 1.008, "He" => 4.0026,
+      "Li" => 6.94, "Be" => 9.0122, "B" => 10.81, "C" => 12.011,
+      "N" => 14.007, "O" => 15.999, "F" => 18.998, "Ne" => 20.180,
+      "Na" => 22.990, "Mg" => 24.305, "Al" => 26.982, "Si" => 28.085,
+      "P" => 30.974, "S" => 32.06, "Cl" => 35.45, "Ar" => 39.948,
+      "K" => 39.098, "Ca" => 40.078, "Sc" => 44.956, "Ti" => 47.867,
+      "V" => 50.942, "Cr" => 51.996, "Mn" => 54.938, "Fe" => 55.845,
+      "Co" => 58.933, "Ni" => 58.693, "Cu" => 63.546, "Zn" => 65.38,
+      "Ga" => 69.723, "Ge" => 72.630, "As" => 74.922, "Se" => 78.971,
+      "Br" => 79.904, "Kr" => 83.798,
+      "Rb" => 85.468, "Sr" => 87.62, "Ag" => 107.87, "Cd" => 112.41,
+      "Sn" => 118.71, "I" => 126.90, "Xe" => 131.29,
+      "Cs" => 132.91, "Ba" => 137.33, "Au" => 196.97, "Hg" => 200.59,
+      "Pb" => 207.2, "Bi" => 208.98, "U" => 238.03
+    }.freeze
+
+    class << self
+      # Look up atomic mass by element symbol. Returns nil for
+      # unknown elements or unpopulated entries.
+      def atomic_mass(symbol)
+        ATOMIC_MASSES[symbol.to_s]
+      end
+    end
 
     # Subset covering the elements chemistry most commonly deals with.
     # Each entry: symbol => Element. Adding more elements is one

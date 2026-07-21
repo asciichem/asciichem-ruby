@@ -5,6 +5,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-07-21
+
+### Added
+- `Molecule#formula_weight` — sum of `atomic_mass × count` across
+  all atoms (recurses through groups and nested molecules). Returns
+  nil if any element lacks atomic mass data. Examples:
+  `parse("H_2O").nodes.first.formula_weight` returns `18.015`;
+  `parse("C_6H_12O_6")` returns `180.156`.
+- `PeriodicTable.atomic_mass(symbol)` — IUPAC 2021 standard atomic
+  weights for ~50 common elements. Single source of truth for
+  atomic mass data.
+
+### Changed
+- `PeriodicTable::Element` struct gains `atomic_mass` field (nil
+  when unpopulated).
+
 ## [0.12.0] - 2026-07-21
 
 ### Added
@@ -250,6 +266,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Comprehensive RSpec suite with round-trip conformance.
 
 [Unreleased]: https://github.com/asciichem/asciichem-ruby/commits/main
+[0.13.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.9.0...v0.10.0
