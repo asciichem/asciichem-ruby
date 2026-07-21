@@ -76,8 +76,64 @@ module AsciiChem
         nodes.sum { |node| atom_count_of(node) }
       end
 
+      # Hill-system canonical formula: C first, then H, then others
+      # alphabetically. Single source of truth for "what is the
+      # canonical formula string of this molecule".
+      #
+      # Examples:
+      #   H_2O  -> "H2O"
+      #   CH_4  -> "CH4"
+      #   C_2H_6O -> "C2H6O"
+      #   H_2SO_4 -> "H2O4S" (no carbon, alpha sort)
+      def hill_formula
+        counts = count_atoms_by_element
+        return '' if counts.empty?
+
+        parts = hill_sort(counts).map do |element, count|
+          count == 1 ? element : "#{element}#{count}"
+        end
+        parts.join
+      end
+
       def stereo_letter
         STEREO_TO_LETTER.fetch(stereo) if stereo
+      end
+
+      private
+
+      # Hash of element symbol -> total count, recursing through
+      # groups and nested molecules with subscripts and multiplicities.
+      def count_atoms_by_element
+        tally = Hash.new(0)
+        own_coefficient = coefficient&.to_i
+        multiplier = own_coefficient && own_coefficient.positive? ? own_coefficient : 1
+        nodes.each { |node| tally_element(node, tally, multiplier) }
+        tally
+      end
+
+      def tally_element(node, tally, multiplier)
+        case node
+        when AsciiChem::Model::Atom
+          sub = node.subscript&.to_i
+          count = (sub && sub.positive? ? sub : 1) * multiplier
+          tally[node.element] += count
+        when AsciiChem::Model::Group
+          group_mult = node.multiplicity&.to_i
+          inner_mult = group_mult && group_mult.positive? ? group_mult : 1
+          node.nodes.each { |n| tally_element(n, tally, multiplier * inner_mult) }
+        when AsciiChem::Model::Molecule
+          coeff = node.coefficient&.to_i
+          inner_mult = coeff && coeff.positive? ? coeff : 1
+          node.nodes.each { |n| tally_element(n, tally, multiplier * inner_mult) }
+        end
+      end
+
+      def hill_sort(counts)
+        present = counts.reject { |_, count| count.zero? }
+        carbon = present.key?('C') ? [['C', present['C']]] : []
+        hydrogen = present.key?('H') ? [['H', present['H']]] : []
+        others = present.reject { |el, _| %w[C H].include?(el) }.sort
+        carbon + hydrogen + others
       end
 
       private

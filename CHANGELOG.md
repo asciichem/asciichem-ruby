@@ -5,6 +5,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-07-21
+
+### Added
+- `Molecule#hill_formula` — Hill-system canonical formula (C first,
+  then H, then others alphabetically). Useful for indexing and
+  display. `parse("C_2H_6O").nodes.first.hill_formula` returns
+  `"C2H6O"`; `parse("H_2SO_4")` returns `"H2O4S"`.
+
+### Changed
+- `Linter.run` sorts diagnostics by severity (errors first) then by
+  message for stable UX output. Also deduplicates identical
+  (message, node) pairs from different checks.
+- `AsciiChem::Parser` caches `Grammar` and `Transform` instances at
+  the class level instead of allocating per parse. Benchmark: ~15%
+  throughput improvement on repeated parses.
+
 ## [0.11.0] - 2026-07-21
 
 ### Added
@@ -234,6 +250,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Comprehensive RSpec suite with round-trip conformance.
 
 [Unreleased]: https://github.com/asciichem/asciichem-ruby/commits/main
+[0.12.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.8.0...v0.9.0
