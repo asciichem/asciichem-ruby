@@ -50,6 +50,14 @@ module AsciiChem
         AsciiChem::Formatter.render(:svg, self)
       end
 
+      # Structural SVG: 2D layout via elkrb for molecules, fractional-
+      # coord projection for crystals. Falls back to linear Svg for
+      # other constructs. Use this when you want a diagram instead of
+      # a text-in-SVG rendering.
+      def to_structural_svg
+        AsciiChem::Formatter.render(:structural_svg, self)
+      end
+
       def to_cml
         AsciiChem::Cml.from_asciichem(self)
       end
