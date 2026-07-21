@@ -8,11 +8,13 @@ RSpec.describe AsciiChem::Cml::ConditionsExtensions do
   before(:all) { Chemicalml::Cml::Schema3.ensure_registered! }
 
   describe ".inject and .extract" do
-    it "round-trips reaction conditions through XML" do
+    it "round-trips reaction conditions through native <conditionList>" do
       formula = AsciiChem.parse("N_2 + 3H_2 <=>[Fe][400C] 2NH_3")
       xml = AsciiChem::Cml.from_asciichem(formula)
-      expect(xml).to include("aci:conditionsAbove")
-      expect(xml).to include("aci:conditionsBelow")
+      # v0.11.0+: native <conditionList> replaces aci: attributes
+      expect(xml).to include("<conditionList>")
+      expect(xml).to include('title="above">Fe')
+      expect(xml).to include('title="below">400C')
 
       parsed = AsciiChem::Cml.parse(xml)
       reaction = parsed.nodes.first
@@ -25,13 +27,14 @@ RSpec.describe AsciiChem::Cml::ConditionsExtensions do
       formula = AsciiChem.parse("2H_2 + O_2 -> 2H_2O")
       xml = AsciiChem::Cml.from_asciichem(formula)
       expect(xml).not_to include("aci:conditions")
+      expect(xml).not_to include("<conditionList>")
     end
 
     it "handles only-above conditions" do
       formula = AsciiChem.parse("A ->[cat] B")
       xml = AsciiChem::Cml.from_asciichem(formula)
-      expect(xml).to include("aci:conditionsAbove")
-      expect(xml).not_to include("aci:conditionsBelow")
+      expect(xml).to include('title="above">cat')
+      expect(xml).not_to include('title="below')
     end
 
     it "extracts conditions produced by another aci: producer" do

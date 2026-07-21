@@ -35,24 +35,61 @@ module AsciiChem
 
       def build
         molecules = @document.molecules.map { |m| molecule_or_crystal_from_canonical(m) }
-        reactions = @document.reactions.map { |r| reaction_from_canonical(r) }
+        reactions = @document.reactions.map { |r| reaction_or_mechanism_from_canonical(r) }
         cascades = @document.reaction_lists.map { |l| reaction_list_from_canonical(l) }
         AsciiChem::Model::Formula.new(nodes: molecules + reactions + cascades)
       end
 
       private
 
+      def reaction_or_mechanism_from_canonical(reaction)
+        return mechanism_from_canonical(reaction) if reaction.mechanisms&.any?
+
+        reaction_from_canonical(reaction)
+      end
+
+      def mechanism_from_canonical(reaction)
+        text = reaction.mechanisms.first&.title.to_s
+        return AsciiChem::Model::Mechanism.new if text.empty?
+
+        AsciiChem.parse(text).nodes.first
+      end
+
       # -- Molecules --------------------------------------------------
 
       # Detect molecule-with-crystal (chemicalml 0.3.0 native wire for
-      # AsciiChem Crystal/Spectrum nodes). Returns the matching model
-      # class when the wire molecule has a crystal/spectrum child;
-      # otherwise the standard Molecule.
+      # AsciiChem Crystal/Spectrum/ZMatrix/Calculation nodes). Returns
+      # the matching model class when the wire molecule has a known
+      # child; otherwise the standard Molecule.
       def molecule_or_crystal_from_canonical(molecule)
         return spectrum_from_canonical(molecule) if molecule.spectra
+        return zmatrix_from_canonical(molecule) if molecule.z_matrix
+        return calculation_from_canonical(molecule) if molecule.property_lists&.any?
         return molecule_from_canonical(molecule) unless molecule.crystal
 
         crystal_from_canonical(molecule)
+      end
+
+      def zmatrix_from_canonical(molecule)
+        content = molecule.z_matrix.content.to_s
+        AsciiChem.parse(content).nodes.first
+      end
+
+      def calculation_from_canonical(molecule)
+        property_list = molecule.property_lists.first
+        properties = (property_list&.properties || []).map do |prop|
+          AsciiChem::Model::Calculation::Property.new(
+            title: prop.title,
+            value: prop.scalar&.content,
+            units: prop.scalar&.units
+          )
+        end
+        method, basis = (molecule.title || '').split('/', 2)
+        AsciiChem::Model::Calculation.new(
+          method: method,
+          basis: basis,
+          properties: properties
+        )
       end
 
       def spectrum_from_canonical(molecule)
@@ -245,8 +282,16 @@ module AsciiChem
         list.products.map { |p| molecule_from_canonical(p.substance.molecule) }
       end
 
-      def conditions_from_canonical(_reaction)
-        nil
+      def conditions_from_canonical(reaction)
+        condition_list = reaction.condition_list
+        return nil unless condition_list
+
+        scalars = condition_list.scalars || []
+        above = scalars.find { |s| s.title == 'above' }&.content
+        below = scalars.find { |s| s.title == 'below' }&.content
+        return nil unless above || below
+
+        AsciiChem::Model::Reaction::Conditions.new(above: above, below: below)
       end
 
       # Rebuilds an AsciiChem::Model::Molecule's node list from a

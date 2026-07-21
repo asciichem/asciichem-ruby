@@ -54,6 +54,12 @@ module AsciiChem
             molecules << crystal_to_canonical(node)
           when AsciiChem::Model::Spectrum
             molecules << spectrum_to_canonical(node)
+          when AsciiChem::Model::ZMatrix
+            molecules << zmatrix_to_canonical(node)
+          when AsciiChem::Model::Calculation
+            molecules << calculation_to_canonical(node)
+          when AsciiChem::Model::Mechanism
+            reactions << mechanism_to_canonical(node)
           end
         end
         Chemicalml::Cml::Document.new(
@@ -151,6 +157,78 @@ module AsciiChem
           yValue: peak.intensity&.to_s,
           yMultiplicity: peak.multiplicity&.to_s,
           title: peak.assignment&.to_s
+        )
+      end
+
+      # -- ZMatrix ----------------------------------------------------
+      #
+      # ZMatrix wraps in a Molecule. The Molecule's z_matrix child
+      # holds the text form (chemicalml's ZMatrix wire currently uses
+      # content-based representation; structural length/angle/torsion
+      # children are a future enhancement).
+
+      def zmatrix_to_canonical(zmatrix)
+        text_form = AsciiChem::Formatter.render(:text, zmatrix)
+        Chemicalml::Cml::Molecule.new(
+          id: @ids.next(:molecule),
+          title: 'zmatrix',
+          z_matrix: Chemicalml::Cml::ZMatrix.new(content: text_form)
+        )
+      end
+
+      # -- Calculation ------------------------------------------------
+      #
+      # Calculation wraps in a Molecule with a propertyList child.
+      # Each property (energy, dipole, etc.) becomes a Property with
+      # a Scalar value.
+
+      def calculation_to_canonical(calc)
+        Chemicalml::Cml::Molecule.new(
+          id: @ids.next(:molecule),
+          title: calc_label(calc),
+          property_lists: [build_calc_property_list(calc)]
+        )
+      end
+
+      def calc_label(calc)
+        [calc.method, calc.basis].compact.join('/')
+      end
+
+      def build_calc_property_list(calc)
+        Chemicalml::Cml::PropertyList.new(
+          properties: calc.properties.map { |p| build_calc_property(p) }
+        )
+      end
+
+      def build_calc_property(prop)
+        Chemicalml::Cml::Property.new(
+          title: prop.title,
+          scalar: Chemicalml::Cml::Scalar.new(
+            content: prop.value.to_s,
+            units: prop.units&.to_s
+          )
+        )
+      end
+
+      # -- Mechanism --------------------------------------------------
+      #
+      # Mechanism emits as a Reaction with a <mechanism> child. The
+      # mechanism carries the text form in its title attribute for
+      # round-trip; a future enhancement will use reactionStepList for
+      # structural step-by-step representation.
+
+      def mechanism_to_canonical(mechanism)
+        text_form = AsciiChem::Formatter.render(:text, mechanism)
+        Chemicalml::Cml::Reaction.new(
+          id: @ids.next(:reaction),
+          title: text_form,
+          type: 'mechanism',
+          mechanisms: [
+            Chemicalml::Cml::Mechanism.new(
+              title: text_form,
+              convention: 'asciichem:text'
+            )
+          ]
         )
       end
 
@@ -280,9 +358,30 @@ module AsciiChem
           arrow: reaction.arrow,
           conditions_above: conditions_above(reaction),
           conditions_below: conditions_below(reaction),
+          condition_list: build_condition_list(reaction),
           title: reaction.arrow_wire,
           type: reaction.arrow_wire
         )
+      end
+
+      def build_condition_list(reaction)
+        conditions = reaction.conditions
+        return nil unless conditions && (conditions.above || conditions.below)
+
+        scalars = []
+        if conditions.above
+          scalars << Chemicalml::Cml::Scalar.new(
+            content: conditions.above.to_s,
+            title: 'above'
+          )
+        end
+        if conditions.below
+          scalars << Chemicalml::Cml::Scalar.new(
+            content: conditions.below.to_s,
+            title: 'below'
+          )
+        end
+        Chemicalml::Cml::ConditionList.new(scalars: scalars)
       end
 
       def reaction_cascade_to_canonical(cascade)
