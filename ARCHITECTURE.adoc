@@ -237,3 +237,156 @@ Plurimath handles it.
 * No hand-rolled model serialisation. The model is in-memory only;
   rendering to MathML / HTML / etc. is one-way output via Nokogiri or
   string building, not `(de)serialisation`.
+
+
+== Native CML wire (v0.9-v0.11)
+
+All AsciiChem model classes have native CML wire representations
+(chemicalml 0.3.0+). The mapping is one-way in production: the
+adapter produces native wire objects; the CML Translator enriches
+with aci: extensions only for backwards-compat fallback.
+
+[cols="1,1,2", options="header"]
+|===
+| Model class | Wire container | Native child elements
+| Crystal |  |  with  cells, ,  (fractional coords)
+| Spectrum |  |  with  of  (xValue/yValue/yMultiplicity/title)
+| ZMatrix |  |  (text content; structural length/angle/torsion children are future work)
+| Calculation |  |  of  with  (value, units)
+| Mechanism |  |  (text via title; structural step list is future work)
+| Reaction conditions |  |  with  (above/below)
+|===
+
+== Extension channels (six parallel modules)
+
+Each channel is a MECE module under :
+
+*  — per-atom aci: attributes (FIELDS registry)
+*  — top-level constructs via aci: elements (HANDLERS registry)
+*  —  inside molecules (BRACKETS registry on Group)
+*  — preserves unknown top-level elements verbatim
+*  — per-molecule key/value metadata (aci:meta-*)
+*  — now mostly legacy; native <conditionList> preferred
+
+The  is a thin orchestrator (~80 lines) that calls each
+module's // in pipeline order.
+
+== Model-owned wire codes
+
+Wire-format mappings live on the model classes as the single source
+of truth:
+
+*  /  / 
+*  / 
+*  / 
+*  /  /  / 
+*  (shared by adapter and extension modules)
+
+Adding a new bond kind, bracket kind, arrow kind, or cell parameter
+is one entry on the model; both adapter directions pick it up.
+
+== Linter framework
+
+Ten registered checks (auto-load via ):
+
+*  — stoichiometric atom conservation
+*  — charge conservation (v0.7+)
+*  — group bracket consistency
+*  — cell lengths/angles/fractional coords (v0.6+)
+*  — forward references and geometry (v0.6+)
+*  — peak data validation (v0.6+)
+*  — periodic-table membership
+*  — isotope mass >= atomic number
+*  — unmatched ring-closure digits
+*  — bond order + charge <= max valence
+
+ sorts by severity then deduplicates.
+
+== Convenience methods on Molecule
+
+*  — total atoms (recurses through groups/nested molecules)
+*  — Hill-system canonical formula (C first, H second, alpha)
+*  — sum of atomic_mass × count (v0.13+)
+
+== Native CML wire (v0.9-v0.11)
+
+All AsciiChem model classes have native CML wire representations
+(chemicalml 0.3.0+). The adapter produces native wire objects;
+the CML Translator enriches with aci: extensions only as a
+backwards-compat fallback.
+
+|===
+| Model class | Wire container | Native child elements
+
+| Crystal
+| `<molecule>`
+| `<crystal>` with `<scalar>` cells, `<symmetry>`, `<atomArray>` (fractional coords)
+
+| Spectrum
+| `<molecule>`
+| `<spectrum>` with `<peakList>` of `<peak>` (xValue/yValue/yMultiplicity/title)
+
+| ZMatrix
+| `<molecule>`
+| `<zMatrix>` (text content; structural length/Angle/Torsion children are future work)
+
+| Calculation
+| `<molecule>`
+| `<propertyList>` of `<property>` with `<scalar>` (value, units)
+
+| Mechanism
+| `<reaction>`
+| `<mechanism>` (text via title; structural step list is future work)
+
+| Reaction conditions
+| `<reaction>`
+| `<conditionList>` with `<scalar>` (above/below)
+|===
+
+== Six extension channels (MECE modules under Cml)
+
+* `Extensions::AtomAttributes` — per-atom aci: attributes (FIELDS registry)
+* `Extensions::TopLevel` — top-level constructs via aci: elements (HANDLERS registry)
+* `GroupExtensions` — `<aci:group>` inside molecules
+* `OpaqueExtensions` — preserves unknown top-level elements verbatim
+* `MetadataExtensions` — per-molecule key/value metadata (aci:meta-*)
+* `ConditionsExtensions` — legacy; native <conditionList> preferred (v0.11+)
+
+The `Translator` is a thin orchestrator (~80 lines) that calls each
+module's inject/extract/restore in pipeline order.
+
+== Model-owned wire codes (single source of truth)
+
+Wire-format mappings live on the model classes:
+
+* `Bond::CML_ORDER_CODES` / `KIND_BY_CML_ORDER` / `CML_STEREO_CODES`
+* `Group::BRACKETS` / `BRACKET_BY_WIRE`
+* `Reaction::ARROWS` / `ARROW_BY_WIRE`
+* `Crystal::CELL_PARAMS` / `LENGTH_FIELDS` / `ANGLE_FIELDS` / `CELL_LABELS`
+* `Cml::ID_PREFIXES` (shared by adapter and extension modules)
+
+Adding a new bond kind, bracket kind, arrow kind, or cell parameter
+is one entry on the model; both adapter directions pick it up.
+
+== Linter framework
+
+Ten registered checks (auto-load via `Linter::Base.register`):
+
+* `BalanceCheck` — stoichiometric atom conservation
+* `ChargeBalanceCheck` — charge conservation (v0.7+)
+* `BracketBalanceCheck` — group bracket consistency
+* `CrystalSanityCheck` — cell lengths/angles/fractional coords (v0.6+)
+* `ZMatrixReferenceCheck` — forward references and geometry (v0.6+)
+* `SpectrumPeakCheck` — peak data validation (v0.6+)
+* `ElementValidationCheck` — periodic-table membership
+* `IsotopeSanityCheck` — isotope mass >= atomic number
+* `UnclosedRingCheck` — unmatched ring-closure digits
+* `ValenceCheck` — bond order + charge <= max valence
+
+`Linter.run` sorts by severity (errors first) then deduplicates.
+
+== Convenience methods on Molecule
+
+* `#atom_count` — total atoms (recurses through groups/nested molecules)
+* `#hill_formula` — Hill-system canonical formula (C first, H second, alpha)
+* `#formula_weight` — sum of atomic_mass * count (v0.13+)
