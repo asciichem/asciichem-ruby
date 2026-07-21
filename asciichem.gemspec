@@ -8,10 +8,12 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Ribose Inc."]
   spec.email         = ["open.source@ribose.com"]
 
-  spec.summary       = "ASCII syntax for chemistry formulae, reactions, and structures."
+  spec.summary       = "ASCII syntax for chemistry formulae, reactions, structures, and spectroscopy."
   spec.description   = "AsciiChem is an ASCII syntax for representing chemical formulae, " \
-                       "reactions, electron configurations, and bonds. It parses to a semantic " \
-                       "model and renders to MathML, HTML, LaTeX, and SVG. Math embedding uses Plurimath."
+                       "reactions, electron configurations, bonds, crystals, spectra, " \
+                       "calculations, Z-matrices, and reaction mechanisms. It parses to a " \
+                       "semantic model and renders to MathML, HTML, LaTeX, SVG, and CML. " \
+                       "Math embedding uses Plurimath. Round-trips to native CML via chemicalml."
   spec.homepage      = "https://www.asciichem.org"
   spec.license       = "BSD-2-Clause"
   spec.required_ruby_version = Gem::Requirement.new(">= 3.3.0")
@@ -19,6 +21,7 @@ Gem::Specification.new do |spec|
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/asciichem/asciichem-ruby"
   spec.metadata["changelog_uri"] = "https://github.com/asciichem/asciichem-ruby/blob/main/CHANGELOG.md"
+  spec.metadata["docs_uri"] = "https://www.asciichem.org"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
