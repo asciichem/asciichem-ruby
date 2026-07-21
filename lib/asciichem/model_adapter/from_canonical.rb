@@ -45,12 +45,46 @@ module AsciiChem
       # -- Molecules --------------------------------------------------
 
       # Detect molecule-with-crystal (chemicalml 0.3.0 native wire for
-      # AsciiChem Crystal nodes). Returns a Crystal model when the wire
-      # molecule has a <crystal> child; otherwise the standard Molecule.
+      # AsciiChem Crystal/Spectrum nodes). Returns the matching model
+      # class when the wire molecule has a crystal/spectrum child;
+      # otherwise the standard Molecule.
       def molecule_or_crystal_from_canonical(molecule)
+        return spectrum_from_canonical(molecule) if molecule.spectra
         return molecule_from_canonical(molecule) unless molecule.crystal
 
         crystal_from_canonical(molecule)
+      end
+
+      def spectrum_from_canonical(molecule)
+        spectrum_wire = molecule.spectra
+        AsciiChem::Model::Spectrum.new(
+          type: spectrum_wire.title,
+          params: build_spectrum_params(spectrum_wire),
+          peaks: extract_peaks(spectrum_wire.peak_list)
+        )
+      end
+
+      def build_spectrum_params(spectrum_wire)
+        params = {}
+        params[:type] = spectrum_wire.format if spectrum_wire.format
+        params[:solvent] = spectrum_wire.condition if spectrum_wire.condition
+        params
+      end
+
+      def extract_peaks(peak_list)
+        return [] if peak_list.nil?
+
+        peaks = peak_list.peaks || []
+        peaks.map { |peak| extract_peak(peak) }
+      end
+
+      def extract_peak(peak)
+        AsciiChem::Model::Spectrum::Peak.new(
+          position: peak.xValue,
+          intensity: peak.yValue,
+          multiplicity: peak.yMultiplicity,
+          assignment: peak.title
+        )
       end
 
       def crystal_from_canonical(molecule)

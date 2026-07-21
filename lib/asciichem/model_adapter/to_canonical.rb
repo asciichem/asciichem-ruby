@@ -52,6 +52,8 @@ module AsciiChem
             reaction_lists << reaction_cascade_to_canonical(node)
           when AsciiChem::Model::Crystal
             molecules << crystal_to_canonical(node)
+          when AsciiChem::Model::Spectrum
+            molecules << spectrum_to_canonical(node)
           end
         end
         Chemicalml::Cml::Document.new(
@@ -104,6 +106,51 @@ module AsciiChem
         Chemicalml::Cml::Crystal.new(
           scalars: scalars,
           symmetry: symmetry
+        )
+      end
+
+      # -- Spectra ----------------------------------------------------
+      #
+      # Spectrum wraps in a Molecule so it has a top-level home. The
+      # Molecule carries a native <spectrum> child with <peakList>
+      # containing <peak> elements. Each peak's position/intensity/
+      # multiplicity/assignment maps to standard CML attributes.
+
+      def spectrum_to_canonical(spectrum)
+        Chemicalml::Cml::Molecule.new(
+          id: @ids.next(:molecule),
+          title: spectrum_label(spectrum),
+          spectra: build_spectrum_child(spectrum)
+        )
+      end
+
+      def spectrum_label(spectrum)
+        spectrum.type ? "spectrum:#{spectrum.type}" : "spectrum"
+      end
+
+      def build_spectrum_child(spectrum)
+        Chemicalml::Cml::Spectrum.new(
+          title: spectrum.type,
+          format: spectrum.params['type']&.to_s,
+          condition: spectrum.params['solvent']&.to_s,
+          peak_list: build_peak_list(spectrum.peaks)
+        )
+      end
+
+      def build_peak_list(peaks)
+        return nil if peaks.nil? || peaks.empty?
+
+        Chemicalml::Cml::PeakList.new(
+          peaks: peaks.map { |peak| build_peak(peak) }
+        )
+      end
+
+      def build_peak(peak)
+        Chemicalml::Cml::Peak.new(
+          xValue: peak.position&.to_s,
+          yValue: peak.intensity&.to_s,
+          yMultiplicity: peak.multiplicity&.to_s,
+          title: peak.assignment&.to_s
         )
       end
 

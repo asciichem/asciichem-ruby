@@ -34,7 +34,8 @@ module AsciiChem
         # on emit — the native wire carries the data. aci: fallback
         # still works on parse for backwards-compat with old files.
         NATIVELY_WIRED = [
-          AsciiChem::Model::Crystal
+          AsciiChem::Model::Crystal,
+          AsciiChem::Model::Spectrum
         ].freeze
 
         def to_asciichem(xml)
