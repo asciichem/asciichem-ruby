@@ -95,6 +95,23 @@ module AsciiChem
         parts.join
       end
 
+      # Molecular weight (sum of atomic_mass × count for each element).
+      # Returns nil if any element lacks atomic mass data (unknown
+      # element or unpopulated PeriodicTable entry).
+      def formula_weight
+        counts = count_atoms_by_element
+        return nil if counts.empty?
+
+        total = 0
+        counts.each do |element, count|
+          mass = AsciiChem::PeriodicTable.atomic_mass(element)
+          return nil unless mass
+
+          total += mass * count
+        end
+        total
+      end
+
       def stereo_letter
         STEREO_TO_LETTER.fetch(stereo) if stereo
       end
