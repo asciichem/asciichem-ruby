@@ -293,7 +293,19 @@ module AsciiChem
       def parse_peaks(str)
         return [] unless str
 
+        validate_peaks(str)
         str.split("\n").filter_map { |line| parse_peak(line.strip) }
+      end
+
+      def validate_peaks(str)
+        str.split("\n").each_with_index do |line, idx|
+          stripped = line.strip
+          next if stripped.empty?
+          next if stripped.include?(':')
+
+          raise AsciiChem::ParseError,
+                "spectrum peak on line #{idx + 1} is missing ':' separator: #{stripped.inspect}"
+        end
       end
 
       def parse_peak(line)
@@ -348,6 +360,7 @@ module AsciiChem
       def parse_properties(str)
         return [] unless str
 
+        validate_properties(str)
         str.split("\n").filter_map do |line|
           line = line.strip
           next nil if line.empty?
@@ -361,6 +374,17 @@ module AsciiChem
             value: tokens[0],
             units: tokens[1]
           )
+        end
+      end
+
+      def validate_properties(str)
+        str.split("\n").each_with_index do |line, idx|
+          stripped = line.strip
+          next if stripped.empty?
+          next if stripped.include?(':')
+
+          raise AsciiChem::ParseError,
+                "calculation property on line #{idx + 1} is missing ':' separator: #{stripped.inspect}"
         end
       end
     end
@@ -427,6 +451,7 @@ module AsciiChem
       def parse_entries(str)
         return [] unless str
 
+        validate_entries(str)
         str.split("\n").filter_map do |line|
           line = line.strip
           next nil if line.empty?
@@ -435,6 +460,17 @@ module AsciiChem
           next nil unless key && val
 
           [key.strip, val.strip]
+        end
+      end
+
+      def validate_entries(str)
+        str.split("\n").each_with_index do |line, idx|
+          stripped = line.strip
+          next if stripped.empty?
+          next if stripped.include?(':')
+
+          raise AsciiChem::ParseError,
+                "mechanism entry on line #{idx + 1} is missing ':' separator: #{stripped.inspect}"
         end
       end
     end
