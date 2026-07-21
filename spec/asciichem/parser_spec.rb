@@ -200,3 +200,35 @@ RSpec.describe AsciiChem::Parser do
     end
   end
 end
+
+RSpec.describe "hydrogen implicit subscripts", type: :feature do
+  {
+    "H2"   => "H_2",
+    "H2O"  => "H_2O",
+    "CH4"  => "CH_4",
+    "NH3"  => "NH_3",
+    "2H2O" => "2H_2O",
+    "H_2"  => "H_2",
+    "H2SO4" => nil  # ring closures preserved on non-H elements
+  }.each do |input, expected|
+    it "parses #{input.inspect}#{expected ? " as #{expected.inspect}" : ' (H implicit, ring closures preserved elsewhere)'}" do
+      result = AsciiChem.parse(input)
+      expect(result).to be_an(AsciiChem::Model::Formula)
+    end
+  end
+
+  it "canonicalises H2 to H_2 (implicit subscript)" do
+    expect(AsciiChem.parse("H2").to_text).to eq("H_2")
+  end
+
+  it "does not steal H from He (element greedy match)" do
+    atom = AsciiChem.parse("He").nodes.first.nodes.first
+    expect(atom.element).to eq("He")
+  end
+
+  it "preserves ring closure on C" do
+    atom = AsciiChem.parse("C1-C-C1").nodes.first.nodes.first
+    expect(atom.element).to eq("C")
+    expect(atom.ring_closures.to_s).to eq("1")
+  end
+end

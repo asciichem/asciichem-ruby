@@ -50,11 +50,16 @@ RSpec.describe AsciiChem::Formatter::Text do
       expect(atom.charge).to eq("2+")
     end
 
-    it "uses explicit _ for subscripts in canonical output" do
-      pending "implicit-subscript acceptance is deferred — see TODO.beyond-formulas/33-implicit-subscript.md"
-      # When the grammar accepts H2 (implicit), the canonical output
-      # should be H_2.
+    it "accepts implicit subscript on hydrogen (H2 -> H_2)" do
+      # Hydrogen is the special case: H cannot form ring closures
+      # (only 1 bond), so bare digits after H are unambiguously
+      # subscripts. Lets users write H2O, CH4, NH3 without `_`.
+      # Ring closures on other elements (`C1-C-C1` is cyclohexane)
+      # remain unchanged.
       expect(AsciiChem.parse("H2").to_text).to eq("H_2")
+      expect(AsciiChem.parse("H2O").to_text).to eq("H_2O")
+      expect(AsciiChem.parse("CH4").to_text).to eq("CH_4")
+      expect(AsciiChem.parse("NH3").to_text).to eq("NH_3")
     end
   end
 end

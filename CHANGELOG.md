@@ -5,6 +5,21 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-21
+
+### Added
+- Implicit subscripts on Hydrogen: `H2` now parses as `H_2`, so
+  users can write `H2O`, `CH4`, `NH3` without explicit underscores.
+  Resolves the long-pending feature request without breaking
+  SMILES-style ring closures on other elements (Hydrogen cannot
+  form ring closures — only 1 bond — so bare digits after H are
+  unambiguously subscripts).
+
+### Changed
+- Grammar: new `hydrogen_atom` rule placed before `plain_atom` in
+  the unit dispatch. The `match('[a-z]').absent?` lookahead ensures
+  `He`, `Ho`, etc. fall through to plain_atom unchanged.
+
 ## [0.6.0] - 2026-07-20
 
 ### Added
@@ -138,6 +153,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Comprehensive RSpec suite with round-trip conformance.
 
 [Unreleased]: https://github.com/asciichem/asciichem-ruby/commits/main
+[0.7.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/asciichem/asciichem-ruby/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.4.1...v0.5.0
