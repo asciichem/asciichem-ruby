@@ -5,6 +5,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-07-21
+
+### Changed
+- Updated gemspec summary and description to mention all
+  beyond-formulas constructs (crystals, spectra, calculations,
+  Z-matrices, reaction mechanisms) and the native CML round-trip
+  via chemicalml.
+- Added `docs_uri` metadata pointing to the AsciiChem documentation
+  site.
+
 ## [0.18.0] - 2026-07-21
 
 ### Changed
@@ -311,6 +321,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Comprehensive RSpec suite with round-trip conformance.
 
 [Unreleased]: https://github.com/asciichem/asciichem-ruby/commits/main
+[0.18.1]: https://github.com/asciichem/asciichem-ruby/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.15.0...v0.16.0
