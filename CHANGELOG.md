@@ -5,6 +5,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-21
+
+### Added
+- **Native CML wire for Spectrum.** Spectrum nodes now emit as a
+  `<molecule>` containing a native `<spectrum>` child (with `format`
+  and `condition` attributes) plus a `<peakList>` of `<peak>`
+  elements. Each peak carries `xValue`, `yValue`, `yMultiplicity`,
+  and `title` (assignment) attributes per the CML Schema 3 spec.
+
+### Changed
+- `ModelAdapter::ToCanonical`: new `spectrum_to_canonical` mapper
+  wraps Spectrum in a Molecule wire object with spectrum child.
+- `ModelAdapter::FromCanonical`: detects molecule-with-spectrum and
+  rebuilds as Spectrum node.
+- `Translator::NATIVELY_WIRED`: now includes Spectrum.
+
 ## [0.9.0] - 2026-07-21
 
 ### Added
@@ -192,6 +208,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Comprehensive RSpec suite with round-trip conformance.
 
 [Unreleased]: https://github.com/asciichem/asciichem-ruby/commits/main
+[0.10.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.6.0...v0.7.0
