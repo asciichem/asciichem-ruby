@@ -27,12 +27,57 @@ module AsciiChem
     def format_error(error)
       pos = error.message.match(/char (\d+)/)
       char = pos ? pos[1].to_i : 0
-      snippet = text[[char - 10, 0].max, 20] || text
-      pointer = " " * (char - [char - 10, 0].max) + "^"
+      line_no, col_no, line_text = locate(text, char)
+      snippet = line_text || text[[char - 10, 0].max, 20] || text
+      pointer_offset = char - (line_text ? char_for_line(text, line_no) : [char - 10, 0].max)
+      pointer = " " * pointer_offset + "^"
       expected = extract_expected(error.message)
-      "Parse error at char #{char}: expected #{expected}\n" \
+      location = line_no ? "line #{line_no}, col #{col_no}" : "char #{char}"
+      "Parse error at #{location}: expected #{expected}\n" \
         "  ...#{snippet}...\n" \
         "  #{pointer}"
+    end
+
+    # Find the line number (1-indexed) and column (1-indexed) for a
+    # given character offset in the source. Returns [nil, nil, nil]
+    # when the source has no newlines (single-line case).
+    def locate(text, char)
+      return [nil, nil, nil] unless text.include?("\n")
+
+      line_no = 1
+      col_no = 1
+      char_count = 0
+      current_line_start = 0
+      text.each_char.with_index do |c, i|
+        if i == char
+          return [line_no, col_no, text[current_line_start..(text.index("\n", current_line_start) || text.length) - 1]]
+        end
+
+        col_no += 1
+        if c == "\n"
+          line_no += 1
+          col_no = 1
+          current_line_start = i + 1
+        end
+      end
+      [line_no, col_no, text[current_line_start..]]
+    end
+
+    # Offset of the first char on `line_no` (for caret positioning).
+    def char_for_line(text, line_no)
+      return 0 if line_no <= 1
+
+      offset = 0
+      current_line = 1
+      text.each_char.with_index do |c, i|
+        return offset if current_line == line_no
+
+        if c == "\n"
+          current_line += 1
+          offset = i + 1
+        end
+      end
+      offset
     end
 
     def extract_expected(message)
