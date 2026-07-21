@@ -31,6 +31,9 @@ module AsciiChem
       DEFAULT_ATOM_COLOR = '#0c4a3e'
 
       def visit_formula(formula)
+        crystal = formula.nodes.find { |n| n.is_a?(AsciiChem::Model::Crystal) }
+        return visit_crystal(crystal) if crystal
+
         molecule = formula.nodes.find { |n| n.is_a?(AsciiChem::Model::Molecule) }
         return visit_formula_linear(formula) unless molecule
 
@@ -41,6 +44,41 @@ module AsciiChem
         return visit_formula_linear(formula) if result.empty?
 
         render_svg(result)
+      end
+
+      # Render a Crystal as a 2D projection of fractional coordinates.
+      # Each atom is placed at (xFract * SCALE, yFract * SCALE); the
+      # unit cell outline is drawn as a rectangle. Basic visualisation;
+      # perspective/polyhedral views are out of scope.
+      def visit_crystal(crystal)
+        return "" if crystal.atoms.empty?
+
+        scale = 200
+        atoms_with_pos = crystal.atoms.map do |atom|
+          x = (atom.x_fract&.to_f || 0) * scale
+          y = (atom.y_fract&.to_f || 0) * scale
+          { atom: atom, x: x, y: y }
+        end
+        width = scale + 80
+        height = scale + 80
+        render_crystal_svg(crystal, atoms_with_pos, width, height)
+      end
+
+      def render_crystal_svg(crystal, atoms_with_pos, width, height)
+        lines = []
+        lines << %(<?xml version="1.0" encoding="UTF-8"?>)
+        lines << %(<svg xmlns="http://www.w3.org/2000/svg" width="#{width}" height="#{height}" viewBox="0 0 #{width} #{height}" role="img" aria-label="Crystal #{crystal.name || ''}">)
+        lines << %(  <title>Crystal #{crystal.name || 'unnamed'}</title>)
+        lines << %(  <rect x="40" y="40" width="200" height="200" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 2"/>)
+        atoms_with_pos.each do |entry|
+          x = entry[:x] + 40
+          y = entry[:y] + 40
+          color = StructuralSvg::ATOM_COLORS.fetch(entry[:atom].element, StructuralSvg::DEFAULT_ATOM_COLOR)
+          lines << %(  <circle cx="#{x}" cy="#{y}" r="#{StructuralSvg::ATOM_RADIUS}" fill="#{color}"/>)
+          lines << %(  <text x="#{x}" y="#{y + 4}" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#fff">#{entry[:atom].element}</text>)
+        end
+        lines << %(</svg>)
+        lines.join("\n")
       end
 
       private

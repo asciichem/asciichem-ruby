@@ -5,6 +5,18 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-07-21
+
+### Added
+- `Node#to_structural_svg` shortcut — invokes
+  `Formatter::StructuralSvg` for 2D diagram output. For Crystal
+  nodes, projects fractional coordinates onto the ab-plane with a
+  unit cell outline; for molecules with bonds, uses elkrb for
+  graph layout (existing behaviour); falls back to linear Svg
+  otherwise.
+- `Formatter::StructuralSvg#visit_crystal` — renders a Crystal as
+  a 2D projection of fractional coordinates with unit cell outline.
+
 ## [0.15.0] - 2026-07-21
 
 ### Changed
@@ -281,6 +293,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Comprehensive RSpec suite with round-trip conformance.
 
 [Unreleased]: https://github.com/asciichem/asciichem-ruby/commits/main
+[0.16.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.12.0...v0.13.0
