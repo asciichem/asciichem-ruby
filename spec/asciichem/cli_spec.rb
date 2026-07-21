@@ -122,5 +122,23 @@ RSpec.describe AsciiChem::Cli do
       expect(out).to include("spaceGroup=\"Fm-3m\"")
     end
   end
+
+  describe "lint -f json" do
+    it "emits diagnostics as a JSON array" do
+      out = run("lint", "-i", "crystal[x](a=-1){Na@f(0,0,0)}", "-f", "json")
+      require "json"
+      payload = JSON.parse(out)
+      expect(payload).to be_an(Array)
+      expect(payload.first["severity"]).to eq("error")
+      expect(payload.first["message"]).to match(/Crystal a must be positive/)
+    end
+
+    it "emits an empty array when no diagnostics" do
+      out = run("lint", "-i", "H_2O", "-f", "json")
+      require "json"
+      payload = JSON.parse(out)
+      expect(payload).to eq([])
+    end
+  end
 end
 

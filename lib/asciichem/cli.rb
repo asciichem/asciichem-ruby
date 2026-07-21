@@ -57,10 +57,12 @@ module AsciiChem
     desc "lint -i INPUT", "Run chemistry checks; exit 1 on error, 0 if clean"
     method_option :input, aliases: "-i", type: :string, required: true,
                            desc: "AsciiChem source text"
+    method_option :format, aliases: "-f", type: :string, default: "text",
+                            desc: "Output format: text or json"
     def lint
       formula = AsciiChem.parse(options[:input])
       diagnostics = AsciiChem::Linter.run(formula)
-      diagnostics.each { |d| puts d }
+      output_lint(diagnostics, options[:format])
       exit diagnostics.any? { |d| d.severity == :error } ? 1 : 0
     rescue AsciiChem::ParseError => e
       warn "Parse error: #{e.message}"
@@ -91,6 +93,26 @@ module AsciiChem
       return formula.to_cml if format.to_sym == :cml
 
       AsciiChem::Formatter.render(format.to_sym, formula)
+    end
+
+    def output_lint(diagnostics, format)
+      case format.to_s
+      when "json" then output_lint_json(diagnostics)
+      else
+        diagnostics.each { |d| puts d }
+      end
+    end
+
+    def output_lint_json(diagnostics)
+      require "json"
+      payload = diagnostics.map do |d|
+        {
+          severity: d.severity.to_s,
+          message: d.message,
+          node: d.node&.diagnostic_label
+        }
+      end
+      puts JSON.pretty_generate(payload)
     end
   end
 end
