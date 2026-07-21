@@ -5,6 +5,28 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-21
+
+### Added
+- **Native CML wire for Crystal.** Crystal nodes now emit as a
+  `<molecule>` containing a native `<crystal>` child (with `<scalar>`
+  cells and `<symmetry spaceGroup=...>`) plus an `<atomArray>` with
+  fractional coordinates. Other CML tools can now read AsciiChem
+  crystal output directly without needing the aci: extension
+  namespace. Round-trip preserves all fields. The legacy aci:
+  text-carrier form is still accepted on parse for backwards
+  compatibility.
+
+### Changed
+- `ModelAdapter::ToCanonical`: new `crystal_to_canonical` mapper
+  wraps Crystal in a Molecule wire object.
+- `ModelAdapter::FromCanonical`: detects molecule-with-crystal and
+  rebuilds as Crystal node.
+- `Extensions::TopLevel.collect`: accepts `skip_classes:` parameter
+  to suppress the aci: text carrier for constructs with native wire.
+- `Translator::NATIVELY_WIRED`: registry of construct classes that
+  have been migrated to native wire (currently just Crystal).
+
 ## [0.8.0] - 2026-07-21
 
 ### Changed
@@ -170,6 +192,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Comprehensive RSpec suite with round-trip conformance.
 
 [Unreleased]: https://github.com/asciichem/asciichem-ruby/commits/main
+[0.9.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.5.1...v0.6.0
