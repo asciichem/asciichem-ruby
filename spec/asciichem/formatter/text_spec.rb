@@ -51,8 +51,8 @@ RSpec.describe AsciiChem::Formatter::Text do
     end
 
     it "uses explicit _ for subscripts in canonical output" do
-      pending "implicit-subscript acceptance is deferred to TODO 13"
-      # When/if the grammar accepts H2 (implicit), the canonical output
+      pending "implicit-subscript acceptance is deferred — see TODO.beyond-formulas/33-implicit-subscript.md"
+      # When the grammar accepts H2 (implicit), the canonical output
       # should be H_2.
       expect(AsciiChem.parse("H2").to_text).to eq("H_2")
     end
