@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (must match lib/asciichem/version.rb)"
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Verify version matches input
+        run: |
+          actual=$(ruby -e 'require "./lib/asciichem/version"; print AsciiChem::VERSION')
+          if [ "$actual" != "${{ inputs.version }}" ]; then
+            echo "Version mismatch: input=${{ inputs.version }}, lib/asciichem/version.rb=$actual"
+            exit 1
+          fi
+          echo "Releasing $actual"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Build gem
+        run: bundle exec rake build
+      - name: Set up RubyGems credentials
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+        run: |
+          mkdir -p $HOME/.gem
+          cat > $HOME/.gem/credentials <<EOF
+          ---
+          :rubygems_api_key: ${RUBYGEMS_API_KEY}
+          EOF
+          chmod 0600 $HOME/.gem/credentials
+      - name: Push to RubyGems
+        run: |
+          gem push pkg/asciichem-${{ inputs.version }}.gem
+      - name: Summary
+        run: |
+          echo "Released asciichem ${{ inputs.version }} to RubyGems"
+          echo "https://rubygems.org/gems/asciichem"

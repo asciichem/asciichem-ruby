@@ -5,6 +5,23 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-21
+
+### Changed
+- `chemicalml` dependency bumped from `~> 0.2.1` to `~> 0.3.0`.
+  chemicalml 0.3.0 fixes the wire serialization gaps that blocked
+  Phases 06-10, 15 (native CML wire for Crystal/Spectrum/ZMatrix/
+  Mechanism/Calculation/conditions). Molecule wire now serializes
+  `<crystal>`, `<spectrum>`, `<zMatrix>`, `<propertyList>` children;
+  Reaction wire now serializes `<conditionList>`, `<spectatorList>`,
+  `<mechanism>` children.
+
+### Added
+- `.github/workflows/release.yml` — manual-dispatch release workflow
+  that pushes the gem to RubyGems. Triggered via `gh workflow run
+  release.yml -f version=X.Y.Z` after the version-bump PR merges.
+  Verifies the input version matches `lib/asciichem/version.rb`.
+
 ## [0.7.0] - 2026-07-21
 
 ### Added
@@ -153,6 +170,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Comprehensive RSpec suite with round-trip conformance.
 
 [Unreleased]: https://github.com/asciichem/asciichem-ruby/commits/main
+[0.8.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/asciichem/asciichem-ruby/compare/v0.5.0...v0.5.1
