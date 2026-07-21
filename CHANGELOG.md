@@ -5,6 +5,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-07-21
+
+### Added
+- `Atom::Point3` value object (Struct with `x`, `y`, `z`, `to_a`,
+  `magnitude`).
+- `Atom#cartesian` and `Atom#fractional` accessors return Point3
+  bundling the flat coordinate fields. Backwards compatible: flat
+  accessors (`x2`/`y2`/`z2`, `x_fract`/`y_fract`/`z_fract`) remain.
+
 ## [0.16.0] - 2026-07-21
 
 ### Added
@@ -293,6 +302,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Comprehensive RSpec suite with round-trip conformance.
 
 [Unreleased]: https://github.com/asciichem/asciichem-ruby/commits/main
+[0.17.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.13.0...v0.14.0
