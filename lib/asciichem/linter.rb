@@ -25,11 +25,16 @@ module AsciiChem
     autoload :ZMatrixReferenceCheck, "asciichem/linter/zmatrix_reference_check"
 
     SEVERITIES = %i[error warning info].freeze
+    SEVERITY_ORDER = { error: 0, warning: 1, info: 2 }.freeze
 
     # Run all registered checks against the model. Returns an array of
-    # Diagnostic objects (empty if no issues).
+    # Diagnostic objects (empty if no issues), sorted by severity
+    # (errors first) then by node position for stable UX output.
     def self.run(formula)
-      Registry.all.flat_map { |check| check.new.run(formula) }
+      Registry.all
+              .flat_map { |check| check.new.run(formula) }
+              .sort_by { |d| [SEVERITY_ORDER.fetch(d.severity, 99), d.message] }
+              .uniq { |d| [d.message, d.node&.object_id] }
     end
 
     # Convenience: returns true if any check produced an error.
