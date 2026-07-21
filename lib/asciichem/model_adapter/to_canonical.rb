@@ -50,6 +50,8 @@ module AsciiChem
             reactions << reaction_to_canonical(node)
           when AsciiChem::Model::ReactionCascade
             reaction_lists << reaction_cascade_to_canonical(node)
+          when AsciiChem::Model::Crystal
+            molecules << crystal_to_canonical(node)
           end
         end
         Chemicalml::Cml::Document.new(
@@ -60,6 +62,50 @@ module AsciiChem
       end
 
       private
+
+      # -- Crystals ---------------------------------------------------
+      #
+      # Crystal wraps in a Molecule so it has a top-level home in the
+      # CML Document (which only accepts molecule/reaction/reactionList).
+      # The wrapped Molecule carries the native <crystal> child plus an
+      # <atomArray> with fractional coordinates on each atom.
+
+      def crystal_to_canonical(crystal)
+        walker = MoleculeWalker.new(@ids)
+        # Build a synthetic Molecule so the walker produces atoms/bonds
+        # in canonical order. Crystal.atoms are AsciiChem::Model::Atom
+        # instances with x_fract/y_fract/z_fract set.
+        synthetic = AsciiChem::Model::Molecule.new(nodes: crystal.atoms)
+        atoms, = walker.walk(synthetic)
+        @atom_mapping.merge!(walker.atom_mapping)
+        Chemicalml::Cml::Molecule.new(
+          id: @ids.next(:molecule),
+          title: crystal.name,
+          crystal: build_crystal_child(crystal),
+          atom_array: atoms.empty? ? nil : Chemicalml::Cml::AtomArray.new(atoms: atoms)
+        )
+      end
+
+      def build_crystal_child(crystal)
+        scalars = []
+        crystal.each_cell_param(:text) do |label, value|
+          scalars << Chemicalml::Cml::Scalar.new(
+            content: value.to_s,
+            title: label
+          )
+        end
+        symmetry = if crystal.spacegroup
+                     # chemicalml's Symmetry wire uses camelCase :spaceGroup
+                     # as the ruby attribute name (matches the XML attribute).
+                     Chemicalml::Cml::Symmetry.new(
+                       spaceGroup: crystal.spacegroup
+                     )
+                   end
+        Chemicalml::Cml::Crystal.new(
+          scalars: scalars,
+          symmetry: symmetry
+        )
+      end
 
       # -- Molecules --------------------------------------------------
 

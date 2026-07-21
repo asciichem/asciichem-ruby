@@ -116,7 +116,10 @@ RSpec.describe AsciiChem::Cli do
     it "round-trips a Crystal through CML via the CLI" do
       out = run("convert", "-i", "crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0)}", "-t", "cml")
       expect(out).to include("<cml")
-      expect(out).to include("aci:crystal")
+      # chemicalml 0.3.0+: Crystal uses native <crystal> wire inside
+      # a <molecule>, not the aci: text carrier.
+      expect(out).to include("<crystal")
+      expect(out).to include("spaceGroup=\"Fm-3m\"")
     end
   end
 end

@@ -34,7 +34,7 @@ module AsciiChem
       end
 
       def build
-        molecules = @document.molecules.map { |m| molecule_from_canonical(m) }
+        molecules = @document.molecules.map { |m| molecule_or_crystal_from_canonical(m) }
         reactions = @document.reactions.map { |r| reaction_from_canonical(r) }
         cascades = @document.reaction_lists.map { |l| reaction_list_from_canonical(l) }
         AsciiChem::Model::Formula.new(nodes: molecules + reactions + cascades)
@@ -43,6 +43,54 @@ module AsciiChem
       private
 
       # -- Molecules --------------------------------------------------
+
+      # Detect molecule-with-crystal (chemicalml 0.3.0 native wire for
+      # AsciiChem Crystal nodes). Returns a Crystal model when the wire
+      # molecule has a <crystal> child; otherwise the standard Molecule.
+      def molecule_or_crystal_from_canonical(molecule)
+        return molecule_from_canonical(molecule) unless molecule.crystal
+
+        crystal_from_canonical(molecule)
+      end
+
+      def crystal_from_canonical(molecule)
+        crystal_wire = molecule.crystal
+        params = extract_crystal_params(crystal_wire)
+        AsciiChem::Model::Crystal.new(
+          name: molecule.title,
+          a: params['a'],
+          b: params['b'],
+          c: params['c'],
+          alpha: params['alpha'],
+          beta: params['beta'],
+          gamma: params['gamma'],
+          spacegroup: crystal_wire.symmetry&.spaceGroup,
+          atoms: extract_crystal_atoms(molecule)
+        )
+      end
+
+      def extract_crystal_params(crystal_wire)
+        scalars = crystal_wire.scalars || []
+        scalars.each_with_object({}) do |scalar, memo|
+          memo[scalar.title] = scalar.content if scalar.title
+        end
+      end
+
+      def extract_crystal_atoms(molecule)
+        atoms = molecule.atom_array&.atoms || []
+        atoms.map { |wire_atom| atom_from_wire(wire_atom) }
+      end
+
+      def atom_from_wire(wire_atom)
+        AsciiChem::Model::Atom.new(
+          element: wire_atom.element_type,
+          isotope: wire_atom.isotope,
+          charge: wire_atom.formal_charge,
+          x_fract: wire_atom.xFract,
+          y_fract: wire_atom.yFract,
+          z_fract: wire_atom.zFract
+        )
+      end
 
       def molecule_from_canonical(molecule)
         builder = MoleculeRebuilder.new(molecule)

@@ -29,6 +29,14 @@ module AsciiChem
           inject_opaque(xml, formula)
         end
 
+        # Constructs that now have native CML wire representation
+        # (chemicalml 0.3.0+). For each, suppress the aci: text carrier
+        # on emit — the native wire carries the data. aci: fallback
+        # still works on parse for backwards-compat with old files.
+        NATIVELY_WIRED = [
+          AsciiChem::Model::Crystal
+        ].freeze
+
         def to_asciichem(xml)
           ensure_schema_registered!
           extracted = extract_all(xml)
@@ -77,8 +85,8 @@ module AsciiChem
         end
 
         def inject_top_level(xml, formula)
-          top_level = Extensions.collect_top_level(formula)
-          Extensions.inject_top_level(xml, top_level)
+          top_level = Extensions::TopLevel.collect(formula, skip_classes: NATIVELY_WIRED)
+          Extensions::TopLevel.inject(xml, top_level)
         end
 
         def inject_opaque(xml, formula)

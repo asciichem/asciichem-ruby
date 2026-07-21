@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'nokogiri'
+require 'set'
 
 module AsciiChem
   module Cml
@@ -94,9 +95,15 @@ module AsciiChem
 
         # Build the top-level extensions list from a formula. Returns
         # an array of `{ position:, element_name:, content: }` hashes.
-        def self.collect(formula)
+        # Pass `skip_classes:` to suppress the aci: text carrier for
+        # constructs that have native wire representation elsewhere
+        # in the pipeline (e.g. Crystal via chemicalml 0.3.0).
+        def self.collect(formula, skip_classes: [])
           handlers_by_class = HANDLERS.to_h { |h| [h.node_class, h] }
+          skip_set = skip_classes.to_set
           formula.nodes.each_with_index.with_object([]) do |(node, idx), memo|
+            next if skip_set.include?(node.class)
+
             handler = handlers_by_class[node.class]
             next unless handler
 
