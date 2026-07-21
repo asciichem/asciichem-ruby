@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-07-21
+
+### Changed
+- Parser error messages now report `line N, col M` for multi-line
+  inputs instead of `char N`. The caret pointer is positioned on
+  the relevant line. Single-line inputs continue to use the
+  existing char-position format.
+
 ## [0.14.0] - 2026-07-21
 
 ### Added
@@ -273,6 +281,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Comprehensive RSpec suite with round-trip conformance.
 
 [Unreleased]: https://github.com/asciichem/asciichem-ruby/commits/main
+[0.15.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.11.0...v0.12.0
