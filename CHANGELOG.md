@@ -5,6 +5,32 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-07-21
+
+### Added
+- **Native CML wire for ZMatrix, Calculation, Mechanism, and
+  reaction conditions.** Completes the native-wire migration arc
+  for all beyond-formulas constructs:
+  - ZMatrix emits as `<molecule>` with `<zMatrix>` child carrying
+    the text form (structural length/angle/torsion children are a
+    future enhancement).
+  - Calculation emits as `<molecule>` with `<propertyList>` of
+    `<property>` children, each with a `<scalar>` carrying value
+    and units.
+  - Mechanism emits as `<reaction>` with `<mechanism>` child.
+    Currently uses the text form via title attribute; structural
+    step-by-step representation is a future enhancement.
+  - Reaction conditions (`<=>[Fe][400C]`) now emit as native
+    `<conditionList>` with `<scalar>` children for above/below,
+    replacing the `aci:conditionsAbove`/`aci:conditionsBelow`
+    attributes used in v0.10.0 and earlier.
+
+### Changed
+- `ConditionsExtensions.inject`: now a no-op when native
+  `<conditionList>` is present (defensive fallback only).
+- `ModelAdapter::FromCanonical`: reads native `<conditionList>`
+  via `conditions_from_canonical`.
+
 ## [0.10.0] - 2026-07-21
 
 ### Added
@@ -208,6 +234,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Comprehensive RSpec suite with round-trip conformance.
 
 [Unreleased]: https://github.com/asciichem/asciichem-ruby/commits/main
+[0.11.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.7.0...v0.8.0

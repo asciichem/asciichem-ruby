@@ -5,25 +5,30 @@ require 'nokogiri'
 module AsciiChem
   module Cml
     # Carries per-reaction conditions (above/below the arrow) through
-    # CML round-trip via `aci:conditionsAbove` / `aci:conditionsBelow`
-    # attributes on `<reaction>` elements.
+    # CML round-trip. v0.11.0+: chemicalml 0.3.0 Reaction wire now
+    # serialises `<conditionList>` natively, so conditions are emitted
+    # by the adapter directly. This module now handles ONLY:
     #
-    # CML's standard `<conditionList>` element exists but the
-    # chemicalml Reaction wire doesn't serialize it (verified — see
-    # TODO.beyond-formulas/17-chemicalml-wire-gaps.md). AsciiChem
-    # carries conditions via the aci: namespace as a workaround.
+    # - Parse legacy `<conditionList>` from XML (for files written by
+    #   other CML tools or older AsciiChem versions using aci: attrs)
+    # - Parse legacy `aci:conditionsAbove`/`aci:conditionsBelow`
+    #   attributes for backwards compat
     #
-    # This is the sixth extension channel, parallel to:
-    #   - Extensions (atom attributes + top-level constructs)
-    #   - GroupExtensions (group structure inside molecules)
-    #   - OpaqueExtensions (unknown top-level elements)
-    #   - MetadataExtensions (per-molecule metadata)
+    # The inject path is retained only to support test fixtures that
+    # build XML by hand; production emit goes through the adapter.
     module ConditionsExtensions
-      # Inject aci:conditionsAbove/Below attributes into the XML for
-      # each reaction with conditions. No-op if no reaction has any.
+      # Inject aci:conditionsAbove/Below attributes for legacy consumers.
+      # v0.11.0+: native <conditionList> is emitted by the adapter, so
+      # this is now suppressed unless conditions are missing from the
+      # XML (defensive — shouldn't normally trigger).
       def self.inject(xml, formula)
         conditions_map = build_conditions_map(formula)
         return xml if conditions_map.empty?
+
+        # If native <conditionList> already present, skip aci: emit.
+        doc_check = Nokogiri::XML(xml)
+        return xml if doc_check.xpath('//cml:reaction/cml:conditionList',
+                                      cml: Extensions::CML_NS).any?
 
         doc = Nokogiri::XML(xml)
         root = doc.root
