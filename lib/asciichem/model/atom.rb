@@ -16,6 +16,21 @@ module AsciiChem
     # the digit string (e.g. `"1"`); multiple digits mean multiple
     # open/close points (e.g. `"12"` opens/closes rings 1 and 2).
     class Atom < Node
+      # 3D point value object. Used by Atom#cartesian and Atom#fractional
+      # to bundle coordinate triples. Flat accessors (x2/y2/z2 and
+      # x_fract/y_fract/z_fract) remain for backwards compatibility.
+      Point3 = Struct.new(:x, :y, :z, keyword_init: true) do
+        def to_a
+          [x, y, z]
+        end
+
+        def magnitude
+          return nil unless x && y && z
+
+          Math.sqrt(x.to_f**2 + y.to_f**2 + z.to_f**2)
+        end
+      end
+
       attr_accessor :element, :isotope, :subscript, :superscript,
                     :charge, :oxidation_state,
                     :lone_pairs, :radical_electrons,
@@ -23,6 +38,22 @@ module AsciiChem
                     :x2, :y2, :z2, :atom_parity,
                     :spin_multiplicity, :atom_title,
                     :x_fract, :y_fract, :z_fract
+
+      # Cartesian point (2D if only x2/y2 set, 3D if z2 also set).
+      # Returns nil if no cartesian coordinates are present.
+      def cartesian
+        return nil unless x2 || y2
+
+        Point3.new(x: x2, y: y2, z: z2)
+      end
+
+      # Fractional point (crystallographic). Returns nil if no
+      # fractional coordinates are present.
+      def fractional
+        return nil unless x_fract || y_fract
+
+        Point3.new(x: x_fract, y: y_fract, z: z_fract)
+      end
 
       def initialize(element:, isotope: nil, subscript: nil,
                      superscript: nil, charge: nil, oxidation_state: nil,
