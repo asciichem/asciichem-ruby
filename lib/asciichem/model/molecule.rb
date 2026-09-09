@@ -86,7 +86,7 @@ module AsciiChem
       #   C_2H_6O -> "C2H6O"
       #   H_2SO_4 -> "H2O4S" (no carbon, alpha sort)
       def hill_formula
-        counts = count_atoms_by_element
+        counts = element_counts
         return '' if counts.empty?
 
         parts = hill_sort(counts).map do |element, count|
@@ -99,7 +99,7 @@ module AsciiChem
       # Returns nil if any element lacks atomic mass data (unknown
       # element or unpopulated PeriodicTable entry).
       def formula_weight
-        counts = count_atoms_by_element
+        counts = element_counts
         return nil if counts.empty?
 
         total = 0
@@ -116,17 +116,24 @@ module AsciiChem
         STEREO_TO_LETTER.fetch(stereo) if stereo
       end
 
-      private
-
-      # Hash of element symbol -> total count, recursing through
-      # groups and nested molecules with subscripts and multiplicities.
-      def count_atoms_by_element
+      # Hash of element symbol => total atom count, recursing through
+      # groups and nested molecules with subscripts and multiplicities
+      # applied. The composition half of #atom_count; #hill_formula and
+      # #formula_weight build on it. Pass `with_coefficient: false` to
+      # get the composition of a single molecule instance — identifiers
+      # describe the substance, not the stoichiometric multiplier.
+      def element_counts(with_coefficient: true)
         tally = Hash.new(0)
-        own_coefficient = coefficient&.to_i
-        multiplier = own_coefficient && own_coefficient.positive? ? own_coefficient : 1
+        multiplier = 1
+        if with_coefficient
+          own = coefficient&.to_i
+          multiplier = own if own && own.positive?
+        end
         nodes.each { |node| tally_element(node, tally, multiplier) }
         tally
       end
+
+      private
 
       def tally_element(node, tally, multiplier)
         case node

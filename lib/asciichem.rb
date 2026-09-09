@@ -17,6 +17,7 @@ module AsciiChem
   autoload :Formatter, "asciichem/formatter"
   autoload :Grammar, "asciichem/grammar"
   autoload :Greek, "asciichem/greek"
+  autoload :Identifiers, "asciichem/identifiers"
   autoload :Layout, "asciichem/layout"
   autoload :Linter, "asciichem/linter"
   autoload :Model, "asciichem/model"

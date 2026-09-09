@@ -16,6 +16,8 @@ module AsciiChem
     autoload :ChargeBalanceCheck, "asciichem/linter/charge_balance_check"
     autoload :CrystalSanityCheck, "asciichem/linter/crystal_sanity_check"
     autoload :ElementValidationCheck, "asciichem/linter/element_validation_check"
+    autoload :IdentifierConsistencyCheck, "asciichem/linter/identifier_consistency_check"
+    autoload :IdentifierFormatCheck, "asciichem/linter/identifier_format_check"
     autoload :Diagnostic, "asciichem/linter/diagnostic"
     autoload :IsotopeSanityCheck, "asciichem/linter/isotope_sanity_check"
     autoload :Registry, "asciichem/linter/registry"
