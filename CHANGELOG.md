@@ -3,7 +3,7 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.19.0] - 2026-09-09
 
 ### Added
 - `AsciiChem::Identifiers` — offline format validators for chemical
