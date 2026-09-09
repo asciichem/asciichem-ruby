@@ -5,6 +5,33 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `AsciiChem::Identifiers` — offline format validators for chemical
+  identifier conventions, self-registering like linter checks
+  (`cas` with check digit, `inchi` with formula-layer analysis,
+  `inchikey` 14-10-1 format, `smiles` structural sanity). Purely
+  lexical; no network, no assignment checking.
+- `IdentifierFormatCheck` (linter) — validates `@cas`/`@inchi`/
+  `@inchikey`/`@smiles` annotation values against the registry;
+  unknown conventions are skipped.
+- `IdentifierConsistencyCheck` (linter) — cross-checks identifier
+  values against the molecule they annotate: InChI formula-layer
+  element counts vs molecule composition (error), SMILES element set
+  vs molecule elements with implicit hydrogens tolerated (warning).
+- `Model::Molecule#element_counts(with_coefficient:)` — public
+  composition API; `#hill_formula` and `#formula_weight` now share it.
+
+### Fixed
+- RSpec suite aborted non-deterministically mid-run (randomly
+  truncated example counts, e.g. 56–748 of 788): CLI commands call
+  `Kernel#exit` even on success, and the cli specs' `run` helper did
+  not trap `SystemExit`, so under random ordering an uncaught exit
+  aborted the suite while reporting "0 failures". The helper now
+  traps it; five consecutive full runs execute all 788 examples.
+- Linter registry re-registration in specs now globs all check files
+  instead of a hardcoded list (new checks no longer vanish from the
+  suite after `Registry.reset`).
+
 ## [0.18.1] - 2026-07-21
 
 ### Changed

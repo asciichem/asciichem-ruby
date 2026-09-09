@@ -168,6 +168,8 @@ RSpec.describe "AsciiChem edge cases" do
         :charge_balance,
         :crystal_sanity,
         :element_validation,
+        :identifier_consistency,
+        :identifier_format,
         :isotope_sanity,
         :spectrum_peaks,
         :unclosed_ring,

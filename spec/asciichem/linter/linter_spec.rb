@@ -97,17 +97,10 @@ RSpec.describe AsciiChem::Linter do
       expect(described_class::Registry.names).to include(:custom_test)
     ensure
       described_class::Registry.reset
-      # Re-register the built-in checks after reset.
-      load "asciichem/linter/balance_check.rb"
-      load "asciichem/linter/bracket_balance_check.rb"
-      load "asciichem/linter/charge_balance_check.rb"
-      load "asciichem/linter/crystal_sanity_check.rb"
-      load "asciichem/linter/element_validation_check.rb"
-      load "asciichem/linter/isotope_sanity_check.rb"
-      load "asciichem/linter/spectrum_peak_check.rb"
-      load "asciichem/linter/unclosed_ring_check.rb"
-      load "asciichem/linter/valence_check.rb"
-      load "asciichem/linter/zmatrix_reference_check.rb"
+      # Re-register every built-in check after reset. Globbed so a new
+      # check file is picked up without editing this list.
+      Dir[File.join(__dir__, "..", "..", "..", "lib", "asciichem", "linter", "*_check.rb")]
+        .sort.each { |path| load(path) }
     end
   end
 
