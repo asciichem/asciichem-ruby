@@ -5,10 +5,18 @@ require "stringio"
 require "asciichem/cli"
 
 RSpec.describe AsciiChem::Cli do
+  # Runs the CLI in-process. CLI commands call Kernel#exit even on
+  # success (lint exits 0 when clean); an uncaught SystemExit aborts
+  # the whole RSpec run mid-suite (RSpec's at_exit then reports only
+  # the examples executed so far — the TODO.impl/52 truncation bug).
+  # Swallow it here; specs that assert on exit status call
+  # described_class.start directly with raise_error(SystemExit).
   def run(*argv)
     original = $stdout
     $stdout = StringIO.new
     described_class.start(argv)
+    $stdout.string
+  rescue SystemExit
     $stdout.string
   ensure
     $stdout = original
