@@ -83,10 +83,15 @@ tag.
 
 == Publish to RubyGems
 
-[source,sh]
-----
-gem push pkg/asciichem-0.X.Y.gem
-----
+The Release workflow (`.github/workflows/release.yml`) publishes via
+https://guides.rubygems.org/trusted-publishing/[RubyGems trusted publishing]
+(OIDC) — there are no API keys. Its trusted publisher is registered on
+https://rubygems.org (repository `asciichem/asciichem-ruby`, workflow
+`release.yml`, no environment).
+
+On the repository's Actions tab, run the "Release" workflow with the
+version number. It verifies the version matches `version.rb`, builds
+the gem, and pushes it using the workflow's GitHub OIDC identity.
 
 Verify at https://rubygems.org/gems/asciichem.
 

@@ -11,14 +11,17 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    environment: release
+    # Trusted publishing (OIDC): the publisher registered on RubyGems.org
+    # is repository asciichem/asciichem-ruby + workflow release.yml, with
+    # no environment — so this job must not claim one.
     permissions:
       contents: read
-      packages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
+          persist-credentials: false
       - name: Verify version matches input
         run: |
           actual=$(ruby -e 'require "./lib/asciichem/version"; print AsciiChem::VERSION')
@@ -31,21 +34,8 @@ jobs:
         with:
           ruby-version: "3.4"
           bundler-cache: true
-      - name: Build gem
-        run: bundle exec rake build
-      - name: Set up RubyGems credentials
-        env:
-          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: |
-          mkdir -p $HOME/.gem
-          cat > $HOME/.gem/credentials <<EOF
-          ---
-          :rubygems_api_key: ${RUBYGEMS_API_KEY}
-          EOF
-          chmod 0600 $HOME/.gem/credentials
-      - name: Push to RubyGems
-        run: |
-          gem push pkg/asciichem-${{ inputs.version }}.gem
+      # Builds and pushes using the GitHub OIDC identity — no API keys.
+      - uses: rubygems/release-gem@v1
       - name: Summary
         run: |
           echo "Released asciichem ${{ inputs.version }} to RubyGems"
