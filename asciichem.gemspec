@@ -35,8 +35,11 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "chemicalml", "~> 0.3.0"
   spec.add_dependency "elkrb", "~> 1.0"
+  spec.add_dependency "lutaml-model", ">= 0.8", "< 2"
   spec.add_dependency "nokogiri", "~> 1.16"
   spec.add_dependency "parslet", "~> 2.0"
   spec.add_dependency "plurimath", "~> 0.8"
   spec.add_dependency "thor", "~> 1.3"
+
+  spec.add_development_dependency "asciichem-model", "~> 0.3.4"
 end

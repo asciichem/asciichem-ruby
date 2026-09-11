@@ -12,3 +12,4 @@
 /.vscode/
 /.idea/
 *.gem
+conformance.json

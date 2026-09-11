@@ -14,8 +14,17 @@ jobs:
         ruby: ["3.3", "3.4"]
     steps:
       - uses: actions/checkout@v4
+      - name: Clone conformance corpus (asciichem-tests)
+        run: git clone --depth 1 https://github.com/asciichem/asciichem-tests.git ../asciichem-tests
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - run: bundle exec rspec
+      - name: Publish conformance report
+        if: matrix.ruby == '3.4'
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance
+          path: conformance.json
+          if-no-files-found: warn

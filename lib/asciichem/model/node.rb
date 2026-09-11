@@ -62,6 +62,14 @@ module AsciiChem
         AsciiChem::Cml.from_asciichem(self)
       end
 
+      # Canonical JSON wire form (asciichem-model v1). The Text
+      # formatter canonicalises AsciiChem text; this canonicalises
+      # the semantic model itself — the interchange format every
+      # implementation must parse and emit.
+      def to_model_json
+        AsciiChem::WireAdapter.to_model_json(self)
+      end
+
       # Subclasses override to expose the attributes that participate in
       # equality. Default: empty (so two bare Nodes are equal).
       def value_attributes
