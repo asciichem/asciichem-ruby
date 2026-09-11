@@ -27,9 +27,18 @@ module AsciiChem
   autoload :RingBonds, "asciichem/ring_bonds"
   autoload :Transform, "asciichem/transform"
   autoload :VERSION, "asciichem/version"
+  autoload :Wire, "asciichem/wire"
+  autoload :WireAdapter, "asciichem/wire_adapter"
   autoload :XmlBuilder, "asciichem/xml_builder"
 
   def self.parse(text)
     Parser.new(text).parse
+  end
+
+  # Rebuilds the semantic model from the canonical JSON wire form
+  # (asciichem-model v1) — the interchange format every
+  # implementation emits.
+  def self.from_model_json(json)
+    WireAdapter.from_model_json(json)
   end
 end

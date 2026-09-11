@@ -3,6 +3,22 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Canonical JSON wire form (`to_model_json` / `AsciiChem.from_model_json`)
+  per asciichem-model v1: `AsciiChem::Wire` (lutaml-model Serializable
+  classes, json mappings only - no hand-rolled serialization) bridged by
+  `AsciiChem::WireAdapter` (model-to-model conversion, same pattern as
+  the CML ModelAdapter). Emission covers every node type; ingestion
+  covers the lossless core set (beyond-formulas nodes are emission-only
+  until their corpus round-trip acceptance lands).
+- Conformance runner over the shared corpus (asciichem-tests): L0
+  emission + schema validation, L1 Text round-trip, L3 CML round-trip,
+  L4 linter diagnostics, plus the ParseError contract for rejects.
+  Emits conformance.json; CI clones the corpus and publishes the report
+  as an artifact. Current claim: L0 149/149, L1 16/16, L3 23/23, L4 6/6.
+
 ## [0.19.0] - 2026-09-09
 
 ### Added
