@@ -3,7 +3,7 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.21.0] - 2026-09-12
 
 ### Added
 - Structure interchange (TODO.v2 09, TODO.impl 57): SMILES and
@@ -386,7 +386,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   `version`.
 - Comprehensive RSpec suite with round-trip conformance.
 
-[Unreleased]: https://github.com/asciichem/asciichem-ruby/compare/v0.20.0...HEAD
+[Unreleased]: https://github.com/asciichem/asciichem-ruby/compare/v0.21.0...HEAD
+[0.21.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.19.0...v0.20.0
 [0.18.1]: https://github.com/asciichem/asciichem-ruby/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.17.0...v0.18.0
