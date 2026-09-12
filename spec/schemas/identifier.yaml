@@ -1,0 +1,32 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/identifier"
+title: AsciiChem Identifier node
+description: |
+  A substance identifier with its convention. Maps to CML
+  `<identifier convention="...">`. Format constraints live with the
+  implementations' offline validators; this schema pins the shape and
+  the convention registry.
+type: object
+required: [type, value, convention]
+properties:
+  type:
+    const: identifier
+  value:
+    type: string
+    minLength: 1
+    description: The identifier value (e.g. "50-78-2").
+  convention:
+    enum: [cas, inchi, inchikey, smiles, canonical-smiles, iupac-name, pubchem-cid, chebi]
+    description: The identifier convention registry value.
+  dictRef:
+    type: string
+    description: Optional dictionary reference for CML round-trip.
+additionalProperties: false
+examples:
+  - type: identifier
+    value: "50-78-2"
+    convention: cas
+  - type: identifier
+    value: "BSYNRYMUTXBXSQ-UHFFFAOYSA-N"
+    convention: inchikey

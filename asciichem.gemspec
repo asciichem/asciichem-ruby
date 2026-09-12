@@ -41,5 +41,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "plurimath", "~> 0.8"
   spec.add_dependency "thor", "~> 1.3"
 
-  spec.add_development_dependency "asciichem-model", "~> 0.3.4"
+  spec.add_development_dependency "json_schemer", "~> 2.4"
 end

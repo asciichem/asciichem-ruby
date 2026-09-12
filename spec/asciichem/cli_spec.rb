@@ -148,5 +148,49 @@ RSpec.describe AsciiChem::Cli do
       expect(payload).to eq([])
     end
   end
-end
 
+describe "convert --from structure grammars" do
+  it "ingests SMILES and renders text" do
+    expect(run("convert", "-i", "CCO", "--from", "smiles", "-t", "text")).to eq("C-C-O\n")
+  end
+
+  it "ingests SMILES and emits the wire form" do
+    out = run("convert", "-i", "c1ccccc1", "--from", "smiles", "-t", "model-json")
+    expect(JSON.parse(out)["nodes"][0]["nodes"][0]["aromatic"]).to be(true)
+  end
+
+  it "ingests SMILES and re-emits canonical SMILES" do
+    expect(run("convert", "-i", "CC(=O)OC1=CC=CC=C1C(=O)O", "--from", "smiles", "-t", "smiles"))
+      .to eq("CC(=O)OC1=CC=CC=C1C(=O)O\n")
+  end
+
+  it "ingests a molfile from a file" do
+    require "tempfile"
+    atom = ->(x, y, sym) do
+      format("%10.4f%10.4f%10.4f %-3s 0  0  0  0  0  0  0  0  0  0  0  0", x, y, 0.0, sym)
+    end
+    bond = ->(a, b) { format("%3d%3d%3d%3d  0  0  0  0  0  0  0", a, b, 1, 0) }
+    file = Tempfile.new(["ethanol", ".mol"])
+    file.write(
+      ["ethanol", "  AsciiChem", "",
+       format("%3d%3d  0  0  0  0  0  0  0  0999 V2000", 3, 2),
+       atom.call(-0.25, 0.375, "C"), atom.call(0.4645, -0.0375, "C"),
+       atom.call(1.179, 0.375, "O"),
+       bond.call(1, 2), bond.call(2, 3), "M  END"].join("\n") << "\n"
+    )
+    file.close
+    out = run("convert", "-f", file.path, "--from", "molfile", "-t", "model-json")
+    elements = JSON.parse(out)["nodes"].flat_map do |m|
+      m["nodes"].select { |n| n.is_a?(Hash) && n["type"] == "atom" }.map { |n| n["element"] }
+    end
+    expect(elements).to eq(%w[C C O])
+  ensure
+    file&.unlink
+  end
+
+  it "rejects an unknown --from grammar" do
+    expect { described_class.start(["convert", "-i", "CCO", "--from", "inchi"]) }
+      .to raise_error(SystemExit)
+  end
+end
+end

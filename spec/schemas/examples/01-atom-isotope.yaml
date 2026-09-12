@@ -1,0 +1,7 @@
+# 01 — Atom with prefix isotope (the defining semantic fix)
+
+# `^14C` parses as Atom(element: "C", isotope: "14") — the isotope
+# binds to the atom, never to a phantom AsciiMath `{}` carrier.
+type: atom
+element: C
+isotope: "14"

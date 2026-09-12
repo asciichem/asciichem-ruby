@@ -1,0 +1,6 @@
+# 09 — Implicit hydrogen count from a SMILES bracket atom ([NH4+]):
+# `hydrogens` records the count exactly as the source stated it.
+type: atom
+element: N
+charge: "+"
+hydrogens: 4

@@ -1,0 +1,22 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/name"
+title: AsciiChem Name node
+description: |
+  A molecule name. Maps to CML `<name>`; convention distinguishes
+  IUPAC, CAS, trivial, trade names.
+type: object
+required: [type, content]
+properties:
+  type:
+    const: name
+  content:
+    type: string
+    description: The name text.
+  convention:
+    type: string
+    description: Naming convention (e.g. "iupac", "cas", "trivial").
+  dictRef:
+    type: string
+    description: Optional dictionary reference for CML round-trip.
+additionalProperties: false

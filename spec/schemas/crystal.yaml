@@ -1,0 +1,30 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/crystal"
+title: AsciiChem Crystal node
+description: |
+  A crystallographic cell: unit-cell constants, space group, and the
+  asymmetric-unit atoms with fractional coordinates.
+type: object
+required: [type]
+properties:
+  type:
+    const: crystal
+  name:
+    type: string
+    description: Mineral/compound name.
+  a: { type: number, description: Cell length a (Angstrom). }
+  b: { type: number, description: Cell length b. }
+  c: { type: number, description: Cell length c. }
+  alpha: { type: number, description: Cell angle alpha (degrees). }
+  beta: { type: number, description: Cell angle beta. }
+  gamma: { type: number, description: Cell angle gamma. }
+  spacegroup:
+    type: string
+    description: Hermann-Mauguin symbol, e.g. "Fm-3m".
+  atoms:
+    type: array
+    description: Asymmetric-unit atoms (fractional coordinates ride on the atom's coordinate annotations).
+    items:
+      $ref: "atom.yaml"
+additionalProperties: false

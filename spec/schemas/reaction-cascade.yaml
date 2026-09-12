@@ -1,0 +1,17 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/reaction-cascade"
+title: AsciiChem ReactionCascade node
+description: |
+  Two or more reactions chained together (A -> B -> C).
+type: object
+required: [type, steps]
+properties:
+  type:
+    const: reaction-cascade
+  steps:
+    type: array
+    minItems: 2
+    items:
+      $ref: "reaction.yaml"
+additionalProperties: false

@@ -1,0 +1,18 @@
+# 02 — Molecule with coefficient, atoms, and substance identifiers
+
+# `2H_2O` annotated with validated identity: water's CAS RN and InChI.
+type: molecule
+coefficient: "2"
+nodes:
+  - type: atom
+    element: H
+    subscript: "2"
+  - type: atom
+    element: O
+identifiers:
+  - type: identifier
+    value: "7732-18-5"
+    convention: cas
+  - type: identifier
+    value: "InChI=1S/H2O/h1H2"
+    convention: inchi

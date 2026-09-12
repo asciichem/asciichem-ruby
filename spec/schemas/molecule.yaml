@@ -1,0 +1,56 @@
+---
+"$id": https://github.com/asciichem/asciichem-model/v1/molecule
+title: AsciiChem Molecule node
+description: |
+  An ordered sequence of atoms/groups with optional coefficient and
+  attached substance identifiers (CML-level annotations).
+type: object
+required:
+- type
+- nodes
+properties:
+  type:
+    const: molecule
+  nodes:
+    type: array
+    description: Ordered child nodes (atoms, bonds, groups, nested molecules).
+    items:
+      if:
+        properties:
+          type:
+            const: molecule
+        required:
+        - type
+      then:
+        "$ref": molecule.yaml
+      else:
+        if:
+          properties:
+            type:
+              const: group
+          required:
+          - type
+        then:
+          "$ref": group.yaml
+        else:
+          if:
+            properties:
+              type:
+                const: bond
+            required:
+            - type
+          then:
+            "$ref": bond.yaml
+          else:
+            "$ref": atom.yaml
+    minItems: 1
+  coefficient:
+    type: string
+    pattern: "^\\d+$"
+    description: Stoichiometric coefficient ("2" in 2H_2O).
+  identifiers:
+    type: array
+    description: Substance identifiers attached to this molecule.
+    items:
+      "$ref": identifier.yaml
+additionalProperties: false

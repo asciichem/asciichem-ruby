@@ -1,0 +1,30 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/mechanism"
+title: AsciiChem Mechanism node
+description: |
+  A reaction mechanism: labelled reaction steps plus spectator
+  species.
+type: object
+required: [type]
+properties:
+  type:
+    const: mechanism
+  steps:
+    type: array
+    items:
+      type: object
+      required: [reaction]
+      properties:
+        label:
+          type: string
+          description: Step label, e.g. "initiation".
+        reaction:
+          $ref: "reaction.yaml"
+      additionalProperties: false
+  spectators:
+    type: array
+    description: Species present but not transformed.
+    items:
+      $ref: "molecule.yaml"
+additionalProperties: false

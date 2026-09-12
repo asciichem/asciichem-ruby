@@ -1,0 +1,57 @@
+---
+"$id": https://github.com/asciichem/asciichem-model/v1/group
+title: AsciiChem Group node
+description: |
+  A bracketed sub-formula with an optional multiplier that applies to
+  the whole group (`(OH)_2`).
+type: object
+required:
+- type
+- nodes
+properties:
+  type:
+    const: group
+  nodes:
+    type: array
+    minItems: 1
+    items:
+      if:
+        properties:
+          type:
+            const: molecule
+        required:
+        - type
+      then:
+        "$ref": molecule.yaml
+      else:
+        if:
+          properties:
+            type:
+              const: group
+          required:
+          - type
+        then:
+          "$ref": group.yaml
+        else:
+          if:
+            properties:
+              type:
+                const: bond
+            required:
+            - type
+          then:
+            "$ref": bond.yaml
+          else:
+            "$ref": atom.yaml
+  multiplicity:
+    type: string
+    pattern: "^\\d+$"
+    description: Multiplier applied to the group ("2" in (OH)_2).
+  bracket:
+    default: paren
+    enum:
+    - paren
+    - square
+    - brace
+    description: Bracket kind — paren (), square [], brace {}.
+additionalProperties: false

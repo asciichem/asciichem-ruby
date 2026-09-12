@@ -1,0 +1,40 @@
+# 05 — SubstanceRecord: aspirin resolved from CAS Common Chemistry
+
+# The resolved view a resolver produces for CAS RN 50-78-2. Every
+# identifier and property carries provenance; the attribution line is
+# required because Common Chemistry content is CC BY-NC 4.0.
+type: substance-record
+preferredName: Aspirin
+synonyms:
+  - 2-Acetyloxybenzoic acid
+  - acetylsalicylic acid
+formula: C9H8O4
+molecularWeight: 180.16
+identifiers:
+  - identifier:
+      type: identifier
+      value: "50-78-2"
+      convention: cas
+    provenance:
+      type: provenance
+      source: commonchemistry
+      retrievedAt: "2026-09-09T00:00:00Z"
+      attribution: "CAS Common Chemistry, CC BY-NC 4.0"
+  - identifier:
+      type: identifier
+      value: "BSYNRYMUTXBXSQ-UHFFFAOYSA-N"
+      convention: inchikey
+    provenance:
+      type: provenance
+      source: commonchemistry
+      retrievedAt: "2026-09-09T00:00:00Z"
+      attribution: "CAS Common Chemistry, CC BY-NC 4.0"
+properties:
+  - name: melting point
+    value: "135"
+    units: "°C"
+    provenance:
+      type: provenance
+      source: commonchemistry
+      retrievedAt: "2026-09-09T00:00:00Z"
+      attribution: "CAS Common Chemistry, CC BY-NC 4.0"

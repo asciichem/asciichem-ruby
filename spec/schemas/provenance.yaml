@@ -1,0 +1,28 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/provenance"
+title: AsciiChem Provenance node
+description: |
+  Where a piece of identity data came from — which source asserted
+  it, when it was retrieved, which source version, and the
+  attribution line licensing requires (e.g. CAS Common Chemistry's
+  CC BY-NC 4.0). Modelled after how the chemicals library attributes
+  databanks and how Relaton models bibliographic retrieval.
+type: object
+required: [type, source, retrievedAt]
+properties:
+  type:
+    const: provenance
+  source:
+    type: string
+    description: Source adapter name (e.g. "pubchem", "commonchemistry").
+  retrievedAt:
+    type: string
+    format: date-time
+  sourceVersion:
+    type: string
+    description: Source release or accessed-date pin where versionless.
+  attribution:
+    type: string
+    description: Attribution string emitted with NC-licensed data.
+additionalProperties: false

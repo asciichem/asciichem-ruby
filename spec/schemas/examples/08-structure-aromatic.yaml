@@ -1,0 +1,35 @@
+# 08 — External-structure fields (TODO.impl 55): aromatic ring from
+# SMILES ingestion (c1ccccc1) and an implicit-H bracket atom ([NH4+]).
+# Absent `hydrogens` means "per valence rules" — never invented.
+type: molecule
+nodes:
+  - type: atom
+    element: C
+    aromatic: true
+    ringClosures: "1"
+  - type: bond
+    kind: aromatic
+  - type: atom
+    element: C
+    aromatic: true
+  - type: bond
+    kind: aromatic
+  - type: atom
+    element: C
+    aromatic: true
+  - type: bond
+    kind: aromatic
+  - type: atom
+    element: C
+    aromatic: true
+  - type: bond
+    kind: aromatic
+  - type: atom
+    element: C
+    aromatic: true
+  - type: bond
+    kind: aromatic
+  - type: atom
+    element: C
+    aromatic: true
+    ringClosures: "1"

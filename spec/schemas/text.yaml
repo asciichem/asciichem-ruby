@@ -1,0 +1,16 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/text"
+title: AsciiChem Text node
+description: |
+  Free-form text in double quotes (matching AsciiMath convention).
+  Unquoted prose is a parse error by design.
+type: object
+required: [type, content]
+properties:
+  type:
+    const: text
+  content:
+    type: string
+    description: The text content without the quote delimiters.
+additionalProperties: false

@@ -1,0 +1,57 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/substance-record"
+title: AsciiChem SubstanceRecord node
+description: |
+  The resolved view of a substance produced by a resolver source —
+  shaped after the CAS Common Chemistry detail payload so resolver
+  output maps onto it 1:1. Every identifier and property carries its
+  own provenance.
+type: object
+required: [type, identifiers]
+properties:
+  type:
+    const: substance-record
+  preferredName:
+    type: string
+    description: The source's preferred chemical name.
+  synonyms:
+    type: array
+    items:
+      type: string
+    description: Systematic, common, and trade names.
+  formula:
+    type: string
+    description: Molecular formula as the source states it (e.g. "C9H8O4").
+  molecularWeight:
+    type: number
+    description: Molecular weight in g/mol as the source states it.
+  identifiers:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      required: [identifier, provenance]
+      properties:
+        identifier:
+          $ref: "identifier.yaml"
+        provenance:
+          $ref: "provenance.yaml"
+      additionalProperties: false
+  properties:
+    type: array
+    items:
+      type: object
+      required: [name, value, provenance]
+      properties:
+        name:
+          type: string
+          description: e.g. "boiling point", "melting point", "density".
+        value:
+          type: string
+        units:
+          type: string
+        provenance:
+          $ref: "provenance.yaml"
+      additionalProperties: false
+additionalProperties: false

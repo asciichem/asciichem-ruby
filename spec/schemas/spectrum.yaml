@@ -1,0 +1,39 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/spectrum"
+title: AsciiChem Spectrum node
+description: |
+  A spectroscopy record: technique type, acquisition parameters, and
+  peaks.
+type: object
+required: [type]
+properties:
+  type:
+    const: spectrum
+  technique:
+    type: string
+    description: Technique type, e.g. "nmr", "ir", "mass".
+  params:
+    type: object
+    description: Acquisition parameters (solvent, frequency, ...).
+    additionalProperties:
+      type: string
+  peaks:
+    type: array
+    items:
+      type: object
+      required: [position]
+      properties:
+        position:
+          type: string
+          description: Peak position (ppm, cm^-1, m/z, ...).
+        intensity:
+          type: string
+        multiplicity:
+          type: string
+          description: Splitting pattern (s, d, t, q, m).
+        assignment:
+          type: string
+          description: Structural assignment of the peak.
+      additionalProperties: false
+additionalProperties: false

@@ -1,0 +1,41 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/zmatrix"
+title: AsciiChem ZMatrix node
+description: |
+  Internal coordinates: each row places an atom by distance/angle/
+  dihedral relative to previously defined atoms.
+type: object
+required: [type]
+properties:
+  type:
+    const: zmatrix
+  rows:
+    type: array
+    items:
+      type: object
+      required: [atom]
+      properties:
+        atom:
+          type: string
+          description: This row's atom label, e.g. "H1".
+        ref1:
+          type: string
+          description: Label of the bond-length reference atom.
+        distance:
+          type: string
+          description: Bond length to ref1.
+        ref2:
+          type: string
+          description: Label of the angle reference atom.
+        angle:
+          type: string
+          description: Angle atom-ref1-ref2 (degrees).
+        ref3:
+          type: string
+          description: Label of the dihedral reference atom.
+        dihedral:
+          type: string
+          description: Dihedral ref2-ref1-atom angle (degrees).
+      additionalProperties: false
+additionalProperties: false
