@@ -3,6 +3,19 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.22.0] - 2026-09-12
+
+### Added
+- CLI `--from asciichem|smiles|molfile` on `convert`, plus
+  `model-json`, `smiles`, `molfile`, and `structural-svg` output
+  targets (TODO.impl 60).
+
+### Changed
+- Conformance validation uses schemas vendored in `spec/schemas`
+  (json_schemer dev dependency); the asciichem-model rubygem
+  dependency is removed — the contract repository is no longer
+  distributed as a gem (TODO.impl 59).
+
 ## [0.21.0] - 2026-09-12
 
 ### Added
@@ -386,7 +399,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   `version`.
 - Comprehensive RSpec suite with round-trip conformance.
 
-[Unreleased]: https://github.com/asciichem/asciichem-ruby/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/asciichem/asciichem-ruby/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.19.0...v0.20.0
 [0.18.1]: https://github.com/asciichem/asciichem-ruby/compare/v0.18.0...v0.18.1
