@@ -105,7 +105,9 @@ module AsciiChem
           oxidation_state: str_or_nil(atom.oxidation_state),
           lone_pairs: int_or_nil(atom.lone_pairs),
           radical_electrons: int_or_nil(atom.radical_electrons),
-          ring_closures: str_or_nil(atom.ring_closures)
+          ring_closures: str_or_nil(atom.ring_closures),
+          aromatic: bool_or_nil(atom.aromatic),
+          hydrogens: int_or_nil(atom.hydrogens)
         )
       end
 
@@ -119,6 +121,10 @@ module AsciiChem
 
       def str_or_nil(value)
         value.is_a?(String) ? value : nil
+      end
+
+      def bool_or_nil(value)
+        value.nil? ? nil : !!value
       end
 
       def int_or_nil(value)
@@ -280,7 +286,8 @@ module AsciiChem
           element: wire.element, isotope: wire.isotope, subscript: wire.subscript,
           charge: wire.charge, oxidation_state: wire.oxidation_state,
           lone_pairs: wire.lone_pairs, radical_electrons: wire.radical_electrons,
-          ring_closures: wire.ring_closures
+          ring_closures: wire.ring_closures,
+          aromatic: wire.aromatic, hydrogens: wire.hydrogens
         )
       end
 

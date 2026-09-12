@@ -70,6 +70,18 @@ module AsciiChem
         AsciiChem::WireAdapter.to_model_json(self)
       end
 
+      # Deterministic SMILES for a Molecule (or dot-joined components
+      # for a Formula). Raises for constructs with no SMILES form.
+      def to_smiles
+        AsciiChem::Smiles.write(self)
+      end
+
+      # Molfile V2000 for a Molecule. Authored coordinates win; a
+      # deterministic 2D layout is computed otherwise.
+      def to_molfile(name: nil)
+        AsciiChem::Molfile.write(self, name: name)
+      end
+
       # Subclasses override to expose the attributes that participate in
       # equality. Default: empty (so two bare Nodes are equal).
       def value_attributes

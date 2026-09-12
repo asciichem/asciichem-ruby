@@ -32,6 +32,83 @@ RSpec.describe "asciichem-tests conformance corpus" do
 
   parser_cases = cases.select { |c| c.key?("input") && !c.key?("lint") && !c.key?("convention") }
 
+  # Structure interchange (TODO.v2 09): SMILES and molfile ingest under
+  # their own keys; fixture strings hold the reference-canonical forms.
+  smiles_cases = cases.select { |c| c.key?("smiles") }
+  smiles_cases.each do |fixture|
+    id = fixture.fetch("id")
+    smiles = fixture.fetch("smiles")
+
+    if fixture.fetch("parses")
+      it "#{id} ingests SMILES" do
+        expect { AsciiChem.parse_smiles(smiles) }.not_to raise_error
+      end
+
+      it "#{id} round-trips via deterministic SMILES" do
+        skip "not canonical form" unless fixture["smilesRoundTrip"]
+
+        expect(AsciiChem.parse_smiles(smiles).to_smiles).to eq(smiles)
+      end
+
+      it "#{id} SMILES round-trips through AsciiChem text" do
+        skip "not canonical form" unless fixture["smilesRoundTrip"]
+
+        # Aromaticity and implicit hydrogens have no AsciiChem syntax
+        # (they arrive via ingestion), so text round-trip is only
+        # asserted where the text form is complete.
+        mol = AsciiChem.parse_smiles(smiles)
+        skip "not expressible in text" if mol.nodes.any? do |m|
+          m.nodes.any? do |n|
+            n.is_a?(AsciiChem::Model::Atom) &&
+              (n.aromatic || n.hydrogens ||
+               # Bare digits after H are subscripts, never ring
+               # closures — a hydrogen cannot close a ring in text.
+               (n.ring_closures && n.element == "H"))
+          end
+        end
+
+        round = AsciiChem.parse(mol.to_text)
+        expect(round.to_smiles).to eq(smiles)
+      end
+    else
+      it "#{id} rejects SMILES with ParseError" do
+        expect { AsciiChem.parse_smiles(smiles) }.to raise_error(AsciiChem::ParseError)
+      end
+    end
+  end
+
+  molfile_cases = cases.select { |c| c.key?("molfile") }
+  molfile_cases.each do |fixture|
+    id = fixture.fetch("id")
+    molfile = fixture.fetch("molfile")
+
+    if fixture.fetch("parses")
+      it "#{id} ingests molfile with expected counts" do
+        molecule = AsciiChem.parse_molfile(molfile)
+        atoms, edges = AsciiChem::Structure::Graph.build(molecule)
+        expect(atoms.length).to eq(fixture.fetch("atoms"))
+        expect(edges.length).to eq(fixture.fetch("bonds"))
+      end
+
+      it "#{id} round-trips via molfile" do
+        skip "not flagged" unless fixture["molfileRoundTrip"]
+
+        molecule = AsciiChem.parse_molfile(molfile)
+        atoms, edges = AsciiChem::Structure::Graph.build(molecule)
+        shape = edges.map { |e| [e.from, e.to, e.kind] }.sort
+        atoms2, edges2 = AsciiChem::Structure::Graph.build(
+          AsciiChem.parse_molfile(AsciiChem::Molfile.write(molecule))
+        )
+        expect(atoms2.length).to eq(atoms.length)
+        expect(edges2.map { |e| [e.from, e.to, e.kind] }.sort).to eq(shape)
+      end
+    else
+      it "#{id} rejects molfile with ParseError" do
+        expect { AsciiChem.parse_molfile(molfile) }.to raise_error(AsciiChem::ParseError)
+      end
+    end
+  end
+
   parser_cases.each do |fixture|
     id = fixture.fetch("id")
     input = fixture.fetch("input")

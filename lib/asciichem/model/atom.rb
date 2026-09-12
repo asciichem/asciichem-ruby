@@ -34,7 +34,7 @@ module AsciiChem
       attr_accessor :element, :isotope, :subscript, :superscript,
                     :charge, :oxidation_state,
                     :lone_pairs, :radical_electrons,
-                    :ring_closures,
+                    :ring_closures, :aromatic, :hydrogens,
                     :x2, :y2, :z2, :atom_parity,
                     :spin_multiplicity, :atom_title,
                     :x_fract, :y_fract, :z_fract
@@ -58,7 +58,7 @@ module AsciiChem
       def initialize(element:, isotope: nil, subscript: nil,
                      superscript: nil, charge: nil, oxidation_state: nil,
                      lone_pairs: nil, radical_electrons: nil,
-                     ring_closures: nil,
+                     ring_closures: nil, aromatic: nil, hydrogens: nil,
                      x2: nil, y2: nil, z2: nil, atom_parity: nil,
                      spin_multiplicity: nil, atom_title: nil,
                      x_fract: nil, y_fract: nil, z_fract: nil)
@@ -71,6 +71,8 @@ module AsciiChem
         @lone_pairs = lone_pairs
         @radical_electrons = radical_electrons
         @ring_closures = ring_closures
+        @aromatic = aromatic
+        @hydrogens = hydrogens
         @x2 = x2
         @y2 = y2
         @z2 = z2
@@ -87,7 +89,8 @@ module AsciiChem
           superscript: superscript, charge: charge,
           oxidation_state: oxidation_state,
           lone_pairs: lone_pairs, radical_electrons: radical_electrons,
-          ring_closures: ring_closures,
+          ring_closures: ring_closures, aromatic: aromatic,
+          hydrogens: hydrogens,
           x2: x2, y2: y2, z2: z2, atom_parity: atom_parity,
           spin_multiplicity: spin_multiplicity, atom_title: atom_title,
           x_fract: x_fract, y_fract: y_fract, z_fract: z_fract }
@@ -108,6 +111,8 @@ module AsciiChem
         parts << "^(#{oxidation_state})" if oxidation_state
         parts << ".#{radical_electrons}" if radical_electrons
         parts << ring_closures.to_s if ring_closures
+        parts << "aromatic" if aromatic
+        parts << "H#{hydrogens}" if hydrogens
         "Atom(#{parts.join})"
       end
     end

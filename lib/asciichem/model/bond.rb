@@ -14,7 +14,8 @@ module AsciiChem
         wedge:     { ascii: ">-", mathml_entity: "↑" },
         hash:      { ascii: "-<", mathml_entity: "↓" },
         dative:    { ascii: "~>", mathml_entity: "→" },
-        wavy:      { ascii: "~~", mathml_entity: "∼" }
+        wavy:      { ascii: "~~", mathml_entity: "∼" },
+        aromatic:  { ascii: ":",  mathml_entity: ":" }
       }.freeze
 
       # CML wire order codes per bond kind. Single source of truth

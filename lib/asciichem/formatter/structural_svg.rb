@@ -258,6 +258,14 @@ module AsciiChem
         RENDERERS = {
           single: ->(r) { [r.base_line] },
 
+          # Aromatic bonds render as dashed lines (the inner-ring
+          # circle is a renderer nicety left for a later iteration).
+          aromatic: lambda do |r|
+            line = r.base_line
+            line['stroke-dasharray'] = '4 2.5'
+            [line]
+          end,
+
           double: ->(r) { [-SPACING, 0, SPACING].map { |d| r.offset_line(d) }.compact },
 
           triple: ->(r) { [0, -SPACING * 1.5, SPACING * 1.5].map { |d| r.offset_line(d) }.compact },
