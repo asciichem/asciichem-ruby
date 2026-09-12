@@ -3,6 +3,18 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.23.0] - 2026-09-12
+
+### Added
+- `AsciiChem::Resolver` — multi-source identifier resolution (TODO.impl
+  38): opt-in adapter registry, one substance per source with
+  provenance, cross-check Conflict on InChIKey disagreement, TTL
+  cache in the user cache dir.
+- `Resolver::PubChem` — keyless PUG-REST adapter with recorded
+  offline fixtures; CAS via the name namespace (TODO.impl 39).
+- CLI `resolve` (networked, cached, `--refresh`) and offline
+  `validate` for identifier annotations (TODO.impl 41).
+
 ## [0.22.0] - 2026-09-12
 
 ### Added
@@ -399,7 +411,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   `version`.
 - Comprehensive RSpec suite with round-trip conformance.
 
-[Unreleased]: https://github.com/asciichem/asciichem-ruby/compare/v0.22.0...HEAD
+[Unreleased]: https://github.com/asciichem/asciichem-ruby/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.19.0...v0.20.0
