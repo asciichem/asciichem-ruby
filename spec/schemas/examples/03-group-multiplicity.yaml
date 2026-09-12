@@ -1,0 +1,11 @@
+# 03 — Group with multiplicity and bracket kind
+
+# `(OH)_2`: a paren group with multiplier 2.
+type: group
+multiplicity: "2"
+bracket: paren
+nodes:
+  - type: atom
+    element: O
+  - type: atom
+    element: H

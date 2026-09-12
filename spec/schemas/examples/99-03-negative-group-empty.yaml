@@ -1,0 +1,4 @@
+# NEGATIVE 99-03 — group with no children.
+# Must FAIL validation against group.yaml (nodes minItems 1).
+type: group
+nodes: []

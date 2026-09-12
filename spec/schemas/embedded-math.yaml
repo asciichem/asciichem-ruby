@@ -1,0 +1,18 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/embedded-math"
+title: AsciiChem EmbeddedMath node
+description: |
+  Math embedded in chemistry (backtick syntax, e.g. `K_c = 1`). The
+  wire form carries the AsciiMath source; the parsed
+  Plurimath::Math::Formula is a Ruby-implementation detail.
+type: object
+required: [type, source]
+properties:
+  type:
+    const: embedded-math
+  source:
+    type: string
+    minLength: 1
+    description: The backticked AsciiMath source text.
+additionalProperties: false

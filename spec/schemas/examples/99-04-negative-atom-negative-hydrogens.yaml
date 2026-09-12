@@ -1,0 +1,4 @@
+# 99-04 — Negative: hydrogens is a count; negatives are invalid.
+type: atom
+element: C
+hydrogens: -1

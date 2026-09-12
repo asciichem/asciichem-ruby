@@ -10,16 +10,22 @@ module AsciiChem
     # and command banners, matching the executable name.
     package_name "asciichem"
 
-    desc "convert -i INPUT -t FORMAT", "Convert AsciiChem INPUT to FORMAT (mathml|text|html|latex|svg|cml)"
-    method_option :input, aliases: "-i", type: :string, required: true,
-                           desc: "AsciiChem source text (or '-' for stdin)"
+    desc "convert -i INPUT -t FORMAT", "Convert INPUT to FORMAT (mathml|text|html|latex|svg|structural-svg|model-json|cml|smiles|molfile)"
+    method_option :input, aliases: "-i", type: :string,
+                           desc: "Source text (or '-' for stdin)"
     method_option :file, aliases: "-f", type: :string,
-                          desc: "Read AsciiChem source from a file"
+                          desc: "Read source from a file"
+    method_option :from, type: :string, default: "asciichem",
+                        desc: "Input grammar: asciichem|smiles|molfile"
     method_option :format, aliases: "-t", type: :string, default: "mathml",
                             desc: "Output format"
     def convert
+      unless options["input"] || options["file"]
+        raise AsciiChem::ParseError, "provide -i INPUT or -f FILE"
+      end
+
       source = read_source
-      formula = AsciiChem.parse(source)
+      formula = ingest(source, options[:from])
       puts render(formula, options[:format])
     rescue AsciiChem::ParseError => e
       warn "Parse error: #{e.message}"
@@ -89,8 +95,31 @@ module AsciiChem
       options[:input]
     end
 
+    # One ingestion point per input grammar (TODO.v2 09): every
+    # grammar funnels into the same semantic model, so every output
+    # format works regardless of the input language.
+    def ingest(source, from)
+      case from.to_s
+      when "asciichem" then AsciiChem.parse(source)
+      when "smiles" then AsciiChem.parse_smiles(source)
+      when "molfile" then molfile_formula(source)
+      else
+        raise AsciiChem::ParseError, "unknown --from grammar: #{from}"
+      end
+    end
+
+    # parse_molfile returns a single Molecule; wrap it so every
+    # formatter's Formula contract holds.
+    def molfile_formula(source)
+      text = File.file?(source) ? File.read(source) : source
+      AsciiChem::Model::Formula.new(nodes: [AsciiChem.parse_molfile(text)])
+    end
+
     def render(formula, format)
       return formula.to_cml if format.to_sym == :cml
+      return formula.to_model_json if format.to_sym == :"model-json"
+      return formula.to_smiles if format.to_sym == :smiles
+      return formula.nodes.first.to_molfile if format.to_sym == :molfile
 
       AsciiChem::Formatter.render(format.to_sym, formula)
     end

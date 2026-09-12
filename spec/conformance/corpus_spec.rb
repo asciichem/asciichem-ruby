@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require_relative "../support/conformance_report"
+require_relative "../support/conformance_schemas"
 
 # Conformance runner for the shared corpus (asciichem-tests).
 # Executes every fixture against this implementation:
@@ -119,9 +120,8 @@ RSpec.describe "asciichem-tests conformance corpus" do
       end
 
       it "#{id} emits schema-valid canonical JSON (L0)" do
-        require "asciichem_model"
         json = AsciiChem.parse(input).to_model_json
-        errors = AsciiChemModel::Validators.validate(JSON.parse(json))
+        errors = ConformanceSchemas.validate(JSON.parse(json))
         expect(errors).to be_empty, "#{id}: #{errors.join('; ')[0, 200]}"
       end
 

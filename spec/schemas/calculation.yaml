@@ -1,0 +1,37 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/calculation"
+title: AsciiChem Calculation node
+description: |
+  A computational-chemistry result: method, basis set, and computed
+  properties.
+type: object
+required: [type]
+properties:
+  type:
+    const: calculation
+  method:
+    type: string
+    description: e.g. "B3LYP".
+  basis:
+    type: string
+    description: e.g. "6-31G(d)".
+  properties:
+    type: array
+    items:
+      type: object
+      required: [title, value]
+      properties:
+        title:
+          type: string
+          description: Property name, e.g. "dipole".
+        value:
+          type: string
+        units:
+          type: string
+        dictRef:
+          type: string
+        convention:
+          type: string
+      additionalProperties: false
+additionalProperties: false

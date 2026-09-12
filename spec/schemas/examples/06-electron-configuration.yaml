@@ -1,0 +1,16 @@
+# 06 — Electron configuration with term symbol
+
+# `1s^2 2s^2 2p^6 3d^10 4s^2` style occupancy plus an optional
+# atomic term symbol.
+type: electron-configuration
+orbitals:
+  - orbital: 1s
+    occupancy: "2"
+  - orbital: 2s
+    occupancy: "2"
+  - orbital: 2p
+    occupancy: "6"
+termSymbol:
+  multiplicity: "3"
+  letter: P
+  jValue: "2"

@@ -1,0 +1,43 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/electron-configuration"
+title: AsciiChem ElectronConfiguration node
+description: |
+  Orbital occupancy (`1s^2 2s^2 2p^6`) with an optional term symbol
+  (^{multiplicity}L_J).
+type: object
+required: [type, orbitals]
+properties:
+  type:
+    const: electron-configuration
+  orbitals:
+    type: array
+    description: Ordered orbital occupancies.
+    items:
+      type: object
+      required: [orbital, occupancy]
+      properties:
+        orbital:
+          type: string
+          description: Orbital label, e.g. "1s", "2p".
+        occupancy:
+          type: string
+          pattern: "^\\d+$"
+          description: Electron count in this orbital.
+      additionalProperties: false
+  termSymbol:
+    type: object
+    description: Optional atomic term symbol.
+    properties:
+      multiplicity:
+        type: string
+        pattern: "^\\d+$"
+        description: Spin multiplicity (2S+1).
+      letter:
+        type: string
+        description: Orbital angular momentum letter (S, P, D, ...).
+      jValue:
+        type: string
+        description: Total angular momentum J.
+    additionalProperties: false
+additionalProperties: false

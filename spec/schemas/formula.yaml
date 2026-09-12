@@ -1,0 +1,159 @@
+---
+"$id": https://github.com/asciichem/asciichem-model/v1/formula
+title: AsciiChem Formula node (document root)
+description: |
+  The root of a parsed AsciiChem document: an ordered sequence of
+  top-level nodes. This is the canonical wire form every
+  implementation emits under the envelope's `root` key.
+type: object
+required:
+- type
+- nodes
+properties:
+  type:
+    const: formula
+  nodes:
+    type: array
+    description: |
+      Top-level nodes — mirrors the reference grammar's node rule:
+      reactions, cascades, electron configurations, crystals,
+      spectra, calculations, z-matrices, mechanisms, (annotated)
+      molecules, groups, atoms, embedded math, and text.
+    items:
+      if:
+        properties:
+          type:
+            const: molecule
+        required:
+        - type
+      then:
+        "$ref": molecule.yaml
+      else:
+        if:
+          properties:
+            type:
+              const: reaction
+          required:
+          - type
+        then:
+          "$ref": reaction.yaml
+        else:
+          if:
+            properties:
+              type:
+                const: reaction-cascade
+            required:
+            - type
+          then:
+            "$ref": reaction-cascade.yaml
+          else:
+            if:
+              properties:
+                type:
+                  const: group
+              required:
+              - type
+            then:
+              "$ref": group.yaml
+            else:
+              if:
+                properties:
+                  type:
+                    const: atom
+                required:
+                - type
+              then:
+                "$ref": atom.yaml
+              else:
+                if:
+                  properties:
+                    type:
+                      const: bond
+                  required:
+                  - type
+                then:
+                  "$ref": bond.yaml
+                else:
+                  if:
+                    properties:
+                      type:
+                        const: electron-configuration
+                    required:
+                    - type
+                  then:
+                    "$ref": electron-configuration.yaml
+                  else:
+                    if:
+                      properties:
+                        type:
+                          const: embedded-math
+                      required:
+                      - type
+                    then:
+                      "$ref": embedded-math.yaml
+                    else:
+                      if:
+                        properties:
+                          type:
+                            const: text
+                        required:
+                        - type
+                      then:
+                        "$ref": text.yaml
+                      else:
+                        if:
+                          properties:
+                            type:
+                              const: name
+                          required:
+                          - type
+                        then:
+                          "$ref": name.yaml
+                        else:
+                          if:
+                            properties:
+                              type:
+                                const: identifier
+                            required:
+                            - type
+                          then:
+                            "$ref": identifier.yaml
+                          else:
+                            if:
+                              properties:
+                                type:
+                                  const: mechanism
+                              required:
+                              - type
+                            then:
+                              "$ref": mechanism.yaml
+                            else:
+                              if:
+                                properties:
+                                  type:
+                                    const: spectrum
+                                required:
+                                - type
+                              then:
+                                "$ref": spectrum.yaml
+                              else:
+                                if:
+                                  properties:
+                                    type:
+                                      const: crystal
+                                  required:
+                                  - type
+                                then:
+                                  "$ref": crystal.yaml
+                                else:
+                                  if:
+                                    properties:
+                                      type:
+                                        const: zmatrix
+                                    required:
+                                    - type
+                                  then:
+                                    "$ref": zmatrix.yaml
+                                  else:
+                                    "$ref": calculation.yaml
+additionalProperties: false

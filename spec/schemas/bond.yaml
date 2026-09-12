@@ -1,0 +1,21 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/bond"
+title: AsciiChem Bond node
+description: |
+  A bond between adjacent atoms in a linear structure. Kind enum is
+  the single source of truth shared by every implementation; adding a
+  kind is a MINOR model bump.
+type: object
+required: [type]
+properties:
+  type:
+    const: bond
+  kind:
+    default: single
+    enum: [single, double, triple, quadruple, wedge, hash, dative, wavy, aromatic]
+    description: |
+      single (-), double (=), triple (#), quadruple (##), wedge (>-),
+      hash (-<), dative (~>), wavy (~~), aromatic (SMILES/molfile
+      aromatic bonds).
+additionalProperties: false

@@ -1,0 +1,30 @@
+# 04 — Reaction with equilibrium arrow and conditions
+
+# `N_2 + 3H_2 <=>[Fe][400°C] 2NH_3`: catalyst above the arrow,
+# temperature below.
+type: reaction
+arrow: equilibrium
+conditions:
+  above: "Fe"
+  below: "400°C"
+reactants:
+  - type: molecule
+    nodes:
+      - type: atom
+        element: N
+        subscript: "2"
+  - type: molecule
+    coefficient: "3"
+    nodes:
+      - type: atom
+        element: H
+        subscript: "2"
+products:
+  - type: molecule
+    coefficient: "2"
+    nodes:
+      - type: atom
+        element: N
+      - type: atom
+        element: H
+        subscript: "3"

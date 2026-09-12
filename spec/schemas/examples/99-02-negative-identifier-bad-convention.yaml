@@ -1,0 +1,5 @@
+# NEGATIVE 99-02 — identifier with an unregistered convention.
+# Must FAIL validation against identifier.yaml (convention enum).
+type: identifier
+value: "xyz"
+convention: smarts

@@ -1,0 +1,57 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/atom"
+title: AsciiChem Atom node
+description: |
+  A chemical atom in the canonical wire form. A prefix superscript
+  (isotope) binds to the atom — the defining semantic fix over
+  AsciiMath's phantom `{}` carrier.
+type: object
+required: [type, element]
+properties:
+  type:
+    const: atom
+  element:
+    type: string
+    pattern: "^[A-Z][a-z]?$"
+    description: Element symbol (e.g. "C", "Cl").
+    examples: ["C", "Cl", "Fe"]
+  isotope:
+    type: string
+    pattern: "^\\d+$"
+    description: Isotope mass number bound to this atom ("14" in ^14C).
+  charge:
+    type: string
+    description: Charge annotation (e.g. "2+", "-").
+  subscript:
+    type: string
+    pattern: "^\\d+$"
+    description: Subscript multiplicity ("2" in H_2O).
+  oxidationState:
+    type: string
+    description: Oxidation state annotation ("II" in Ca^(II)).
+  lonePairs:
+    type: integer
+    minimum: 0
+    description: Lewis lone-pair markers ("::O" carries 2).
+  radicalElectrons:
+    type: integer
+    minimum: 0
+    description: Radical-electron markers ("N." carries 1).
+  ringClosures:
+    type: string
+    pattern: "^\\d+$|^(\\d)+$"
+    description: SMILES-style ring closure digits ("1" in C1...C1).
+  aromatic:
+    type: boolean
+    description: |
+      Aromatic atom flag, set by SMILES lowercase input (c1ccccc1)
+      or molfile aromatic contexts. Absent means not aromatic.
+  hydrogens:
+    type: integer
+    minimum: 0
+    description: |
+      Implicit hydrogen count as stated by the source (SMILES bracket
+      atoms [CH4]/[nH], molfile atom-block H counts). Absent means
+      "per valence rules" — never invented.
+additionalProperties: false

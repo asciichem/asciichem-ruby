@@ -1,0 +1,5 @@
+# NEGATIVE 99-01 — atom with a malformed element symbol.
+# Must FAIL validation against atom.yaml (pattern ^[A-Z][a-z]?$;
+# "HX" has an uppercase second letter, which no element symbol has).
+type: atom
+element: HX

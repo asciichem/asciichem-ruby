@@ -1,0 +1,18 @@
+# 07 — Spectrum with peaks (negative example files follow in 99-*)
+
+# An NMR record: technique, acquisition parameters, peaks with
+# assignments.
+type: spectrum
+technique: nmr
+params:
+  solvent: CDCl3
+  frequency: "400 MHz"
+peaks:
+  - position: "2.1"
+    intensity: "3H"
+    multiplicity: s
+    assignment: CH3
+  - position: "7.3"
+    intensity: "1H"
+    multiplicity: t
+    assignment: ArH

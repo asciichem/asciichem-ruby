@@ -1,0 +1,34 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/reaction"
+title: AsciiChem Reaction node
+description: |
+  A chemical reaction: reactants, an arrow (with optional conditions
+  above/below), and products.
+type: object
+required: [type, reactants, products]
+properties:
+  type:
+    const: reaction
+  reactants:
+    type: array
+    items:
+      $ref: "molecule.yaml"
+  products:
+    type: array
+    items:
+      $ref: "molecule.yaml"
+  arrow:
+    default: forward
+    enum: [forward, reverse, equilibrium, resonance]
+    description: forward (->), reverse (<-), equilibrium (<=>), resonance (<->).
+  conditions:
+    type: object
+    description: Text carried above/below the arrow.
+    properties:
+      above:
+        type: string
+      below:
+        type: string
+    additionalProperties: false
+additionalProperties: false
