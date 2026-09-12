@@ -193,4 +193,37 @@ describe "convert --from structure grammars" do
       .to raise_error(SystemExit)
   end
 end
+
+  describe "resolve and validate" do
+    it "validates identifier annotations offline" do
+      out = run("validate", "-i", %q{H_2O @cas("7732-18-5") @cas("50-7-8")})
+      expect(out).to include("cas")
+      expect(out).to include("ok")
+      expect(out).to include("INVALID")
+    end
+
+    it "reports when there are no annotations" do
+      expect(run("validate", "-i", "H_2O")).to match(/no identifier annotations/)
+    end
+
+    it "resolves offline from a seeded cache entry" do
+      require "asciichem/resolver"
+      require "tmpdir"
+      cache = AsciiChem::Resolver::Cache.new(dir: File.join(Dir.tmpdir, "asciichem-cli-#{rand(1e9)}"))
+      fixture = File.read(File.expand_path("fixtures/resolver/pubchem/aspirin.json", File.dirname(__dir__)))
+      fetcher = Struct.new(:body) do
+        def get(_url) = body
+      end.new(fixture)
+      AsciiChem::Resolver[:pubchem].new.resolve(value: "aspirin", convention: "name",
+                                                fetch: fetcher, cache: cache)
+      allow(AsciiChem::Resolver::Cache).to receive(:default).and_return(cache)
+      out = run("resolve", "--name", "aspirin", "-t", "text")
+      expect(out).to eq("2-acetyloxybenzoic acid\n")
+    end
+
+    it "exits with an actionable error for unknown sources" do
+      expect { described_class.start(["resolve", "--name", "x", "--source", "nope"]) }
+        .to raise_error(SystemExit)
+    end
+  end
 end
