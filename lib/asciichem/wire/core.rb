@@ -16,6 +16,8 @@ module AsciiChem
       attribute :lone_pairs, :integer
       attribute :radical_electrons, :integer
       attribute :ring_closures, :string
+      attribute :aromatic, :boolean
+      attribute :hydrogens, :integer
       json do
         map "element", to: :element
         map "isotope", to: :isotope
@@ -25,6 +27,8 @@ module AsciiChem
         map "lonePairs", to: :lone_pairs
         map "radicalElectrons", to: :radical_electrons
         map "ringClosures", to: :ring_closures
+        map "aromatic", to: :aromatic
+        map "hydrogens", to: :hydrogens
       end
     end
 

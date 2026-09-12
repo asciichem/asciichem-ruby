@@ -22,9 +22,12 @@ module AsciiChem
   autoload :Linter, "asciichem/linter"
   autoload :Model, "asciichem/model"
   autoload :ModelAdapter, "asciichem/model_adapter"
+  autoload :Molfile, "asciichem/molfile"
   autoload :Parser, "asciichem/parser"
   autoload :PeriodicTable, "asciichem/periodic_table"
   autoload :RingBonds, "asciichem/ring_bonds"
+  autoload :Smiles, "asciichem/smiles"
+  autoload :Structure, "asciichem/structure"
   autoload :Transform, "asciichem/transform"
   autoload :VERSION, "asciichem/version"
   autoload :Wire, "asciichem/wire"
@@ -40,5 +43,18 @@ module AsciiChem
   # implementation emits.
   def self.from_model_json(json)
     WireAdapter.from_model_json(json)
+  end
+
+  # Ingests a SMILES string into the semantic model (TODO.v2 09):
+  # one Model::Molecule per dot-disconnected component, explicit
+  # bonds and ring closures, renderable by every formatter.
+  def self.parse_smiles(smiles)
+    Smiles.parse(smiles)
+  end
+
+  # Ingests a molfile (CTfile V2000) into a Model::Molecule,
+  # preserving atom coordinates.
+  def self.parse_molfile(text)
+    Molfile.parse(text)
   end
 end

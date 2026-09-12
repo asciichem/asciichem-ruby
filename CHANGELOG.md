@@ -3,6 +3,29 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Structure interchange (TODO.v2 09, TODO.impl 57): SMILES and
+  molfile (CTfile V2000) ingestion and emission as modules of the one
+  semantic model — `AsciiChem.parse_smiles` / `parse_molfile`,
+  `to_smiles` / `to_molfile`. Ingested molecules are ordinary
+  `Model::Molecule`s: graphs linearise into atoms + bond tokens +
+  ring-closure digits (`Structure::Linearizer`), so every existing
+  renderer, linter, and wire form works unchanged. The SMILES writer
+  is deterministic (DFS, single-bond continuations, order-independent
+  tie-breaks); aspirin and naphthalene round-trip exactly. v1
+  deferrals, each with an actionable `ParseError`: chirality `@`/`@@`,
+  E/Z directions `/` `\`, wildcard atoms, bonded ring closures.
+- `Model::Atom#aromatic` / `#hydrogens` and an `aromatic` bond kind
+  (asciichem-model 0.4.0 fields): lowercase SMILES atoms, bracket
+  H-counts, molfile type-4 bonds (aromatic atoms marked from bonds).
+- `AsciiChem::Structure` — shared graph walk + adjacency linearizer
+  for the interchange formats; `StructuralSvg` renders aromatic bonds
+  dashed; wire form carries the new fields both ways.
+- Corpus levels: asciichem-tests v0.3.0 `structure/smiles/*` and
+  `structure/molfile/*` fixtures at 100% (37 + 6 cases).
+
 ## [0.20.0] - 2026-09-12
 
 ### Added
