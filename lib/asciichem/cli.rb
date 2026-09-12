@@ -86,6 +86,61 @@ module AsciiChem
       "asciichem #{command.usage}"
     end
 
+    desc "resolve --cas X | --name X | ...", "Resolve a substance from a source (network; cached)"
+    method_option :cas, type: :string, desc: "CAS registry number"
+    method_option :name, type: :string, desc: "Substance name"
+    method_option :cid, type: :string, desc: "PubChem CID"
+    method_option :inchikey, type: :string, desc: "InChIKey"
+    method_option :smiles, type: :string, desc: "SMILES"
+    method_option :source, type: :string, default: "pubchem", desc: "Resolver source"
+    method_option :refresh, type: :boolean, default: false, desc: "Bypass the cache"
+    method_option :format, aliases: "-t", type: :string, default: "model-json",
+                            desc: "Output: model-json | text | smiles"
+    def resolve
+      convention, value = %i[cas name cid inchikey smiles]
+                          .filter_map { |k| [k, options[k.to_s]] if options[k.to_s] }
+                          .first
+      raise AsciiChem::Error, "give one of --cas/--name/--cid/--inchikey/--smiles" unless value
+
+      convention = { cas: "cas", name: "name", cid: "pubchem-cid",
+                     inchikey: "inchikey", smiles: "smiles" }.fetch(convention)
+      substance = AsciiChem::Resolver[options[:source]].new.resolve(
+        value: value, convention: convention, refresh: options[:refresh]
+      )
+      raise AsciiChem::Error, "#{options[:source]} does not know #{value.inspect}" unless substance
+
+      puts case options[:format].to_s
+           when "text" then substance.preferred_name.to_s
+           when "smiles" then substance.identifier_value("canonical-smiles").to_s
+           else substance.to_model_json
+           end
+    rescue AsciiChem::Error => e
+      warn "Resolve error: #{e.message}"
+      exit 3
+    end
+
+    desc "validate -i INPUT", "Offline identifier validation"
+    method_option :input, aliases: "-i", type: :string, required: true
+    def validate
+      formula = AsciiChem.parse(options[:input])
+      annotations = formula.nodes.grep(AsciiChem::Model::Molecule).flat_map(&:identifiers)
+      if annotations.empty?
+        puts "no identifier annotations found"
+        return
+      end
+      annotations.each do |identifier|
+        known = AsciiChem::Identifiers.known?(identifier.convention)
+        valid = known && AsciiChem::Identifiers.valid?(identifier.convention, identifier.value)
+        status = known ? (valid ? "ok" : "INVALID") : "unknown convention"
+        puts format("%-12s %-40s %s", identifier.convention, identifier.value, status)
+      end
+      exit 1 if annotations.any? { |i| AsciiChem::Identifiers.known?(i.convention) &&
+                                      !AsciiChem::Identifiers.valid?(i.convention, i.value) }
+    rescue AsciiChem::ParseError => e
+      warn "Parse error: #{e.message}"
+      exit 1
+    end
+
     private
 
     def read_source
