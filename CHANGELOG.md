@@ -3,6 +3,21 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- `AsciiChem::Citation` (TODO.impl 44): one dataset-type Relaton
+  bibitem per (substance, source) — the citation track's core
+  contract. Source-specific fields live in per-source profiles
+  (PubChem, Common Chemistry); every identifier rides along as a
+  keyword so citations are machine-checkable. Runtime dependency:
+  relaton-bib (classic model).
+- `Resolver::CommonChemistry` (TODO.impl 40, maintainer sign-off
+  2026-09-13): CAS RN lookups against CAS Common Chemistry. CC BY-NC
+  4.0 posture is enforced in code — the adapter never self-registers;
+  users opt in explicitly, and every result carries the required
+  attribution.
+
 ## [0.23.0] - 2026-09-12
 
 ### Added

@@ -17,11 +17,13 @@ module AsciiChem
         # Declares the source name and registers the adapter (called
         # from the class body — `inherited` fires before the body
         # runs, so it cannot see the subclass configuration).
-        def source_name(name = nil)
+        # `register: false` for opt-in sources (NC-licensed): the
+        # adapter exists but users must register it explicitly.
+        def source_name(name = nil, register: true)
           return @source_name if name.nil?
 
           @source_name = name.to_s
-          AsciiChem::Resolver.register(@source_name, self)
+          AsciiChem::Resolver.register(@source_name, self) if register
         end
 
         def supports(*conventions)
