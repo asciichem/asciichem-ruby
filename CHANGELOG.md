@@ -6,9 +6,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 ## [0.25.0] - 2026-09-14
 
 ### Added
-- CLI \ — resolve a substance and emit the dataset-type Relaton
+- CLI `cite` — resolve a substance and emit the dataset-type Relaton
   bibitem XML (the citation track's user-facing entry point).
-- Cross-engine parsing benchmarks (\,
+- Cross-engine parsing benchmarks (`benchmarks/engines.rb`,
   README with Ruby/TS/Python numbers) and the parsanol investigation
   verdict (compat shim ~6x slower than parslet; not adopted).
 
