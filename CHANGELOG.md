@@ -3,6 +3,15 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.25.0] - 2026-09-14
+
+### Added
+- CLI \ — resolve a substance and emit the dataset-type Relaton
+  bibitem XML (the citation track's user-facing entry point).
+- Cross-engine parsing benchmarks (\,
+  README with Ruby/TS/Python numbers) and the parsanol investigation
+  verdict (compat shim ~6x slower than parslet; not adopted).
+
 ## [0.24.0] - 2026-09-13
 
 ### Added
@@ -426,7 +435,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   `version`.
 - Comprehensive RSpec suite with round-trip conformance.
 
-[Unreleased]: https://github.com/asciichem/asciichem-ruby/compare/v0.24.0...HEAD
+[Unreleased]: https://github.com/asciichem/asciichem-ruby/compare/v0.25.0...HEAD
+[0.25.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.21.0...v0.22.0
