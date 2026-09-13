@@ -119,6 +119,33 @@ module AsciiChem
       exit 3
     end
 
+    desc "cite --cas X | --name X | ...", "Resolve a substance and emit a dataset-type Relaton bibitem (XML)"
+    method_option :cas, type: :string, desc: "CAS registry number"
+    method_option :name, type: :string, desc: "Substance name"
+    method_option :cid, type: :string, desc: "PubChem CID"
+    method_option :inchikey, type: :string, desc: "InChIKey"
+    method_option :smiles, type: :string, desc: "SMILES"
+    method_option :source, type: :string, default: "pubchem", desc: "Resolver source"
+    method_option :refresh, type: :boolean, default: false, desc: "Bypass the cache"
+    def cite
+      convention, value = %i[cas name cid inchikey smiles]
+                          .filter_map { |k| [k, options[k.to_s]] if options[k.to_s] }
+                          .first
+      raise AsciiChem::Error, "give one of --cas/--name/--cid/--inchikey/--smiles" unless value
+
+      convention = { cas: "cas", name: "name", cid: "pubchem-cid",
+                     inchikey: "inchikey", smiles: "smiles" }.fetch(convention)
+      substance = AsciiChem::Resolver[options[:source]].new.resolve(
+        value: value, convention: convention, refresh: options[:refresh]
+      )
+      raise AsciiChem::Error, "#{options[:source]} does not know #{value.inspect}" unless substance
+
+      puts AsciiChem::Citation.to_xml(substance)
+    rescue AsciiChem::Error => e
+      warn "Cite error: #{e.message}"
+      exit 4
+    end
+
     desc "validate -i INPUT", "Offline identifier validation"
     method_option :input, aliases: "-i", type: :string, required: true
     def validate

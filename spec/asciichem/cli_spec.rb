@@ -226,4 +226,23 @@ end
         .to raise_error(SystemExit)
     end
   end
+
+  describe "cite" do
+    it "emits a dataset bibitem from a seeded cache entry" do
+      require "asciichem/resolver"
+      require "tmpdir"
+      cache = AsciiChem::Resolver::Cache.new(dir: File.join(Dir.tmpdir, "asciichem-cite-cli-#{rand(1e9)}"))
+      fixture = File.read(File.expand_path("fixtures/resolver/pubchem/aspirin.json",
+                                           File.dirname(__dir__)))
+      fetcher = Struct.new(:body) do
+        def get(_url) = body
+      end.new(fixture)
+      AsciiChem::Resolver[:pubchem].new.resolve(value: "aspirin", convention: "name",
+                                                fetch: fetcher, cache: cache)
+      allow(AsciiChem::Resolver::Cache).to receive(:default).and_return(cache)
+      out = run("cite", "--name", "aspirin")
+      expect(out).to include('type="dataset"')
+      expect(out).to include("PubChem CID 2244")
+    end
+  end
 end
