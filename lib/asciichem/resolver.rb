@@ -17,6 +17,7 @@ module AsciiChem
     autoload :Adapter, "asciichem/resolver/adapter"
     autoload :Cache, "asciichem/resolver/cache"
     autoload :PubChem, "asciichem/resolver/pubchem"
+    autoload :CommonChemistry, "asciichem/resolver/common_chemistry"
     autoload :Substance, "asciichem/resolver/substance"
 
     # Raised when sources disagree on substance identity (cross-check
@@ -69,9 +70,10 @@ module AsciiChem
       end
     end
 
-    # Open, permissive sources register eagerly; opt-in NC sources do
-    # not self-register (registered manually after sign-off).
-    adapters # ensure the registry exists before adapter files load
+    # Open, permissive sources register eagerly. CommonChemistry is
+    # CC BY-NC 4.0: it loads (autoload) but never self-registers —
+    # users opt in explicitly via Resolver.register.
+    adapters
     constants.each { |c| const_get(c) unless c == :Conflict }
   end
 end
