@@ -38,7 +38,7 @@ module AsciiChem
         molecule.labels.each { |l| parts << %(@label("#{l.value}")) if l.value }
         molecule.properties.each { |p| parts << %(@#{p.title}("#{p.value}")) if p.title && p.value }
         molecule.metadata.each { |m| parts << %(@meta("#{m.name}","#{m.content}")) }
-        parts.empty? ? "" : " #{parts.join}"
+        parts.empty? ? "" : " #{parts.join(" ")}"
       end
 
       def visit_atom(atom)

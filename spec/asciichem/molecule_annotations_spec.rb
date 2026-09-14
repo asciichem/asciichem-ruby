@@ -92,13 +92,14 @@ RSpec.describe "molecule annotation syntax" do
       expect(mol.identifiers.first.convention).to eq("inchi")
     end
 
-    it "round-trips multiple annotations through Text" do
+    it "canonicalises multiple annotations with spaces (TS/Python parity)" do
       src = 'H_2O @name("Water")@inchi("InChI=1/H2O/h1H2")'
-      expect(AsciiChem.parse(src).to_text).to eq(src)
+      expect(AsciiChem.parse(src).to_text)
+        .to eq('H_2O @name("Water") @inchi("InChI=1/H2O/h1H2")')
     end
 
     it "round-trips multiple annotations through CML" do
-      src = 'H_2O @name("Water")@smiles("O")'
+      src = 'H_2O @name("Water") @smiles("O")'
       result = AsciiChem::Cml.parse(AsciiChem.parse(src).to_cml).to_text
       expect(result).to eq(src)
     end
