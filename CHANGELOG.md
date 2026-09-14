@@ -3,7 +3,7 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.28.0] - 2026-09-14
 
 ### Changed
 - Embedded-math MathML now crosses through the mml gem
