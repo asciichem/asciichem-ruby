@@ -186,7 +186,7 @@ module AsciiChem
       def visit_electron_configuration(ec)
         mrow = el("mrow")
         ec.orbitals.each_with_index do |(orbital, occupancy), index|
-          mrow.add_child(mo("&#xA0;")) if index.positive?
+          mrow.add_child(mo(" ")) if index.positive?
           msup = el("msup")
           msup.add_child(mi(orbital))
           msup.add_child(mn(occupancy))
@@ -338,25 +338,21 @@ module AsciiChem
       # Render a reaction-condition string. The condition is captured
       # as raw text by the grammar, but chemists expect `_N` and `^N`
       # patterns to render as proper sub/superscripts. We parse the
-      # condition as AsciiChem and use its MathML output. If the parse
-      # fails (e.g. the condition is free-form prose), fall back to
-      # plain <mtext>.
+      # condition as AsciiChem and render it in-place with this same
+      # formatter (no serialize/reparse round-trip, so no stray xmlns
+      # or reset indentation). If the parse fails (e.g. the condition
+      # is free-form prose), fall back to plain <mtext>.
       def render_condition(text)
         return mtext("") if text.nil? || text.empty?
 
         begin
-          inner = AsciiChem.parse(text).to_mathml
-          parsed = Nokogiri::XML(inner)
-          math = parsed.at_xpath("//m:math", m: MATHML_NS)
-          if math
-            mrow = el("mrow")
-            math.children.each { |c| mrow.add_child(c.dup) }
-            return mrow
-          end
+          formula = AsciiChem.parse(text)
+          mrow = el("mrow")
+          formula.nodes.each { |n| mrow.add_child(render_node(n)) }
+          mrow
         rescue AsciiChem::ParseError, AsciiChem::Error
-          # fall through to plain text
+          mtext(text)
         end
-        mtext(text)
       end
 
       def wrap_in_sub(base, sub)

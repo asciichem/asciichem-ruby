@@ -18,6 +18,7 @@ module AsciiChem
     autoload :ElementValidationCheck, "asciichem/linter/element_validation_check"
     autoload :IdentifierConsistencyCheck, "asciichem/linter/identifier_consistency_check"
     autoload :IdentifierFormatCheck, "asciichem/linter/identifier_format_check"
+    autoload :IdentityCrossCheck, "asciichem/linter/identity_cross_check"
     autoload :Diagnostic, "asciichem/linter/diagnostic"
     autoload :IsotopeSanityCheck, "asciichem/linter/isotope_sanity_check"
     autoload :Registry, "asciichem/linter/registry"

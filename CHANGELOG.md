@@ -3,6 +3,28 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Local InChI identity engine (TODO.impl 48 / TODO.v2 10): opt-in
+  `AsciiChem::Inchi` abstraction over the IUPAC `inchi-1` binary
+  (never reimplemented). `EngineMissingError` carries install
+  guidance. `IdentityCrossCheck` linter compares annotated
+  `@inchi`/`@inchikey` against the drawn structure (error with
+  engine, one guidance warning without). CLI: `asciichem identity`.
+- L2 MathML golden conformance: corpus suite pinned against the
+  reference goldens; report claims the level.
+
+### Fixed
+- Electron-configuration MathML separator is a real U+00A0 (was a
+  double-escaped entity artifact).
+- Reaction conditions render in-place through the same MathML
+  formatter (was serialize → reparse → graft, which leaked xmlns and
+  reset indentation).
+- Molecule stereo markers (`(R)-`, `(alpha)-`, …) survive the v1
+  wire form (additive optional `stereo` field; paired with
+  asciichem-model#13).
+
 ## [0.26.0] - 2026-09-14
 
 ### Added
