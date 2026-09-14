@@ -3,7 +3,7 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.26.0] - 2026-09-14
 
 ### Added
 - The cite syntax (TODO.impl 45): `@cite("pubchem")` on a molecule
@@ -450,7 +450,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   `version`.
 - Comprehensive RSpec suite with round-trip conformance.
 
-[Unreleased]: https://github.com/asciichem/asciichem-ruby/compare/v0.25.0...HEAD
+[Unreleased]: https://github.com/asciichem/asciichem-ruby/compare/v0.26.0...HEAD
+[0.26.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.22.0...v0.23.0
