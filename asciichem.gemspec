@@ -36,6 +36,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "chemicalml", "~> 0.3.0"
   spec.add_dependency "elkrb", "~> 1.0"
   spec.add_dependency "lutaml-model", ">= 0.8", "< 2"
+  spec.add_dependency "mml", "~> 2.3"
   spec.add_dependency "nokogiri", "~> 1.16"
   spec.add_dependency "parslet", "~> 2.0"
   spec.add_dependency "relaton-bib", ">= 0.1", "< 2"

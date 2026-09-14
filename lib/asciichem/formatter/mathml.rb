@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "nokogiri"
+require "mml"
 
 module AsciiChem
   module Formatter
@@ -196,17 +197,27 @@ module AsciiChem
       end
 
       def visit_embedded_math(em)
-        # Strip the outer <math> wrapper so the embedded fragment slots
-        # into our surrounding <mrow>.
-        fragment = em.formula.to_mathml
-        parsed = Nokogiri::XML(fragment)
-        math = parsed.at_xpath("//m:math", m: MATHML_NS)
-        return el("mrow") unless math
-
-        # Detach children into a fresh <mrow>.
+        # Embedded math crosses through the mml gem in both directions:
+        # Plurimath's MathML string is parsed into a typed Mml::V3
+        # graph (the MathML contract model), and each top-level child
+        # is re-serialized by the framework before grafting — never
+        # ad-hoc xpath surgery on the string.
+        math = Mml.parse(em.formula.to_mathml, version: 3)
         mrow = el("mrow")
-        math.children.each { |c| mrow.add_child(c.dup) }
+        math.element_order.each do |entry|
+          next unless entry.respond_to?(:name)
+
+          attr_name = xml_element_attribute(math.class, entry.name)
+          next unless attr_name
+
+          Array(math.public_send(attr_name)).each do |child|
+            fragment = Nokogiri::XML::DocumentFragment.parse(child.to_xml)
+            fragment.children.each { |node| mrow.add_child(node) }
+          end
+        end
         mrow
+      rescue Mml::Error, Lutaml::Model::Error, Nokogiri::XML::SyntaxError
+        el("mrow")
       end
 
       def visit_text(text)
@@ -308,6 +319,14 @@ module AsciiChem
       end
 
       private
+
+      # Symbol of the model attribute an XML child element name maps
+      # to on a Mml class (e.g. "mstyle" => :mstyle_value), via the
+      # lutaml-model XML mapping — no name-munging.
+      def xml_element_attribute(klass, element_name)
+        rule = klass.mappings_for(:xml).elements.find { |r| r.name == element_name }
+        rule&.to
+      end
 
       def render_node(node)
         node.accept(self)
