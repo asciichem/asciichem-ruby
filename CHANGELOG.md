@@ -3,6 +3,21 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- The cite syntax (TODO.impl 45): `@cite("pubchem")` on a molecule
+  declares which source to cite it from; `Citation.for_molecule`
+  resolves the molecule's identifiers (registry keys preferred over
+  names) and emits one bibitem per cited source. Zero grammar
+  changes — `@cite` rides the property-annotation form by design.
+
+### Fixed
+- Molecule annotations now canonicalise with spaces between them
+  (`@name("Water") @cas("...")`), matching the TypeScript and Python
+  canonicalisers; Ruby was the outlier joining them without a
+  separator.
+
 ## [0.25.0] - 2026-09-14
 
 ### Added

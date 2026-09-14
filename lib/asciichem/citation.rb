@@ -81,6 +81,57 @@ module AsciiChem
         bibitem(substance).to_xml
       end
 
+      # The cite syntax (TODO.impl 45): a molecule annotated
+      # `@cite("pubchem")` (a property annotation — the grammar needs
+      # no extension) declares *which source to cite it from*. This
+      # resolves the molecule's identifiers and emits one bibitem per
+      # cited source. Returns [[source, bibitem]] pairs; empty when the
+      # molecule has no @cite annotations.
+      #
+      #   AsciiChem.parse('H_2O @name("water") @cite("pubchem")')
+      #   AsciiChem::Citation.for_molecule(formula.nodes.first).map(&:last)
+      def for_molecule(molecule, cache: nil, fetch: nil)
+        sources = citation_sources(molecule)
+        return [] if sources.empty?
+
+        convention, value = lookup_key(molecule)
+        unless value
+          raise Error,
+                "molecule carries no resolvable identifier for citation " \
+                "(annotate @cas/@inchikey/@smiles or @name)"
+        end
+
+        sources.filter_map do |source|
+          substance = AsciiChem::Resolver[source].new.resolve(
+            value: value, convention: convention, cache: cache, fetch: fetch)
+          next unless substance
+
+          [source, bibitem(substance)]
+        end
+      end
+
+      private
+
+      # The property annotation whose title is "cite": values are the
+      # source names to cite from.
+      def citation_sources(molecule)
+        molecule.properties
+                .select { |p| p.title == "cite" && p.value }
+                .map(&:value)
+      end
+
+      # First identifier the resolver can look up by, in preference
+      # order: unambiguous registry keys before names.
+      def lookup_key(molecule)
+        identifier = molecule.identifiers.find { |i| %w[cas inchikey pubchem-cid].include?(i.convention) }
+        return [identifier.convention, identifier.value] if identifier
+
+        name = molecule.names.first
+        return ["name", name.content] if name
+
+        nil
+      end
+
       private
 
       def title_base(substance)

@@ -55,4 +55,58 @@ RSpec.describe AsciiChem::Citation do
     expect { described_class.bibitem(bare) }
       .to raise_error(AsciiChem::Error, /no provenance/)
   end
+
+  describe ".for_molecule (the cite syntax)" do
+    let(:cache) { AsciiChem::Resolver::Cache.new(dir: "/tmp/asciichem-cite-syntax-#{rand(1e9)}") }
+    let(:fetch) do
+      Struct.new(:body).new(File.read(File.expand_path("../fixtures/resolver/pubchem/aspirin.json", __dir__)))
+    end
+
+    def seeded_fetch(body)
+      Struct.new(:body).new(body)
+    end
+
+    it "parses @cite as a property annotation and round-trips it (zero grammar change)" do
+      molecule = AsciiChem.parse('H_2O @name("water") @cite("pubchem")').nodes.first
+      expect(molecule.to_text).to eq('H_2O @name("water") @cite("pubchem")')
+      expect(molecule.properties.last.title).to eq("cite")
+      expect(molecule.properties.last.value).to eq("pubchem")
+    end
+
+    it "resolves and emits one bibitem per cited source" do
+      body = File.read(File.expand_path("../fixtures/resolver/pubchem/aspirin.json", __dir__))
+      fetcher = seeded_fetch(body)
+      def fetcher.get(_url) = body
+      molecule = AsciiChem.parse('H_2O @name("aspirin") @cite("pubchem")').nodes.first
+      pairs = described_class.for_molecule(molecule, cache: cache, fetch: fetcher)
+      expect(pairs.length).to eq(1)
+      source, item = pairs.first
+      expect(source).to eq("pubchem")
+      expect(item.to_xml).to include("PubChem CID 2244")
+    end
+
+    it "prefers registry identifiers over names for lookup" do
+      captured = []
+      fetcher = Struct.new(:captured) do
+        def get(url)
+          captured << url
+          nil
+        end
+      end.new(captured)
+      molecule = AsciiChem.parse('H_2O @cas("50-78-2") @name("x") @cite("pubchem")').nodes.first
+      described_class.for_molecule(molecule, cache: cache, fetch: fetcher)
+      expect(captured.last).to include("/compound/name/50-78-2/")
+    end
+
+    it "returns [] when there are no @cite annotations" do
+      molecule = AsciiChem.parse("H_2O @cas(\"50-78-2\")").nodes.first
+      expect(described_class.for_molecule(molecule)).to eq([])
+    end
+
+    it "raises an actionable error when nothing identifies the molecule" do
+      molecule = AsciiChem.parse('H_2O @cite("pubchem")').nodes.first
+      expect { described_class.for_molecule(molecule) }
+        .to raise_error(AsciiChem::Error, /no resolvable identifier/i)
+    end
+  end
 end
