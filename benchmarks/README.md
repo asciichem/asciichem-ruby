@@ -41,6 +41,16 @@ as a drop-in speedup for the reference grammar:
    revalidation against the whole corpus with no measured win to
    justify it yet.
 
-**Verdict: not adopted.** Revisit when Parsanol's native backend can
-be engaged for full grammars and shows measured wins on this
-workload; the shim path is a documented no.
+**Verdict: not adopted yet.** Two corrections to the spike (tracked
+upstream in parsanol-ruby#25):
+
+1. The native-DSL micro-benchmark ran in Parsanol's default `:ruby`
+   mode — the Rust core (`:native`) was never engaged, so the native
+   path is unmeasured, not disproven.
+2. The `SO_4^2-` failure is a candidate upstream bug (`repeat` of a
+   `maybe`-prefixed sequence fails at end-of-input; minimal repro in
+   the issue).
+
+Revisit trigger unchanged: engage the native backend for full
+grammars, fix the repetition-termination bug, and beat parslet on
+this workload — then re-run the corpus against the port.
