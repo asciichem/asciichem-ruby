@@ -3,7 +3,7 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.27.0] - 2026-09-14
 
 ### Added
 - Local InChI identity engine (TODO.impl 48 / TODO.v2 10): opt-in
