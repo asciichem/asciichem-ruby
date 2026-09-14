@@ -6,6 +6,10 @@ RSpec.describe AsciiChem::Linter::IdentifierFormatCheck do
   def identifier_diagnostics(source)
     AsciiChem::Linter.run(AsciiChem.parse(source))
                      .select { |d| d.message.match?(/CAS|InChI|SMILES|identifier/) }
+                     # IdentityCrossCheck also fires on @inchi-annotated
+                     # molecules (its no-engine guidance); isolate the
+                     # format check's own diagnostics.
+                     .reject { |d| d.message.include?("identity cross-check") }
   end
 
   it "auto-registers as :identifier_format" do

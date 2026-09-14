@@ -27,6 +27,7 @@ RSpec.configure do |config|
         "L0" => level(corpus_examples, "schema-valid"),
         "L1" => level(corpus_examples, "via Text"),
         "L3" => level(corpus_examples, "via CML"),
+        "L2" => level(corpus_examples, "MathML golden"),
         "L4" => level(corpus_examples, "linter diagnostics")
       }
     }

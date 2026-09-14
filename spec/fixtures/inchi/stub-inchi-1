@@ -1,0 +1,30 @@
+#!/bin/sh
+# Deterministic stand-in for the IUPAC `inchi-1` binary (offline
+# specs). Emulates the -STDIO -AuxNone -NoLabels -Key contract: reads
+# a V2000 molfile on stdin, writes InChI= and InChIKey= lines to
+# stdout. Keyed on the counts line (line 4) so the spec exercises the
+# real molfile pipe.
+#
+# Known shapes (values verified against PubChem CIDs 2244 and 702):
+#   13 atoms / 13 bonds -> aspirin
+#    3 atoms /  2 bonds -> ethanol
+#   anything else       -> engine failure (exit 1)
+input=$(cat)
+counts=$(printf '%s' "$input" | sed -n '4p')
+atoms=$(printf '%s' "$counts" | cut -c1-3 | tr -d ' ')
+bonds=$(printf '%s' "$counts" | cut -c4-6 | tr -d ' ')
+
+case "${atoms}_${bonds}" in
+  13_13)
+    printf 'InChI=1S/C9H8O4/c1-6(10)13-8-5-3-2-4-7(8)9(11)12/h2-5H,1H3,(H,11,12)\n'
+    printf 'InChIKey=BSYNRYMUTXBXSQ-UHFFFAOYSA-N\n'
+    ;;
+  3_2)
+    printf 'InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3\n'
+    printf 'InChIKey=LFQSCWFLJHTTHZ-UHFFFAOYSA-N\n'
+    ;;
+  *)
+    echo "Error: stub-inchi-1 does not know this structure" >&2
+    exit 1
+    ;;
+esac

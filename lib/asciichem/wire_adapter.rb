@@ -136,8 +136,23 @@ module AsciiChem
           type: "molecule",
           nodes: node.nodes.map { |n| to_wire(n) },
           coefficient: node.coefficient,
+          stereo: stereo_to_wire(node.stereo),
           identifiers: node.identifiers.map { |i| identifier_to_wire(i) }
         )
+      end
+
+      # Stereo markers cross the wire as the v1 enum strings
+      # ("R", "alpha", ...); the model carries symbols.
+      def stereo_to_wire(stereo)
+        return nil unless stereo
+
+        AsciiChem::Model::Molecule::STEREO_TO_LETTER.fetch(stereo)
+      end
+
+      def stereo_from_wire(stereo)
+        return nil unless stereo
+
+        AsciiChem::Model::Molecule::STEREO_LETTERS.fetch(stereo.to_s)
       end
 
       def group_to_wire(node)
@@ -295,6 +310,7 @@ module AsciiChem
         AsciiChem::Model::Molecule.new(
           nodes: Array(wire.nodes).map { |n| from_wire(n) },
           coefficient: wire.coefficient,
+          stereo: stereo_from_wire(wire.stereo),
           identifiers: Array(wire.identifiers).map { |i| identifier_from_wire(i) }
         )
       end

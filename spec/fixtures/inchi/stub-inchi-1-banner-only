@@ -1,0 +1,5 @@
+#!/bin/sh
+# Emulates an engine that runs cleanly (exit 0) but produces no
+# InChI/InChIKey — covers the output-parsing failure branch.
+echo "This is the banner of a successful run with no structure output."
+exit 0

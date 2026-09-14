@@ -150,6 +150,16 @@ RSpec.describe "asciichem-tests conformance corpus" do
     end
   end
 
+  # L2: MathML golden parity — the reference implementation is the
+  # source of the goldens; this block pins them against drift.
+  cases.select { |c| c.key?("mathml") }.each do |fixture|
+    id = fixture.fetch("id")
+
+    it "#{id} matches the reference MathML golden (L2)" do
+      expect(AsciiChem.parse(fixture.fetch("input")).to_mathml).to eq(fixture.fetch("mathml"))
+    end
+  end
+
   cases.select { |c| c.key?("lint") }.each do |fixture|
     id = fixture.fetch("id")
     input = fixture.fetch("input")

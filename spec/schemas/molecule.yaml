@@ -48,6 +48,16 @@ properties:
     type: string
     pattern: "^\\d+$"
     description: Stoichiometric coefficient ("2" in 2H_2O).
+  stereo:
+    type: string
+    enum:
+    - R
+    - S
+    - E
+    - Z
+    - alpha
+    - beta
+    description: Stereochemistry marker ((R)-, (S)-, (E)-, (Z)-, (alpha)-, (beta)-).
   identifiers:
     type: array
     description: Substance identifiers attached to this molecule.

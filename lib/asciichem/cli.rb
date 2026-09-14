@@ -168,6 +168,31 @@ module AsciiChem
       exit 1
     end
 
+    desc "identity -i INPUT", "Derive InChI/InChIKey locally from the structure (offline; requires an InChI engine)"
+    method_option :input, aliases: "-i", type: :string,
+                           desc: "Source text (or '-' for stdin)"
+    method_option :file, aliases: "-f", type: :string,
+                          desc: "Read source from a file"
+    method_option :from, type: :string, default: "asciichem",
+                        desc: "Input grammar: asciichem|smiles|molfile"
+    method_option :engine_bin, type: :string,
+                               desc: "Path to the inchi-1 binary (overrides the configured engine)"
+    def identity
+      formula = ingest(read_source, options[:from])
+      molecules = molecules_in(formula)
+      unless molecules.length == 1
+        raise AsciiChem::Error, "identity derivation needs exactly one molecule, got #{molecules.length}"
+      end
+
+      engine = options[:engine_bin] ? AsciiChem::Inchi::BinaryEngine.new(bin: options[:engine_bin]) : nil
+      derived = AsciiChem::Inchi.identity_for(molecules.first, engine: engine)
+      puts derived.inchi
+      puts derived.inchikey if derived.inchikey
+    rescue AsciiChem::EngineMissingError, AsciiChem::Error => e
+      warn "Identity error: #{e.message}"
+      exit 5
+    end
+
     private
 
     def read_source
@@ -204,6 +229,19 @@ module AsciiChem
       return formula.nodes.first.to_molfile if format.to_sym == :molfile
 
       AsciiChem::Formatter.render(format.to_sym, formula)
+    end
+
+    # Molecules anywhere at the top level: direct formula nodes plus
+    # reaction terms. Identity derivation needs exactly one molecule.
+    def molecules_in(formula)
+      formula.nodes.flat_map do |node|
+        case node
+        when AsciiChem::Model::Reaction then node.reactants + node.products
+        when AsciiChem::Model::ReactionCascade
+          node.steps.flat_map { |step| step.reactants + step.products }
+        else [node]
+        end
+      end.grep(AsciiChem::Model::Molecule)
     end
 
     def output_lint(diagnostics, format)

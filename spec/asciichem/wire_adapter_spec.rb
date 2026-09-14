@@ -23,7 +23,9 @@ RSpec.describe AsciiChem::WireAdapter do
       "`K_c = 1`",
       '"free text"',
       'H_2O @cas("7732-18-5")',
-      "C1-C-C-C-C-C1"
+      "C1-C-C-C-C-C1",
+      "(R)-C_2H_5OH",
+      "(alpha)-C_6H_12O_6"
     ].each do |source|
       it "round-trips #{source.inspect}" do
         restored = described_class.from_model_json(AsciiChem.parse(source).to_model_json)

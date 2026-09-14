@@ -245,4 +245,30 @@ end
       expect(out).to include("PubChem CID 2244")
     end
   end
+
+  describe "identity" do
+    let(:stub_bin) { File.expand_path("fixtures/inchi/stub-inchi-1", File.dirname(__dir__)) }
+
+    after { AsciiChem::Inchi.engine = nil }
+
+    it "derives InChI and InChIKey via --engine-bin" do
+      out = run("identity", "-i", "CC(=O)OC1=CC=CC=C1C(=O)O", "--from", "smiles",
+                "--engine-bin", stub_bin)
+      expect(out).to eq(
+        "InChI=1S/C9H8O4/c1-6(10)13-8-5-3-2-4-7(8)9(11)12/h2-5H,1H3,(H,11,12)\n" \
+        "BSYNRYMUTXBXSQ-UHFFFAOYSA-N\n"
+      )
+    end
+
+    it "uses the configured engine when --engine-bin is absent" do
+      AsciiChem::Inchi.engine = AsciiChem::Inchi::BinaryEngine.new(bin: stub_bin)
+      out = run("identity", "-i", "CCO", "--from", "smiles")
+      expect(out).to include("LFQSCWFLJHTTHZ-UHFFFAOYSA-N")
+    end
+
+    it "exits 5 with install guidance when no engine is available" do
+      expect { described_class.start(["identity", "-i", "CCO", "--from", "smiles"]) }
+        .to raise_error(SystemExit) { |e| expect(e.status).to eq(5) }
+    end
+  end
 end
