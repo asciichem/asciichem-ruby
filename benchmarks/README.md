@@ -15,6 +15,7 @@ WORKLOAD = ["H_2O", "Ca^2+", "SO_4^2-", "(R)-CH_3CH(OH)COOH",
 |---|---|---|---|
 | Ruby (parslet), 3.4.8 arm64 | 29.1 ms | ~2.9 ms | `bundle exec ruby benchmarks/engines.rb` |
 | Ruby + parse+text | 35.3 ms | ~3.5 ms | round-trip adds the formatter |
+| Ruby (parsanol compat, :ruby), 1.3.13 | 19.9 ms | ~2.0 ms | `benchmarks/parsanol_recheck.rb`, same session as the 11.8 ms parslet baseline below |
 | TypeScript (peggy), Node 24 | 0.19 ms | ~19 µs | `npm run bench` (asciichem-ts) |
 | Python (RD), 3.10 | 3.94 ms | ~394 µs | `python benchmarks/engines.py` (asciichem-py) |
 
@@ -54,3 +55,33 @@ upstream in parsanol-ruby#25):
 Revisit trigger unchanged: engage the native backend for full
 grammars, fix the repetition-termination bug, and beat parslet on
 this workload — then re-run the corpus against the port.
+
+### Re-check (2026-09-14, parsanol 1.3.13)
+
+The upstream "native by default" + RepetitionTag work landed, so the
+revisit trigger was tested (`benchmarks/parsanol_recheck.rb`):
+
+1. **The repetition-termination bug is fixed.** `SO_4^2-` parses and
+   round-trips, and the unmodified grammar passes the entire shared
+   corpus through the `Parsanol::Parslet` compat layer —
+   **221/221** parse/reject/round-trip cases identical to parslet.
+   One divergence surfaced on our side and is fixed in the gem:
+   parsanol's transform delivers cascade tail segments as scalar
+   hashes, and `CascadeBuilder#canonicalise_hash` used `Array(hash)`
+   (which enumerates a Hash instead of wrapping it) — now wraps
+   explicitly, engine-agnostic.
+2. **Perf (compat, :ruby forced):** 19.9 ms vs 11.8 ms per 10-input
+   pass in the same session — **~1.7x slower than parslet** (down
+   from ~6x in the first investigation). Correct but not a win.
+3. **Native still cannot serialize full parslet grammars** — two
+   upstream bugs (reported in parsanol-ruby#25):
+   `native.rb` never loads `native/dynamic` (NameError silently
+   falls back to :ruby), and `Dynamic.register` never increments
+   `@next_id`, so the second lazily-bound rule panics the Rust core
+   with "callback ID 1000000 is already registered".
+
+**Verdict: still not adopted — but one small upstream fix away from
+a meaningful re-measure.** Corpus correctness is already there; the
+native path is the whole point and remains unmeasurable until
+serialization survives a multi-rule grammar.
+

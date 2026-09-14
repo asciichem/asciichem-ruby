@@ -830,10 +830,17 @@ module AsciiChem
 
       def canonicalise_hash(hash)
         first = hash[:first]
-        arrows = Array(hash[:arrow])
-        products = Array(hash[:products])
-        tail = arrows.zip(products)
+        # Wrap, never Array(): Array(hash) on a scalar Hash value
+        # (the shape parsanol's transform delivers) would enumerate
+        # key/value pairs instead of wrapping it.
+        tail = wrap(hash[:arrow]).zip(wrap(hash[:products]))
         [first, tail]
+      end
+
+      def wrap(value)
+        return [] if value.nil?
+
+        value.is_a?(Array) ? value : [value]
       end
     end
 
