@@ -3,6 +3,19 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- Embedded-math MathML now crosses through the mml gem
+  (plurimath/mml) in both directions: Plurimath output is parsed
+  into a typed Mml::V3 graph and re-serialized by the framework
+  before grafting - replacing xpath surgery on the raw string.
+  mml (~> 2.3) is now a direct dependency (previously transitive
+  via plurimath).
+- New spec contract: every emitted MathML (and every shared-corpus
+  golden) parses back through Mml.parse - output is valid per the
+  typed MathML contract model, not just well-formed XML.
+
 ## [0.27.0] - 2026-09-14
 
 ### Added
@@ -505,3 +518,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 [0.3.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/asciichem/asciichem-ruby/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/asciichem/asciichem-ruby/releases/tag/v0.1.0
+    ### Changed
+- Embedded-math MathML now crosses through the mml gem (plurimath/mml)
+  in both directions: Plurimath output is parsed into a typed
+  Mml::V3 graph and re-serialized by the framework before grafting —
+  replacing xpath surgery on the raw string. mml (~> 2.3) is now a
+  direct dependency (previously transitive via plurimath).
+- New spec contract: every emitted MathML (and every shared-corpus
+  golden) parses back through Mml.parse — output is valid per the
+  typed MathML contract model, not just well-formed XML.
+
