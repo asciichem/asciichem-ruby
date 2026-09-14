@@ -3,6 +3,15 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.28.1] - 2026-09-14
+
+### Fixed
+- Cascade transform is engine-agnostic: CascadeBuilder#canonicalise_hash
+  wraps scalar arrow/products values instead of Array(hash), which
+  enumerates a Hash. The parsanol 1.3.13 re-check (221/221 corpus-green
+  through the unmodified grammar) surfaced the shape; parslet is
+  unaffected. Spec'd for all three engine shapes.
+
 ## [0.28.0] - 2026-09-14
 
 ### Changed
