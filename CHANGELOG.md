@@ -3,6 +3,13 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.28.2] - 2026-09-14
+
+### Fixed
+- Conformance reports now name the corpus version CI actually ran
+  (derived from the cloned asciichem-tests tag) instead of a stale
+  default. Pairs with asciichem-tests v0.4.0 (MathML golden suite).
+
 ## [0.28.1] - 2026-09-14
 
 ### Fixed
