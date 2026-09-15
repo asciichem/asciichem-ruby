@@ -16,6 +16,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Clone conformance corpus (asciichem-tests)
         run: git clone --depth 1 https://github.com/asciichem/asciichem-tests.git ../asciichem-tests
+      - name: Record corpus version for the conformance report
+        run: |
+          git -C ../asciichem-tests fetch --depth 1 --tags --quiet
+          echo "ASCIICHEM_CORPUS_VERSION=$(git -C ../asciichem-tests describe --tags --abbrev=0 2>/dev/null || echo main)" >> "$GITHUB_ENV"
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
