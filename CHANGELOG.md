@@ -3,7 +3,7 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.29.0] - 2026-09-15
 
 ### Added
 - Opt-in Parsanol parsing engine (TODO.impl 63/64; parsanol-ruby#25):
