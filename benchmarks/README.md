@@ -85,3 +85,28 @@ a meaningful re-measure.** Corpus correctness is already there; the
 native path is the whole point and remains unmeasurable until
 serialization survives a multi-rule grammar.
 
+### Re-check 3 (2026-09-15, parsanol 1.3.15)
+
+The mode-routing/VM rework landed; native now engages for the full
+grammar (`PARSANOL_MODE=native` in `benchmarks/parsanol_recheck.rb`,
+fork-per-case gate so Rust aborts are reported, not fatal):
+
+- **219/221 corpus cases green under native** — every accept case
+  except the two embedded-math inputs, and all 51 rejects clean
+- **3.2x faster than parslet** on the workload (4.28 ms vs 13.64 ms
+  per 10-input pass, same session, ±3.0%)
+- The two failures are the embedded-math grammar paths hitting
+  `serialize_dynamic` — the still-unfixed `@next_id` collision from
+  the re-check above (manifests as the Rust panic or a Ruby-side
+  `NoMethodError` on the native error path). Upstream thread:
+  parsanol-ruby#25 (third comment).
+- Separately noted upstream: `H2` / `_2O` are accepted under native
+  but rejected under parslet (optimizer Str/Re run-merging semantics;
+  no corpus case covers these spellings today).
+
+**Verdict: one upstream one-liner from adoption evaluation.** With
+`@next_id += 1` fixed, the entire corpus passes under native at
+3x parslet speed — at that point the decision is whether to make the
+engine switchable (opt-in, soft dependency) in the gem.
+
+
