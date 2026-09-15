@@ -104,6 +104,15 @@ fork-per-case gate so Rust aborts are reported, not fatal):
   but rejected under parslet (optimizer Str/Re run-merging semantics;
   no corpus case covers these spellings today).
 
+### Re-check 5 (2026-09-15, parsanol 1.3.17)
+
+The ffi-gem cdylib tier (Rust engine on every runtime) changes
+nothing for us: gate still **221/221**, 4.40 ms/i on the recheck
+workload. The opt-in engine shipped in asciichem 0.29.0 is
+unaffected; `@next_id` remains unfixed upstream but no longer fires
+on corpus inputs. The re-check-3 verdict below is superseded — the
+engine IS switchable and shipped (TODO.impl 64).
+
 **Verdict: one upstream one-liner from adoption evaluation.** With
 `@next_id += 1` fixed, the entire corpus passes under native at
 3x parslet speed — at that point the decision is whether to make the
