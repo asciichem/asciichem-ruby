@@ -4,21 +4,19 @@ module AsciiChem
   class Parser
     attr_reader :text
 
-    # Grammar and Transform instances are stateless and expensive to
-    # construct. Cache them at the class level so repeated parses
-    # avoid the overhead (benchmark: ~15% throughput improvement).
-    GRAMMAR_INSTANCE = Grammar.new
-    TRANSFORM_INSTANCE = Transform.new
-    private_constant :GRAMMAR_INSTANCE, :TRANSFORM_INSTANCE
-
     def initialize(text)
       @text = text.to_s
     end
 
+    # Grammar and Transform instances are stateless and expensive to
+    # construct; each engine memoizes them at the class level so
+    # repeated parses avoid the overhead (benchmark: ~15% throughput
+    # improvement).
     def parse
-      tree = GRAMMAR_INSTANCE.parse(text)
-      TRANSFORM_INSTANCE.apply(tree)
-    rescue Parslet::ParseFailed => e
+      engine = AsciiChem::Engine.current
+      tree = engine.grammar_instance.parse(text)
+      engine.transform_instance.apply(tree)
+    rescue engine.parse_failed => e
       raise AsciiChem::ParseError, format_error(e)
     end
 
