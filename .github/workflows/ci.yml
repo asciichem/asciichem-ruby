@@ -21,7 +21,7 @@ jobs:
           path: .asciichem-tests
       - name: Point the suite at the corpus and record its version
         run: |
-          echo "ASCIICHEM_CORPUS=$(pwd)/.asciichem-tests" >> "$GITHUB_ENV"
+          echo "ASCIICHEM_CORPUS=$(pwd)/.asciichem-tests/corpus/fixtures" >> "$GITHUB_ENV"
           git -C .asciichem-tests fetch --depth 1 --tags --quiet
           echo "ASCIICHEM_CORPUS_VERSION=$(git -C .asciichem-tests describe --tags --abbrev=0 2>/dev/null || echo main)" >> "$GITHUB_ENV"
       - uses: ruby/setup-ruby@v1
