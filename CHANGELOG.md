@@ -3,6 +3,27 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Opt-in Parsanol parsing engine (TODO.impl 63/64; parsanol-ruby#25):
+  `AsciiChem::Engine.use(:parsanol)` runs the SAME grammar and
+  transform (extracted into backend-neutral GrammarRules /
+  TransformRules modules) over Parsanol's Rust-backed
+  parslet-compat layer - the full suite (1981 examples) passes
+  identically under either engine, at ~2.4x parse speed
+  (219 vs 90 i/s on the benchmark workload). Parsanol is a soft
+  dependency (gemspec unchanged); absent gem raises guidance.
+  ASCIICHEM_ENGINE=parsanol selects it for test runs.
+
+### Changed
+- Cascade legs are captured as one :segments repeat (the
+  electron-config pattern) so every engine arrays them; parsanol
+  merges - and overwrites - bare repeated sibling captures,
+  silently dropping legs (reported upstream). Transform
+  canonicaliser consumes the segments shape; spec'd for scalar and
+  array forms.
+
 ## [0.28.2] - 2026-09-14
 
 ### Fixed
