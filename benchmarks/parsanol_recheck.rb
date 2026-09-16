@@ -1,25 +1,30 @@
 # frozen_string_literal: true
 
-# Parsanol re-check (parsanol-ruby 1.3.15, issue-25 thread): runs the
-# UNMODIFIED AsciiChem grammar over the Parsanol engine via the
-# Parslet compat shim, then (1) gates on the shared corpus, (2) gates
-# on the issue-25 EOF repro, (3) measures against the parslet path.
+# Parsanol gate + benchmark against the SHIPPED opt-in engine
+# (asciichem 0.29.0+): AsciiChem::Engine.use(:parsanol) runs the same
+# GrammarRules/TransformRules over Parsanol's Rust-backed compat
+# layer. (1) gates on the shared corpus, forked per case so a Rust
+# panic aborts the child — reported, not fatal; (2) gates on the
+# issue-25 EOF repro; (3) measures against the parslet path
+# (benchmarks/engines.rb).
 #
-# Mode: native by default (PARSOLAN_MODE=native — default routing);
-# PARSANOL_MODE=ruby forces the pure-Ruby engine. As of 1.3.15 the
-# native backend parses 169/170 corpus accepts + all 51 rejects at
-# ~2.3x parslet speed; the single fatal case is embedded-math input,
-# which panics the Rust core on the known @next_id collision
-# (parsanol-ruby#25) — run that one in :ruby until upstream fixes it.
+# Requires the parsanol gem (add to the Gemfile, or point -I at a
+# local checkout):
 #
-# Run from asciichem-ruby/ with the shim dir prepended:
-#   ruby -I /tmp/parsanol_spike -I ../parsanol/parsanol-ruby/lib benchmarks/parsanol_recheck.rb
+#   bundle exec ruby -I ../parsanol/parsanol-ruby/lib benchmarks/parsanol_recheck.rb
+#
+# PARSANOL_MODE=ruby forces Parsanol's pure-Ruby backend (no Rust
+# core) for comparison.
 require "benchmark/ips"
 require "asciichem"
+require "asciichem/engine/parsanol_engine"
 require "json"
 
-puts "parsanol #{Parsanol::VERSION} | parslet-compat Parser=#{Parsanol::Parslet::Parser}"
-puts "AsciiChem::Grammar superclass: #{AsciiChem::Grammar.superclass}"
+AsciiChem::Engine.use(:parsanol)
+
+engine = AsciiChem::Engine.current
+puts "parsanol #{Parsanol::VERSION} | engine: #{engine}"
+puts "grammar superclass: #{engine.grammar.superclass}"
 puts "mode: #{ENV.fetch("PARSANOL_MODE", "native")}"
 
 if ENV.fetch("PARSANOL_MODE", "native") == "ruby"
