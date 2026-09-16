@@ -127,3 +127,44 @@ Reported upstream (parsanol-ruby#25, fourth comment). We stay on
 the shipped engine; users pinning parsanol for speed should prefer
 1.3.16/1.3.17 until the regression is addressed.
 
+### Re-check 7 (2026-09-16, parsanol 1.3.20)
+
+Three upstream issues closed since 1.3.18:
+
+- **#38** (`Dynamic.register` `@next_id` collision panicking the
+  Rust core) — fixed; no panic during full-corpus run.
+- **#37** ("one decode path" throughput regression) — fixed as a
+  side effect of the optimizer acceptance fix in #39; throughput on
+  this grammar is back to and ahead of 1.3.15/16 levels.
+- **#39** (optimizer Str/Re run-merging changed sequence-boundary
+  acceptance) — root-caused to Re-run regex-source concatenation
+  (proven unsafe: `"a|"+"b"` → `"a|b"` accepts `"a"`); Re runs now
+  stay unmerged, Str-run merging stays. Spec-level decision
+  recorded: the optimizer may never alter acceptance.
+
+Validation against 1.3.20:
+
+- Gate **221/221** through the shipped `ParsanolEngine` (fork-per-case,
+  no Rust aborts).
+- Head-to-head vs parslet, same Ruby process (3 runs, ±3-15%):
+  parsanol **2.6x faster** (4.65–5.19 ms/batch vs 12.18–13.65 ms for
+  parslet). Up from the 1.7x under 1.3.18 — the #37 regression is
+  gone.
+- Direct `H2` / `_2O` / `Ca2+` / `H22` / `O2` probe across both
+  parslet and parsanol (native and ruby backends) shows **identical
+  parse outcomes**. The earlier "divergence" framing in re-checks
+  3-6 was a misreading: AsciiChem's `hydrogen_atom` grammar rule
+  intentionally permits bare-digit subscripts after `H` ("lets users
+  write `H2O` instead of `H_2O`" — grammar_rules.rb:228-231) and
+  `isotope_marker` accepts both `^digits` and `_digits`, so `_2O`
+  parses as the isotope of `O` and round-trips as `^2O`. The
+  parsanol optimizer bug in #39 was real and is fixed, but the
+  AsciiChem repro was a misleading example — both engines agree on
+  these inputs because they share the same grammar rules.
+
+**Verdict: shipped engine fully validated.** 2.6x speedup, 100%
+corpus gate, all four reported upstream issues now resolved or
+non-blocking (#36 bare repeated sibling captures remains open but
+is worked around in `ParsanolEngine` via single `.as(...)` capture
+wrapping).
+
