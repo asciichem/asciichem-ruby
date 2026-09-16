@@ -3,7 +3,7 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.29.1] - 2026-09-16
 
 ### Added
 - CLI `convert --engine parslet|parsanol` selects the parsing engine
