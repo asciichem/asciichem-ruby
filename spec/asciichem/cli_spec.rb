@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "spec_helper"
-require "stringio"
-require "asciichem/cli"
+require 'spec_helper'
+require 'stringio'
+require 'asciichem/cli'
 
 RSpec.describe AsciiChem::Cli do
   # Runs the CLI in-process. CLI commands call Kernel#exit even on
@@ -22,253 +22,292 @@ RSpec.describe AsciiChem::Cli do
     $stdout = original
   end
 
-  describe "convert" do
-    it "emits MathML by default" do
-      out = run("convert", "-i", "H_2O")
-      expect(out).to include("<math")
+  describe 'convert' do
+    it 'emits MathML by default' do
+      out = run('convert', '-i', 'H_2O')
+      expect(out).to include('<math')
       expect(out).to include('mathvariant="normal">H<')
     end
 
-    it "honours -t text" do
-      out = run("convert", "-i", "H_2O", "-t", "text")
-      expect(out.strip).to eq("H_2O")
+    it 'honours -t text' do
+      out = run('convert', '-i', 'H_2O', '-t', 'text')
+      expect(out.strip).to eq('H_2O')
     end
 
-    it "honours -t html" do
-      out = run("convert", "-i", "H_2O", "-t", "html")
-      expect(out.strip).to include("H<sub>2</sub>O")
+    it 'honours -t html' do
+      out = run('convert', '-i', 'H_2O', '-t', 'html')
+      expect(out.strip).to include('H<sub>2</sub>O')
     end
 
-    it "honours -t latex" do
-      out = run("convert", "-i", "H_2O", "-t", "latex")
-      expect(out.strip).to eq("\\ce{H2O}")
+    it 'honours -t latex' do
+      out = run('convert', '-i', 'H_2O', '-t', 'latex')
+      expect(out.strip).to eq('\\ce{H2O}')
     end
 
-    it "honours -t svg" do
-      out = run("convert", "-i", "H_2O", "-t", "svg")
-      expect(out).to include("<svg")
+    it 'honours -t svg' do
+      out = run('convert', '-i', 'H_2O', '-t', 'svg')
+      expect(out).to include('<svg')
     end
 
-    it "exits 1 on parse error" do
-      expect { described_class.start(["convert", "-i", "   "]) }
+    it 'exits 1 on parse error' do
+      expect { described_class.start(['convert', '-i', '   ']) }
         .to raise_error(SystemExit) do |e|
           expect(e.status).to eq(1)
         end
     end
 
-    it "exits 2 on unknown format" do
-      expect { described_class.start(["convert", "-i", "H", "-t", "wav"]) }
+    it 'exits 2 on unknown format' do
+      expect { described_class.start(['convert', '-i', 'H', '-t', 'wav']) }
         .to raise_error(SystemExit) do |e|
           expect(e.status).to eq(2)
         end
     end
+
+    it 'converts through the default engine when --engine is parslet' do
+      out = run('convert', '-i', 'H_2O', '-t', 'text', '--engine', 'parslet')
+      expect(out.strip).to eq('H_2O')
+    end
+
+    it 'exits 6 with install guidance for --engine parsanol without the gem' do
+      next if parsanol_loadable?
+
+      expect { described_class.start(['convert', '-i', 'H_2O', '--engine', 'parsanol']) }
+        .to raise_error(SystemExit) do |e|
+          expect(e.status).to eq(6)
+        end
+    end
+
+    it 'converts through the parsanol engine when available' do
+      skip 'parsanol gem not installed' unless parsanol_loadable?
+
+      out = run('convert', '-i', '2H_2 + O_2 -> 2H_2O', '-t', 'text', '--engine', 'parsanol')
+      expect(out.strip).to eq('2H_2 + O_2 -> 2H_2O')
+    end
+
+    it 'exits 6 for an unknown engine name' do
+      expect { described_class.start(['convert', '-i', 'H_2O', '--engine', 'rpmpeg']) }
+        .to raise_error(SystemExit) do |e|
+          expect(e.status).to eq(6)
+        end
+    end
   end
 
-  describe "roundtrip" do
-    it "exits 0 when the input round-trips exactly" do
-      expect { described_class.start(["roundtrip", "-i", "H_2O"]) }
+  describe 'roundtrip' do
+    it 'exits 0 when the input round-trips exactly' do
+      expect { described_class.start(['roundtrip', '-i', 'H_2O']) }
         .to raise_error(SystemExit) do |e|
           expect(e.status).to eq(0)
         end
     end
   end
 
-  describe "version" do
-    it "prints the version" do
-      out = run("version")
+  describe 'version' do
+    it 'prints the version' do
+      out = run('version')
       expect(out.strip).to eq("asciichem #{AsciiChem::VERSION}")
     end
   end
 
-  describe "beyond-formulas constructs through CLI" do
-    it "converts a Crystal to MathML" do
-      out = run("convert", "-i", "crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0)}", "-t", "mathml")
-      expect(out).to include("<math")
-      expect(out).to include("crystal")
+  describe 'beyond-formulas constructs through CLI' do
+    it 'converts a Crystal to MathML' do
+      out = run('convert', '-i', 'crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0)}', '-t', 'mathml')
+      expect(out).to include('<math')
+      expect(out).to include('crystal')
     end
 
-    it "converts a Spectrum to HTML" do
-      out = run("convert", "-i", %(spectrum[nmr](type=1H){1.2: 3H s "CH3"}), "-t", "html")
-      expect(out).to include("asciichem-spectrum")
+    it 'converts a Spectrum to HTML' do
+      out = run('convert', '-i', %(spectrum[nmr](type=1H){1.2: 3H s "CH3"}), '-t', 'html')
+      expect(out).to include('asciichem-spectrum')
     end
 
-    it "converts a Calculation to LaTeX" do
-      out = run("convert", "-i", "calc(b3lyp){energy: -234.5}", "-t", "latex")
-      expect(out).to include("\\text{calc}")
+    it 'converts a Calculation to LaTeX' do
+      out = run('convert', '-i', 'calc(b3lyp){energy: -234.5}', '-t', 'latex')
+      expect(out).to include('\\text{calc}')
     end
 
-    it "converts a ZMatrix to text" do
-      out = run("convert", "-i", "zmatrix{\n  C1\n  H2 C1 1.09\n}", "-t", "text")
-      expect(out).to include("zmatrix")
+    it 'converts a ZMatrix to text' do
+      out = run('convert', '-i', "zmatrix{\n  C1\n  H2 C1 1.09\n}", '-t', 'text')
+      expect(out).to include('zmatrix')
     end
 
-    it "converts a Mechanism to text" do
-      out = run("convert", "-i", "mechanism{\n  step1: A -> B\n}", "-t", "text")
-      expect(out).to include("mechanism")
+    it 'converts a Mechanism to text' do
+      out = run('convert', '-i', "mechanism{\n  step1: A -> B\n}", '-t', 'text')
+      expect(out).to include('mechanism')
     end
 
-    it "lints CrystalSanityCheck errors via CLI" do
-      expect { described_class.start(["lint", "-i", "crystal[x](a=-1){Na@f(0,0,0)}"]) }
+    it 'lints CrystalSanityCheck errors via CLI' do
+      expect { described_class.start(['lint', '-i', 'crystal[x](a=-1){Na@f(0,0,0)}']) }
         .to raise_error(SystemExit) do |e|
           expect(e.status).to eq(1)
         end
     end
 
-    it "lints ZMatrixReferenceCheck errors via CLI" do
-      expect { described_class.start(["lint", "-i", "zmatrix{\n  H1 C2 1.0\n  C2\n}"]) }
+    it 'lints ZMatrixReferenceCheck errors via CLI' do
+      expect { described_class.start(['lint', '-i', "zmatrix{\n  H1 C2 1.0\n  C2\n}"]) }
         .to raise_error(SystemExit) do |e|
           expect(e.status).to eq(1)
         end
     end
 
-    it "round-trips a Crystal through CML via the CLI" do
-      out = run("convert", "-i", "crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0)}", "-t", "cml")
-      expect(out).to include("<cml")
+    it 'round-trips a Crystal through CML via the CLI' do
+      out = run('convert', '-i', 'crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0)}', '-t', 'cml')
+      expect(out).to include('<cml')
       # chemicalml 0.3.0+: Crystal uses native <crystal> wire inside
       # a <molecule>, not the aci: text carrier.
-      expect(out).to include("<crystal")
-      expect(out).to include("spaceGroup=\"Fm-3m\"")
+      expect(out).to include('<crystal')
+      expect(out).to include('spaceGroup="Fm-3m"')
     end
   end
 
-  describe "lint -f json" do
-    it "emits diagnostics as a JSON array" do
-      out = run("lint", "-i", "crystal[x](a=-1){Na@f(0,0,0)}", "-f", "json")
-      require "json"
+  describe 'lint -f json' do
+    it 'emits diagnostics as a JSON array' do
+      out = run('lint', '-i', 'crystal[x](a=-1){Na@f(0,0,0)}', '-f', 'json')
+      require 'json'
       payload = JSON.parse(out)
       expect(payload).to be_an(Array)
-      expect(payload.first["severity"]).to eq("error")
-      expect(payload.first["message"]).to match(/Crystal a must be positive/)
+      expect(payload.first['severity']).to eq('error')
+      expect(payload.first['message']).to match(/Crystal a must be positive/)
     end
 
-    it "emits an empty array when no diagnostics" do
-      out = run("lint", "-i", "H_2O", "-f", "json")
-      require "json"
+    it 'emits an empty array when no diagnostics' do
+      out = run('lint', '-i', 'H_2O', '-f', 'json')
+      require 'json'
       payload = JSON.parse(out)
       expect(payload).to eq([])
     end
   end
 
-describe "convert --from structure grammars" do
-  it "ingests SMILES and renders text" do
-    expect(run("convert", "-i", "CCO", "--from", "smiles", "-t", "text")).to eq("C-C-O\n")
-  end
-
-  it "ingests SMILES and emits the wire form" do
-    out = run("convert", "-i", "c1ccccc1", "--from", "smiles", "-t", "model-json")
-    expect(JSON.parse(out)["nodes"][0]["nodes"][0]["aromatic"]).to be(true)
-  end
-
-  it "ingests SMILES and re-emits canonical SMILES" do
-    expect(run("convert", "-i", "CC(=O)OC1=CC=CC=C1C(=O)O", "--from", "smiles", "-t", "smiles"))
-      .to eq("CC(=O)OC1=CC=CC=C1C(=O)O\n")
-  end
-
-  it "ingests a molfile from a file" do
-    require "tempfile"
-    atom = ->(x, y, sym) do
-      format("%10.4f%10.4f%10.4f %-3s 0  0  0  0  0  0  0  0  0  0  0  0", x, y, 0.0, sym)
-    end
-    bond = ->(a, b) { format("%3d%3d%3d%3d  0  0  0  0  0  0  0", a, b, 1, 0) }
-    file = Tempfile.new(["ethanol", ".mol"])
-    file.write(
-      ["ethanol", "  AsciiChem", "",
-       format("%3d%3d  0  0  0  0  0  0  0  0999 V2000", 3, 2),
-       atom.call(-0.25, 0.375, "C"), atom.call(0.4645, -0.0375, "C"),
-       atom.call(1.179, 0.375, "O"),
-       bond.call(1, 2), bond.call(2, 3), "M  END"].join("\n") << "\n"
-    )
-    file.close
-    out = run("convert", "-f", file.path, "--from", "molfile", "-t", "model-json")
-    elements = JSON.parse(out)["nodes"].flat_map do |m|
-      m["nodes"].select { |n| n.is_a?(Hash) && n["type"] == "atom" }.map { |n| n["element"] }
-    end
-    expect(elements).to eq(%w[C C O])
-  ensure
-    file&.unlink
-  end
-
-  it "rejects an unknown --from grammar" do
-    expect { described_class.start(["convert", "-i", "CCO", "--from", "inchi"]) }
-      .to raise_error(SystemExit)
-  end
-end
-
-  describe "resolve and validate" do
-    it "validates identifier annotations offline" do
-      out = run("validate", "-i", %q{H_2O @cas("7732-18-5") @cas("50-7-8")})
-      expect(out).to include("cas")
-      expect(out).to include("ok")
-      expect(out).to include("INVALID")
+  describe 'convert --from structure grammars' do
+    it 'ingests SMILES and renders text' do
+      expect(run('convert', '-i', 'CCO', '--from', 'smiles', '-t', 'text')).to eq("C-C-O\n")
     end
 
-    it "reports when there are no annotations" do
-      expect(run("validate", "-i", "H_2O")).to match(/no identifier annotations/)
+    it 'ingests SMILES and emits the wire form' do
+      out = run('convert', '-i', 'c1ccccc1', '--from', 'smiles', '-t', 'model-json')
+      expect(JSON.parse(out)['nodes'][0]['nodes'][0]['aromatic']).to be(true)
     end
 
-    it "resolves offline from a seeded cache entry" do
-      require "asciichem/resolver"
-      require "tmpdir"
-      cache = AsciiChem::Resolver::Cache.new(dir: File.join(Dir.tmpdir, "asciichem-cli-#{rand(1e9)}"))
-      fixture = File.read(File.expand_path("fixtures/resolver/pubchem/aspirin.json", File.dirname(__dir__)))
-      fetcher = Struct.new(:body) do
-        def get(_url) = body
-      end.new(fixture)
-      AsciiChem::Resolver[:pubchem].new.resolve(value: "aspirin", convention: "name",
-                                                fetch: fetcher, cache: cache)
-      allow(AsciiChem::Resolver::Cache).to receive(:default).and_return(cache)
-      out = run("resolve", "--name", "aspirin", "-t", "text")
-      expect(out).to eq("2-acetyloxybenzoic acid\n")
+    it 'ingests SMILES and re-emits canonical SMILES' do
+      expect(run('convert', '-i', 'CC(=O)OC1=CC=CC=C1C(=O)O', '--from', 'smiles', '-t', 'smiles'))
+        .to eq("CC(=O)OC1=CC=CC=C1C(=O)O\n")
     end
 
-    it "exits with an actionable error for unknown sources" do
-      expect { described_class.start(["resolve", "--name", "x", "--source", "nope"]) }
+    it 'ingests a molfile from a file' do
+      require 'tempfile'
+      atom = lambda do |x, y, sym|
+        format('%10.4f%10.4f%10.4f %-3s 0  0  0  0  0  0  0  0  0  0  0  0', x, y, 0.0, sym)
+      end
+      bond = ->(a, b) { format('%3d%3d%3d%3d  0  0  0  0  0  0  0', a, b, 1, 0) }
+      file = Tempfile.new(['ethanol', '.mol'])
+      file.write(
+        ['ethanol', '  AsciiChem', '',
+         format('%3d%3d  0  0  0  0  0  0  0  0999 V2000', 3, 2),
+         atom.call(-0.25, 0.375, 'C'), atom.call(0.4645, -0.0375, 'C'),
+         atom.call(1.179, 0.375, 'O'),
+         bond.call(1, 2), bond.call(2, 3), 'M  END'].join("\n") << "\n"
+      )
+      file.close
+      out = run('convert', '-f', file.path, '--from', 'molfile', '-t', 'model-json')
+      elements = JSON.parse(out)['nodes'].flat_map do |m|
+        m['nodes'].select { |n| n.is_a?(Hash) && n['type'] == 'atom' }.map { |n| n['element'] }
+      end
+      expect(elements).to eq(%w[C C O])
+    ensure
+      file&.unlink
+    end
+
+    it 'rejects an unknown --from grammar' do
+      expect { described_class.start(['convert', '-i', 'CCO', '--from', 'inchi']) }
         .to raise_error(SystemExit)
     end
   end
 
-  describe "cite" do
-    it "emits a dataset bibitem from a seeded cache entry" do
-      require "asciichem/resolver"
-      require "tmpdir"
+  describe 'resolve and validate' do
+    it 'validates identifier annotations offline' do
+      out = run('validate', '-i', 'H_2O @cas("7732-18-5") @cas("50-7-8")')
+      expect(out).to include('cas')
+      expect(out).to include('ok')
+      expect(out).to include('INVALID')
+    end
+
+    it 'reports when there are no annotations' do
+      expect(run('validate', '-i', 'H_2O')).to match(/no identifier annotations/)
+    end
+
+    it 'resolves offline from a seeded cache entry' do
+      require 'asciichem/resolver'
+      require 'tmpdir'
+      cache = AsciiChem::Resolver::Cache.new(dir: File.join(Dir.tmpdir, "asciichem-cli-#{rand(1e9)}"))
+      fixture = File.read(File.expand_path('fixtures/resolver/pubchem/aspirin.json', File.dirname(__dir__)))
+      fetcher = Struct.new(:body) do
+        def get(_url) = body
+      end.new(fixture)
+      AsciiChem::Resolver[:pubchem].new.resolve(value: 'aspirin', convention: 'name',
+                                                fetch: fetcher, cache: cache)
+      allow(AsciiChem::Resolver::Cache).to receive(:default).and_return(cache)
+      out = run('resolve', '--name', 'aspirin', '-t', 'text')
+      expect(out).to eq("2-acetyloxybenzoic acid\n")
+    end
+
+    it 'exits with an actionable error for unknown sources' do
+      expect { described_class.start(['resolve', '--name', 'x', '--source', 'nope']) }
+        .to raise_error(SystemExit)
+    end
+  end
+
+  describe 'cite' do
+    it 'emits a dataset bibitem from a seeded cache entry' do
+      require 'asciichem/resolver'
+      require 'tmpdir'
       cache = AsciiChem::Resolver::Cache.new(dir: File.join(Dir.tmpdir, "asciichem-cite-cli-#{rand(1e9)}"))
-      fixture = File.read(File.expand_path("fixtures/resolver/pubchem/aspirin.json",
+      fixture = File.read(File.expand_path('fixtures/resolver/pubchem/aspirin.json',
                                            File.dirname(__dir__)))
       fetcher = Struct.new(:body) do
         def get(_url) = body
       end.new(fixture)
-      AsciiChem::Resolver[:pubchem].new.resolve(value: "aspirin", convention: "name",
+      AsciiChem::Resolver[:pubchem].new.resolve(value: 'aspirin', convention: 'name',
                                                 fetch: fetcher, cache: cache)
       allow(AsciiChem::Resolver::Cache).to receive(:default).and_return(cache)
-      out = run("cite", "--name", "aspirin")
+      out = run('cite', '--name', 'aspirin')
       expect(out).to include('type="dataset"')
-      expect(out).to include("PubChem CID 2244")
+      expect(out).to include('PubChem CID 2244')
     end
   end
 
-  describe "identity" do
-    let(:stub_bin) { File.expand_path("fixtures/inchi/stub-inchi-1", File.dirname(__dir__)) }
+  describe 'identity' do
+    let(:stub_bin) { File.expand_path('fixtures/inchi/stub-inchi-1', File.dirname(__dir__)) }
 
     after { AsciiChem::Inchi.engine = nil }
 
-    it "derives InChI and InChIKey via --engine-bin" do
-      out = run("identity", "-i", "CC(=O)OC1=CC=CC=C1C(=O)O", "--from", "smiles",
-                "--engine-bin", stub_bin)
+    it 'derives InChI and InChIKey via --engine-bin' do
+      out = run('identity', '-i', 'CC(=O)OC1=CC=CC=C1C(=O)O', '--from', 'smiles',
+                '--engine-bin', stub_bin)
       expect(out).to eq(
         "InChI=1S/C9H8O4/c1-6(10)13-8-5-3-2-4-7(8)9(11)12/h2-5H,1H3,(H,11,12)\n" \
         "BSYNRYMUTXBXSQ-UHFFFAOYSA-N\n"
       )
     end
 
-    it "uses the configured engine when --engine-bin is absent" do
+    it 'uses the configured engine when --engine-bin is absent' do
       AsciiChem::Inchi.engine = AsciiChem::Inchi::BinaryEngine.new(bin: stub_bin)
-      out = run("identity", "-i", "CCO", "--from", "smiles")
-      expect(out).to include("LFQSCWFLJHTTHZ-UHFFFAOYSA-N")
+      out = run('identity', '-i', 'CCO', '--from', 'smiles')
+      expect(out).to include('LFQSCWFLJHTTHZ-UHFFFAOYSA-N')
     end
 
-    it "exits 5 with install guidance when no engine is available" do
-      expect { described_class.start(["identity", "-i", "CCO", "--from", "smiles"]) }
+    it 'exits 5 with install guidance when no engine is available' do
+      expect { described_class.start(['identity', '-i', 'CCO', '--from', 'smiles']) }
         .to raise_error(SystemExit) { |e| expect(e.status).to eq(5) }
+    end
+  end
+
+  private
+
+  def parsanol_loadable?
+    @parsanol_loadable ||= begin
+      require 'parsanol/parslet'
+      true
+    rescue LoadError
+      false
     end
   end
 end
