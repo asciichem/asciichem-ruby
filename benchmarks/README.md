@@ -113,9 +113,17 @@ unaffected; `@next_id` remains unfixed upstream but no longer fires
 on corpus inputs. The re-check-3 verdict below is superseded — the
 engine IS switchable and shipped (TODO.impl 64).
 
-**Verdict: one upstream one-liner from adoption evaluation.** With
-`@next_id += 1` fixed, the entire corpus passes under native at
-3x parslet speed — at that point the decision is whether to make the
-engine switchable (opt-in, soft dependency) in the gem.
+**Verdict: superseded — the engine IS switchable and shipped**
+(asciichem 0.29.0, TODO.impl 64).
 
+### Re-check 6 (2026-09-16, parsanol 1.3.18)
+
+Gate still **221/221** through the shipped engine, but the "one
+decode path" rework **regressed compat-layer throughput ~60%** for
+this grammar: 7.2 ms/batch (138 i/s) vs 4.3-4.6 ms on 1.3.15/16,
+with the parslet control stable across sessions (11-14 ms
+throughout). The `H2`/`_2O` acceptance divergence also persists.
+Reported upstream (parsanol-ruby#25, fourth comment). We stay on
+the shipped engine; users pinning parsanol for speed should prefer
+1.3.16/1.3.17 until the regression is addressed.
 
