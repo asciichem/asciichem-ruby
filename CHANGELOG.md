@@ -3,6 +3,14 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- CLI `convert --engine parslet|parsanol` selects the parsing engine
+  per invocation (parslet stays the default); absent parsanol gem
+  exits 6 with install guidance. The ASCIICHEM_ENGINE env var keeps
+  working for programmatic selection.
+
 ## [0.29.0] - 2026-09-15
 
 ### Added
