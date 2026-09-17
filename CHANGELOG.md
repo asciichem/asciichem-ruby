@@ -3,6 +3,18 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.29.2] - 2026-09-17
+
+### Changed
+- `relaton-bib` constraint widened to `>= 0.1, < 3`: asciichem now
+  co-resolves with current metanorma gems (metanorma-standoc and
+  friends require relaton-bib 2). The citation track speaks both
+  major lines through a single `Citation::RelatonApi` seam —
+  relaton-bib 1 (`RelatonBib`) and relaton-bib 2
+  (`Relaton::Bib` typed models) both build and serialize the
+  dataset-type bibitems; profile data is version-independent.
+- nil resolver links no longer emit an empty `<uri>` element.
+
 ## [0.29.1] - 2026-09-16
 
 ### Added
