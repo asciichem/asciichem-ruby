@@ -39,7 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "mml", "~> 2.3"
   spec.add_dependency "nokogiri", "~> 1.16"
   spec.add_dependency "parslet", "~> 2.0"
-  spec.add_dependency "relaton-bib", ">= 0.1", "< 2"
+  spec.add_dependency "relaton-bib", ">= 0.1", "< 3"
   spec.add_dependency "plurimath", "~> 0.8"
   spec.add_dependency "thor", "~> 1.3"
 
