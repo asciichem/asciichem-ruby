@@ -34,6 +34,15 @@ jobs:
         with:
           ruby-version: "3.4"
           bundler-cache: true
+      # CI never pushes to git (read-only contents). `rake release`
+      # attempts `git push origin main` after publishing unless the
+      # version tag already exists locally — bundler then prints
+      # "Tag vX has already been created" and skips its git stage
+      # entirely (this is how 0.29.0/0.29.1 released). Pre-create the
+      # tag so the gem push is the only remote operation; tags on the
+      # remote remain the maintainer's.
+      - name: Pre-create the release tag (skips rake's git stage)
+        run: git tag "v${{ inputs.version }}"
       # Builds and pushes using the GitHub OIDC identity — no API keys.
       - uses: rubygems/release-gem@v1
       - name: Summary
