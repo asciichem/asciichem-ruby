@@ -168,3 +168,23 @@ non-blocking (#36 bare repeated sibling captures remains open but
 is worked around in `ParsanolEngine` via single `.as(...)` capture
 wrapping).
 
+
+### Re-check 8 (2026-09-17, parsanol 1.3.27)
+
+All four upstream issues we filed are now closed (#36-#39; seven
+releases since 1.3.20). Validation:
+
+- Gate **221/221** through the shipped `ParsanolEngine`.
+- **#36 verified fixed at the source**: the bare-repeated-sibling
+  repro (`A->B->C`) now returns parslet's array-of-segment-hashes —
+  every match preserved. Our `split_merged_formula` seam in
+  `ParsanolEngine` is therefore a compatibility no-op on current
+  parsanol (it still normalizes the merged-hash shape for older
+  parsanol lines, which the opt-in floor allows).
+- **Perf: ratio-only this time.** The machine ran at load ~45
+  during measurement (parallel spec suites in other sessions), so
+  absolute numbers are meaningless — the parslet control itself
+  measured 15-20x slower than its quiet-machine baseline.
+  Same-process ratio: parsanol **~2.1x parslet** (8.3 vs 3.8 i/s,
+  and 8.8 vs 4.5 on the repeat), consistent with the 2.6x
+  quiet-machine figure from re-check 7.
