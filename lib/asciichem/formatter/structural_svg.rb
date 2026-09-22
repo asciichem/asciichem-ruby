@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'nokogiri'
+require 'moxml'
 
 module AsciiChem
   module Formatter
@@ -88,7 +88,8 @@ module AsciiChem
       end
 
       def render_svg(result)
-        doc = Nokogiri::XML::Document.new
+        doc = Moxml.new.create_document
+        doc.add_child(doc.create_declaration('1.0', nil, nil))
         svg = build_svg_root(doc, result)
         bonds_first_then_atoms(result, doc, svg)
         doc.root = svg
@@ -96,14 +97,14 @@ module AsciiChem
       end
 
       def build_svg_root(doc, result)
-        svg = Nokogiri::XML::Element.new('svg', doc)
+        svg = doc.create_element('svg')
         svg['xmlns'] = 'http://www.w3.org/2000/svg'
         svg['width'] = result.width.to_s
         svg['height'] = result.height.to_s
         svg['viewBox'] = "0 0 #{result.width} #{result.height}"
         svg['role'] = 'img'
-        title = Nokogiri::XML::Element.new('title', doc)
-        title.content = title_text(result)
+        title = doc.create_element('title')
+        title.add_child(doc.create_text(title_text(result)))
         svg.add_child(title)
         svg
       end
@@ -136,7 +137,7 @@ module AsciiChem
         end
 
         def render_into(parent)
-          group = Nokogiri::XML::Element.new('g', @doc)
+          group = @doc.create_element('g')
           group.add_child(circle)
           group.add_child(label)
           parent.add_child(group)
@@ -145,7 +146,7 @@ module AsciiChem
         private
 
         def circle
-          el = Nokogiri::XML::Element.new('circle', @doc)
+          el = @doc.create_element('circle')
           el['cx'] = @atom.x.to_s
           el['cy'] = @atom.y.to_s
           el['r'] = StructuralSvg::ATOM_RADIUS.to_s
@@ -156,14 +157,14 @@ module AsciiChem
         end
 
         def label
-          el = Nokogiri::XML::Element.new('text', @doc)
+          el = @doc.create_element('text')
           el['x'] = @atom.x.to_s
           el['y'] = (@atom.y + 4).to_s
           el['text-anchor'] = 'middle'
           el['font-family'] = 'serif'
           el['font-size'] = '14'
           el['fill'] = color
-          el.content = @atom.element
+          el.add_child(@doc.create_text(@atom.element))
           el
         end
 
@@ -176,7 +177,7 @@ module AsciiChem
       # Renders a single bond between two positioned atoms. Dispatches
       # on bond kind via a registry of Procs. Each Proc receives the
       # renderer (for its public line/offset helpers) and returns an
-      # array of Nokogiri elements. Adding a new bond style is a new
+      # array of moxml elements. Adding a new bond style is a new
       # Proc + one registry entry — no edits to existing renderers.
       class BondRenderer
         def initialize(doc, from_atom, to_atom, kind)
@@ -210,7 +211,7 @@ module AsciiChem
         end
 
         def line(start_x, start_y, end_x, end_y)
-          el = Nokogiri::XML::Element.new('line', @doc)
+          el = @doc.create_element('line')
           el['x1'] = start_x.to_s
           el['y1'] = start_y.to_s
           el['x2'] = end_x.to_s
@@ -221,7 +222,7 @@ module AsciiChem
         end
 
         def polygon(points, fill:)
-          el = Nokogiri::XML::Element.new('polygon', @doc)
+          el = @doc.create_element('polygon')
           el['points'] = points.map { |x, y| "#{x},#{y}" }.join(' ')
           el['fill'] = fill
           el
@@ -247,7 +248,7 @@ module AsciiChem
         # -- Strategy registry --------------------------------------
         #
         # Each entry maps a bond kind symbol to a Proc that takes the
-        # renderer and returns an array of Nokogiri elements. Procs
+        # renderer and returns an array of moxml elements. Procs
         # use the public helpers above; nothing reaches into private
         # state.
 

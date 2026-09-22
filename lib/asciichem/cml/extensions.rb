@@ -31,7 +31,7 @@ module AsciiChem
       # extension module that injects aci: attributes or elements
       # calls this instead of inlining its own check.
       def self.ensure_namespace(root)
-        return if root.namespaces.value?(NAMESPACE)
+        return if root.namespaces.any? { |ns| ns.uri == NAMESPACE }
 
         root.add_namespace(PREFIX, NAMESPACE)
       end

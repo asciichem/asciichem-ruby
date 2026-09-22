@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'nokogiri'
+require 'moxml'
 
 module AsciiChem
   module Cml
@@ -46,7 +46,7 @@ module AsciiChem
       def self.inject(xml, groups_by_molecule)
         return xml if groups_by_molecule.empty?
 
-        doc = Nokogiri::XML(xml)
+        doc = Moxml.parse(xml)
         root = doc.root
         Extensions.ensure_namespace(root)
 
@@ -77,7 +77,7 @@ module AsciiChem
       # molecule's ID. Each value is an array of record hashes:
       # `{ multiplicity:, bracket:, atom_ids: }`.
       def self.extract(xml)
-        doc = Nokogiri::XML(xml)
+        doc = Moxml.parse(xml)
         result = Hash.new { |h, k| h[k] = [] }
         doc.xpath('//cml:molecule', cml: Extensions::CML_NS).each do |mol_el|
           group_els = mol_el.xpath("./#{Extensions::PREFIX}:group",

@@ -39,7 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "elkrb", "~> 1.0"
   spec.add_dependency "lutaml-model", "~> 0.8"
   spec.add_dependency "mml", "~> 2.3"
-  spec.add_dependency "nokogiri", "~> 1.18"
+  spec.add_dependency "moxml", "~> 0.5"
   spec.add_dependency "parslet", "~> 2.0"
   spec.add_dependency "relaton-bib", "~> 2.1"
   spec.add_dependency "plurimath", "~> 0.11"
