@@ -208,3 +208,25 @@ Twenty-one releases since re-check 8, all perf-focused upstream
 - Upstream's incremental (`Parsanol::IncrementalSession`) and VM
   memoisation work benefits the compat layer automatically; no
   asciichem-side change needed or made.
+
+## Leptris note (2026-09-22, 1.9.221)
+
+Leptris is moxml's PREFERRED_ADAPTER: when installed above its
+binding floor, lutaml-model's XML layer (our CML wire path) runs on
+it. The version is fully transitive — lutaml-model constrains
+`~> 1.9.178`; asciichem pins nothing. The line moves fast
+(1.9.178 floor -> 1.9.222 within days).
+
+- **Compatibility:** full suite **1985/0** at 1.9.221.1, including
+  every CML round-trip and three-way wire spec. 1.9.222's namespace
+  fix (`xml:space` in the interleaved lane, reported upstream by
+  Canon) does not affect our documents; no action.
+- **Perf on our CML workload:** leptris is ~15-25% behind nokogiri
+  (round-trip 12.7 vs 15.0 i/s; emit 30.6 vs 39.8 i/s; load-noisy
+  ±20%). The workload is dominated by lutaml-model's Ruby-side
+  model building, not the adapter — leptris's speed gains target
+  its native parse lanes (HTML/XQuery per its release notes).
+  Measurement caveat: forcing an adapter for A/B runs requires
+  stubbing `leptris_preferred_available?` — lutaml's
+  `detect_xml_adapter` calls `runtime_default_adapter`, which
+  ignores `default_adapter=`.
