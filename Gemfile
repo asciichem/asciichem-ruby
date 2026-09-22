@@ -5,6 +5,7 @@ source "https://rubygems.org"
 gemspec
 
 group :development do
+  gem "parsanol"
   gem "json_schemer", "~> 2.4"
   gem "benchmark", "~> 0.4"
   gem "benchmark-ips", "~> 2.14", require: false
