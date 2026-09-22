@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'nokogiri'
+require 'moxml'
 
 module AsciiChem
   module Cml
@@ -28,7 +28,7 @@ module AsciiChem
         metadata_map = build_metadata_map(formula)
         return xml if metadata_map.empty?
 
-        doc = Nokogiri::XML(xml)
+        doc = Moxml.parse(xml)
         root = doc.root
         Extensions.ensure_namespace(root)
         apply_metadata(root, metadata_map)
@@ -38,7 +38,7 @@ module AsciiChem
       # Extract aci:meta-* attributes from each <molecule> in the XML.
       # Returns a map `{ molecule_id => { name => content } }`.
       def self.extract(xml)
-        doc = Nokogiri::XML(xml)
+        doc = Moxml.parse(xml)
         result = {}
         doc.xpath('//cml:molecule', cml: Extensions::CML_NS).each do |el|
           id = el['id']
@@ -132,11 +132,11 @@ module AsciiChem
         end
 
         def read_meta_attrs(element)
-          element.attributes.each_with_object({}) do |(name, attr), memo|
-            next unless name.start_with?(META_PREFIX)
+          element.attributes.each_with_object({}) do |attr, memo|
+            next unless attr.name.start_with?(META_PREFIX)
             next unless attr.namespace&.prefix == Extensions::PREFIX
 
-            memo[name.sub(META_PREFIX, '')] = attr.value
+            memo[attr.name.sub(META_PREFIX, '')] = attr.value
           end
         end
       end

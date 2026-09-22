@@ -3,6 +3,19 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- The XML layer migrates from Nokogiri to
+  [moxml](https://github.com/lutaml/moxml) — the adapter layer the
+  rest of the lutaml ecosystem (chemicalml, CML wire, metanorma
+  gems) already uses, so AsciiChem follows the consumer's
+  configured XML backend instead of pinning one. The gemspec
+  dependency changes accordingly (`nokogiri ~> 1.18` out, `moxml
+  ~> 0.5` in). MathML output is byte-identical to 0.29.3: the L2
+  corpus goldens pass unchanged, including empty-element
+  compaction and the `<?xml?>` declaration.
+
 ## [0.29.3] - 2026-09-22
 
 ### Changed

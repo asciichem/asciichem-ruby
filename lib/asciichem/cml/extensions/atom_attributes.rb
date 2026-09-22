@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'nokogiri'
+require 'moxml'
 
 module AsciiChem
   module Cml
@@ -39,9 +39,9 @@ module AsciiChem
         def self.inject(xml, extensions)
           return xml if extensions.empty?
 
-          doc = Nokogiri::XML(xml)
+          doc = Moxml.parse(xml)
           root = doc.root
-          unless root.namespaces.value?(Extensions::NAMESPACE)
+          unless root.namespaces.any? { |ns| ns.uri == Extensions::NAMESPACE }
             root.add_namespace(Extensions::PREFIX, Extensions::NAMESPACE)
           end
 
@@ -62,7 +62,7 @@ module AsciiChem
         # Extract aci: attributes from a CML XML string. Returns a map
         # `{ atom_id => { field: value } }` with Ruby-native types.
         def self.extract(xml)
-          doc = Nokogiri::XML(xml)
+          doc = Moxml.parse(xml)
           result = {}
           doc.xpath('//cml:atom', cml: Extensions::CML_NS).each do |atom_el|
             atom_id = atom_el['id']

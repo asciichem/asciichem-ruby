@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "nokogiri"
+require "moxml"
 
 module AsciiChem
   module Cml
@@ -42,9 +42,9 @@ module AsciiChem
       def self.inject(xml, formula)
         return xml if formula.nodes.empty?
 
-        doc = Nokogiri::XML(xml)
+        doc = Moxml.parse(xml)
         root = doc.root
-        wire_children = root.element_children
+        wire_children = root.children.select(&:element?)
         inserts = build_inserts(formula, wire_children.length)
         return xml if inserts.empty?
 
@@ -54,11 +54,11 @@ module AsciiChem
 
       def self.apply_inserts(root, wire_children, inserts)
         inserts.reverse_each do |wire_index, raw_xml|
-          fragment = Nokogiri::XML::DocumentFragment.parse(raw_xml)
+          nodes = Moxml.new.parse_fragment(raw_xml)
           if wire_index >= wire_children.length
-            root.add_child(fragment)
+            nodes.each { |n| root.add_child(n) }
           else
-            wire_children[wire_index].add_previous_sibling(fragment)
+            nodes.each { |n| wire_children[wire_index].add_previous_sibling(n) }
           end
         end
       end
@@ -88,10 +88,10 @@ module AsciiChem
       # document order. Also returns the cleaned XML with the unknown
       # elements removed (so chemicalml's parser doesn't trip).
       def self.extract(xml)
-        doc = Nokogiri::XML(xml)
+        doc = Moxml.parse(xml)
         root = doc.root
         result = []
-        children = root.element_children
+        children = root.children.select(&:element?)
         children.each_with_index do |child, idx|
           next if cml_namespace?(child)
           next if aci_namespace?(child)
@@ -107,14 +107,12 @@ module AsciiChem
       end
 
       def self.cml_namespace?(element)
-        ns = element.namespace
-        ns && ns.href == Extensions::CML_NS
+        element.namespace_uri == Extensions::CML_NS
       end
       private_class_method :cml_namespace?
 
       def self.aci_namespace?(element)
-        ns = element.namespace
-        ns && ns.href == Extensions::NAMESPACE
+        element.namespace_uri == Extensions::NAMESPACE
       end
       private_class_method :aci_namespace?
 

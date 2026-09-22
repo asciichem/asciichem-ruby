@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'nokogiri'
+require 'moxml'
 
 module AsciiChem
   module Cml
@@ -26,11 +26,11 @@ module AsciiChem
         return xml if conditions_map.empty?
 
         # If native <conditionList> already present, skip aci: emit.
-        doc_check = Nokogiri::XML(xml)
+        doc_check = Moxml.parse(xml)
         return xml if doc_check.xpath('//cml:reaction/cml:conditionList',
                                       cml: Extensions::CML_NS).any?
 
-        doc = Nokogiri::XML(xml)
+        doc = Moxml.parse(xml)
         root = doc.root
         Extensions.ensure_namespace(root)
         apply_conditions(root, conditions_map)
@@ -40,7 +40,7 @@ module AsciiChem
       # Extract aci:conditionsAbove/Below from each <reaction>.
       # Returns `{ reaction_id => { above:, below: } }`.
       def self.extract(xml)
-        doc = Nokogiri::XML(xml)
+        doc = Moxml.parse(xml)
         result = {}
         doc.xpath('//cml:reaction', cml: Extensions::CML_NS).each do |el|
           id = el['id']

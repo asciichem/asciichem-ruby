@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "moxml"
 
 # Visit methods for the five beyond-formulas constructs (Crystal,
 # Spectrum, Calculation, ZMatrix, Mechanism). Each formatter must
@@ -92,8 +93,11 @@ RSpec.describe AsciiChem::Formatter::Mathml do
     ]
     sources.each do |src|
       xml = render(src)
-      doc = Nokogiri::XML(xml)
-      expect(doc.errors).to be_empty, "invalid XML for #{src}: #{doc.errors.inspect}"
+      begin
+        Moxml.parse(xml)
+      rescue Moxml::ParseError => e
+        raise "invalid XML for #{src}: #{e.message}"
+      end
     end
   end
 end

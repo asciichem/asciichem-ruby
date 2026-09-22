@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "nokogiri"
+require "moxml"
 require "mml"
 
 module AsciiChem
@@ -16,19 +16,26 @@ module AsciiChem
       MATHML_NS = "http://www.w3.org/1998/Math/MathML".freeze
 
       def initialize
-        @doc = Nokogiri::XML::Document.new
+        @doc = Moxml.new.create_document
       end
 
       # Model entry point. Returns a `<math>` element as a string.
       def visit_formula(formula)
-        math = el("math", xmlns: MATHML_NS)
+        math = @doc.create_element("math")
+        math.add_namespace(nil, MATHML_NS)
         mrow = el("mrow")
         formula.nodes.each { |n| mrow.add_child(render_node(n)) }
         math.add_child(mrow)
+        @doc.add_child(@doc.create_declaration("1.0", "UTF-8", nil))
         @doc.root = math
         # Native UTF-8 output preserves unicode arrow entities so specs
         # and downstream consumers see ⇌ and → instead of &#x21CC;.
-        @doc.to_xml(encoding: "UTF-8")
+        # Empty MathML elements are compacted back to <none/> form: the
+        # L2 corpus goldens are byte-exact across the TypeScript and
+        # Python implementations, whose serializers self-close.
+        @doc.to_xml(encoding: "UTF-8", indent: 2, indent_text: " ")
+            .gsub("<none></none>", "<none/>")
+            .gsub("<mprescripts></mprescripts>", "<mprescripts/>")
       end
 
       def visit_molecule(molecule)
@@ -72,7 +79,7 @@ module AsciiChem
         multi.add_child(base)
         multi.add_child(el("none"))
         multi.add_child(el("none"))
-        multi.add_child(Nokogiri::XML::Element.new("mprescripts", @doc))
+        multi.add_child(@doc.create_element("mprescripts"))
         multi.add_child(el("none"))
         multi.add_child(mn(atom.isotope))
         multi
@@ -211,12 +218,13 @@ module AsciiChem
           next unless attr_name
 
           Array(math.public_send(attr_name)).each do |child|
-            fragment = Nokogiri::XML::DocumentFragment.parse(child.to_xml)
-            fragment.children.each { |node| mrow.add_child(node) }
+            fragment = Moxml.new.parse_fragment(child.to_xml)
+            # parse_fragment returns the fragment's top-level nodes
+        fragment.each { |node| mrow.add_child(node) }
           end
         end
         mrow
-      rescue Mml::Error, Lutaml::Model::Error, Nokogiri::XML::SyntaxError
+      rescue Mml::Error, Lutaml::Model::Error, Moxml::ParseError
         el("mrow")
       end
 
@@ -388,30 +396,30 @@ module AsciiChem
         msup
       end
 
-      # -- Nokogiri element factories ------------------------------------
+      # -- Element factories ------------------------------------
 
       def el(name, attrs = {})
-        element = Nokogiri::XML::Element.new(name, @doc)
+        element = @doc.create_element(name)
         attrs.each { |k, v| element[k.to_s] = v }
         element
       end
 
       def mi(content)
         e = el("mi", mathvariant: "normal")
-        e.content = content.to_s
+        e.add_child(@doc.create_text(content.to_s))
         e
       end
 
       def mn(content)
-        e = el("mn"); e.content = content.to_s; e
+        e = el("mn"); e.add_child(@doc.create_text(content.to_s)); e
       end
 
       def mo(content)
-        e = el("mo"); e.content = content.to_s; e
+        e = el("mo"); e.add_child(@doc.create_text(content.to_s)); e
       end
 
       def mtext(content)
-        e = el("mtext"); e.content = content.to_s; e
+        e = el("mtext"); e.add_child(@doc.create_text(content.to_s)); e
       end
 
       # -- Beyond-formulas helpers -----------------------------------

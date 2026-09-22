@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'nokogiri'
+require 'moxml'
 require 'set'
 
 module AsciiChem
@@ -120,9 +120,9 @@ module AsciiChem
         def self.inject(xml, top_level)
           return xml if top_level.empty?
 
-          doc = Nokogiri::XML(xml)
+          doc = Moxml.parse(xml)
           root = doc.root
-          unless root.namespaces.value?(Extensions::NAMESPACE)
+          unless root.namespaces.any? { |ns| ns.uri == Extensions::NAMESPACE }
             root.add_namespace(Extensions::PREFIX, Extensions::NAMESPACE)
           end
           top_level.each { |entry| insert_element(doc, root, entry) }
@@ -133,7 +133,7 @@ module AsciiChem
         # array of `{ position:, element_name:, content: }` hashes in
         # ascending position order.
         def self.extract(xml)
-          doc = Nokogiri::XML(xml)
+          doc = Moxml.parse(xml)
           result = []
           element_names = HANDLERS.map(&:element_name)
           element_names.each do |name|
@@ -174,7 +174,7 @@ module AsciiChem
           def insert_element(doc, root, entry)
             element = doc.create_element("#{Extensions::PREFIX}:#{entry[:element_name]}")
             element['position'] = entry[:position].to_s
-            element.content = entry[:content]
+            element.add_child(doc.create_text(entry[:content]))
             # Insert before existing children so extensions appear at
             # the top of <cml>, which reads more naturally than appended.
             root.children.first&.add_previous_sibling(element) || root.add_child(element)
