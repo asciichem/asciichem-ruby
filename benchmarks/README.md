@@ -188,3 +188,23 @@ releases since 1.3.20). Validation:
   Same-process ratio: parsanol **~2.1x parslet** (8.3 vs 3.8 i/s,
   and 8.8 vs 4.5 on the repeat), consistent with the 2.6x
   quiet-machine figure from re-check 7.
+
+### Re-check 9 (2026-09-22, parsanol 1.3.49)
+
+Twenty-one releases since re-check 8, all perf-focused upstream
+(#59 roadmap: first-set BYTE_DISPATCH 1.3.29, VM memoisation
+1.3.35, VM phase-2 wiring 1.3.33, native dynamic bridge fixes
+1.3.40-1.3.41, `Parsanol::IncrementalSession` 1.3.42). Validation:
+
+- Gate **221/221** through the shipped `ParsanolEngine` (run on
+  1.3.48/1.3.49 within the same day — the line is moving fast).
+- **Perf: ratio-only again.** Load was 34-77 during measurement
+  (parslet control itself ran 8-12 i/s vs its quiet ~75), so
+  absolute numbers are excluded. Same-process ratio across three
+  runs: parsanol **1.7-3.2x parslet** (37.7/11.7, 19.0/11.1,
+  25.5/8.4), centring ~2.5-3x — consistent with the quiet-machine
+  2.6x from re-check 7; under contention the native parse path
+  degrades less than pure-Ruby parslet.
+- Upstream's incremental (`Parsanol::IncrementalSession`) and VM
+  memoisation work benefits the compat layer automatically; no
+  asciichem-side change needed or made.
