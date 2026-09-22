@@ -3,6 +3,16 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.29.3] - 2026-09-22
+
+### Changed
+- Dependency floors raised to the corpus-validated versions,
+  expressed pessimistically (`~>`): `lutaml-model ~> 0.8` (from
+  `>= 0.8, < 2`), `relaton-bib ~> 2.1` (from `>= 0.1, < 3`),
+  `plurimath ~> 0.11`, `nokogiri ~> 1.18`; `chemicalml`, `elkrb`,
+  `mml`, `parslet`, `thor` unchanged. Full suite green under the
+  raised floors (1985 examples).
+
 ## [0.29.2] - 2026-09-17
 
 ### Changed
