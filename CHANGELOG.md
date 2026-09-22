@@ -3,7 +3,7 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.30.0] - 2026-09-22
 
 ### Changed
 - The XML layer migrates from Nokogiri to
