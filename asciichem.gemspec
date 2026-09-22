@@ -33,14 +33,16 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
+  # Floors are the versions the corpus suite validates against
+  # (pessimistic ~>); raise them only with a full-suite run.
   spec.add_dependency "chemicalml", "~> 0.3.0"
   spec.add_dependency "elkrb", "~> 1.0"
-  spec.add_dependency "lutaml-model", ">= 0.8", "< 2"
+  spec.add_dependency "lutaml-model", "~> 0.8"
   spec.add_dependency "mml", "~> 2.3"
-  spec.add_dependency "nokogiri", "~> 1.16"
+  spec.add_dependency "nokogiri", "~> 1.18"
   spec.add_dependency "parslet", "~> 2.0"
-  spec.add_dependency "relaton-bib", ">= 0.1", "< 3"
-  spec.add_dependency "plurimath", "~> 0.8"
+  spec.add_dependency "relaton-bib", "~> 2.1"
+  spec.add_dependency "plurimath", "~> 0.11"
   spec.add_dependency "thor", "~> 1.3"
 
   spec.add_development_dependency "json_schemer", "~> 2.4"
