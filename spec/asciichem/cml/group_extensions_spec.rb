@@ -192,6 +192,23 @@ RSpec.describe AsciiChem::Cml::GroupExtensions do
       expect(inner).to be_a(AsciiChem::Model::Group)
       expect(inner.multiplicity).to eq("2")
     end
+
+    it "keeps an explicit attachment bond inside the group (no =C(O) respelling)" do
+      %w[CC(=O)O CH_3C(=O)CH_3 C-C(=O)-O C(=NOH)H C(=O)(=S)O].each do |source|
+        formula = AsciiChem.parse(source)
+        round_tripped = AsciiChem::Cml.parse(formula.to_cml)
+        expect(round_tripped.to_text).to eq(formula.to_text), source
+      end
+    end
+
+    it "keeps SMILES-ingested branch bonds stable through CML" do
+      source = "CC(=O)OC1=CC=CC=C1C(=O)O"
+      formula = AsciiChem.parse(source)
+      once = AsciiChem::Cml.parse(formula.to_cml).to_text
+      twice = AsciiChem::Cml.parse(AsciiChem.parse(once).to_cml).to_text
+      expect(once).to eq(formula.to_text)
+      expect(twice).to eq(once)
+    end
   end
 
   describe "Group::BRACKETS registry" do

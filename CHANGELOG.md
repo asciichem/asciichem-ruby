@@ -3,6 +3,19 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.30.1] - 2026-09-23
+
+### Fixed
+- Groups attached by an explicit bond no longer re-spell through
+  CML round-trip: `CC(=O)O` came back as `CC=(O)O`. The CML
+  rebuilder left the attachment bond outside the reconstructed
+  group; the grammar keeps it inside (the inner molecule starts
+  with the bond), so the rebuilder now pulls an adjacent preceding
+  Bond into the group. Affects text syntax and SMILES ingestion
+  alike; regression specs cover single/sibling bonded groups,
+  multi-atom groups, and aspirin stability across double
+  round-trips.
+
 ## [0.30.0] - 2026-09-22
 
 ### Changed

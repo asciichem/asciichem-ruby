@@ -213,18 +213,23 @@ module AsciiChem
       def self.splice_group_into(nodes, target_nodes, record)
         return if target_nodes.empty?
 
-        positions = target_nodes.map do |target|
-          found = nodes.each_with_index.find { |node, _| node.equal?(target) }
-          found&.last
-        end.compact
+        inner_nodes = group_nodes(nodes, target_nodes)
+
+        positions = target_nodes
+                    .map { |target| position_of(nodes, target) }
+                    .compact
         return if positions.empty?
 
         group = AsciiChem::Model::Group.new(
-          nodes: target_nodes,
+          nodes: inner_nodes,
           multiplicity: record[:multiplicity],
           bracket: record[:bracket]
         )
+        replace_positions_with_group(nodes, group, positions)
+      end
+      private_class_method :splice_group_into
 
+      def self.replace_positions_with_group(nodes, group, positions)
         first_pos = positions.min
         nodes[first_pos] = group
         # Remove remaining positions in descending order so earlier
@@ -233,7 +238,31 @@ module AsciiChem
           nodes.delete_at(pos)
         end
       end
-      private_class_method :splice_group_into
+      private_class_method :replace_positions_with_group
+
+      # A Bond sitting immediately before the group's first target node
+      # is the group's attachment bond — the `=` of `C(=O)`. The
+      # grammar keeps that bond INSIDE the group (its inner molecule
+      # starts with the bond), so the rebuilder moves it in instead of
+      # leaving a stray prefix bond outside, which would re-spell as
+      # `C=(O)`. By construction of the bond insertion (each bond sits
+      # just before its later endpoint), a bond adjacent to the group's
+      # first atom always has that atom as its later endpoint.
+      def self.group_nodes(nodes, target_nodes)
+        idx = position_of(nodes, target_nodes.first)
+        bond = idx&.positive? ? nodes[idx - 1] : nil
+        return target_nodes unless bond.is_a?(AsciiChem::Model::Bond)
+
+        [nodes.delete_at(idx - 1), *target_nodes]
+      end
+      private_class_method :group_nodes
+
+      # Identity-based position lookup so duplicate Bonds (same kind
+      # → `==` equal) aren't confused.
+      def self.position_of(nodes, node)
+        nodes.each_with_index.find { |candidate, _| candidate.equal?(node) }&.last
+      end
+      private_class_method :position_of
 
       # Flatten the canonical document's molecules (top-level +
       # reaction reactants/products + cascade reactions) into a list,
