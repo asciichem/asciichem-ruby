@@ -230,3 +230,24 @@ it. The version is fully transitive — lutaml-model constrains
   stubbing `leptris_preferred_available?` — lutaml's
   `detect_xml_adapter` calls `runtime_default_adapter`, which
   ignores `default_adapter=`.
+
+### Re-check 10 (2026-09-23, parsanol 1.3.52)
+
+Three releases since re-check 9 — notable upstream: 1.3.50 pins
+cross-engine consume-all/recursion semantics (closing the five
+PR-#22 divergence skips), 1.3.51 consolidates on a single Symbol
+tag form. Validation:
+
+- Gate **221/221** through the shipped `ParsanolEngine` — every
+  accept/reject/round-trip case identical to parslet, including the
+  optimizer-acceptance semantics pinned upstream in 1.3.50.
+- The compat surface our engine rides (`Parsanol::Parslet::Parser`)
+  now resolves through `Parsanol::Parser` — renamed/absorbed
+  upstream during the 1.3.3x-4x line; our subclassing works
+  unchanged (the gate is the proof) and needs no engine-side change.
+- **Perf: ratio-only** (machine at load ~175 during measurement —
+  the parslet control measured 7-9 i/s against its quiet ~75):
+  parsanol **2.6-3.2x parslet** across two same-process runs
+  (22.8/7.2, 24.3/9.4), consistent with re-checks 8/9.
+- The unpublished v1.0.1 draft noted in re-check 9 is still
+  untagged/unpublished; nothing to validate there yet.
