@@ -31,6 +31,7 @@ module AsciiChem
 
     autoload :ParsletEngine, 'asciichem/engine/parslet_engine'
     autoload :ParsanolEngine, 'asciichem/engine/parsanol_engine'
+    autoload :PargEngine, 'asciichem/engine/parg_engine'
 
     class << self
       # Selects the engine by name. Returns the engine class.
@@ -50,8 +51,9 @@ module AsciiChem
         case name.to_s
         when 'parslet' then ParsletEngine
         when 'parsanol' then ParsanolEngine
+        when 'parg' then PargEngine
         else
-          raise Error, "unknown engine #{name.inspect} (available: parslet, parsanol)"
+          raise Error, "unknown engine #{name.inspect} (available: parslet, parsanol, parg)"
         end
       end
     end
