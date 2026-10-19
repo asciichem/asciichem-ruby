@@ -36,7 +36,7 @@ Gem::Specification.new do |spec|
   # Floors are the versions the corpus suite validates against
   # (pessimistic ~>); raise them only with a full-suite run.
   spec.add_dependency "chemicalml", "~> 0.3.0"
-  spec.add_dependency "elkrb", "~> 1.0"
+  spec.add_dependency "elkrb", "~> 2.0"
   spec.add_dependency "lutaml-model", "~> 0.8"
   spec.add_dependency "mml", "~> 2.3"
   spec.add_dependency "moxml", "~> 0.5"
