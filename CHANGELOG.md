@@ -17,12 +17,13 @@ This project follows [Semantic Versioning](https://semver.org/).
   model equality against the reference engine, and the workload
   benchmark runs ~2.7x parslet. `AsciiChem::Engine.use(:parg)` or
   `ASCIICHEM_ENGINE=parg`; requires parsanol ≥ 1.3.94 (PARG),
-  still a soft dev dependency. The artifact runtime does not
-  enforce end-of-input and drops captures of uncaptured sequence
-  rules inside repetitions (both filed upstream), so the engine
-  fails short matches itself and the grammar captures every
-  structural rule; `benchmarks/parg_recheck.rb` is the standing
-  gate.
+  still a soft dev dependency. Repetition flattening follows
+  parslet's own hash-only semantics (parsanol-ruby#231/#232), so
+  the grammar captures every structural rule and the engine's
+  tree adapter unwraps the wrappers into the DSL shapes; a
+  capture-completeness gate fails any grammar edit that leaves a
+  trailing literal uncaptured (`benchmarks/parg_recheck.rb` is
+  the standing gate).
 
 ## [0.30.1] - 2026-09-23
 

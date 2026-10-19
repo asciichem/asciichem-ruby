@@ -21,11 +21,14 @@ module AsciiChem
     # conformance corpus passes model-identically (227/227) against
     # the reference engine (benchmarks/parg_recheck.rb).
     #
-    # The artifact runtime does not enforce end-of-input and drops
-    # captures of uncaptured sequence rules inside repetitions (both
-    # parsanol findings), so the grammar captures every structural
-    # rule and TreeAdapter unwraps the wrappers; Grammar#parse fails
-    # when the match stops short of the input.
+    # Tree shape: repetition flattening follows parslet's own
+    # hash-only semantics (parsanol-ruby#231/#232), so the grammar
+    # captures every structural rule — keeping every iteration a
+    # hash — and TreeAdapter unwraps the wrappers into the DSL
+    # shapes. Grammar#parse additionally fails when the tree covers
+    # less input than was matched (a grammar edit leaving a trailing
+    # literal uncaptured), a capture-completeness invariant rather
+    # than end-of-input handling: the runtime itself is parslet-strict.
     class PargEngine
       # Version the vendored artifact was built from; the load fails
       # loudly on drift so the engine never runs a stale grammar.
@@ -47,7 +50,7 @@ module AsciiChem
           unless TreeAdapter.consumed_length(raw) >= source.length
             raise ::Parsanol::ParseFailed,
                   "Failed to match sequence at char #{TreeAdapter.consumed_length(raw)}: " \
-                  'unconsumed input'
+                  'input not fully captured'
           end
 
           TreeAdapter.adapt(raw)
@@ -120,10 +123,10 @@ module AsciiChem
           merged
         end
 
-        # PARG merge semantics: sequences with embedded repetitions
-        # yield arrays of per-child capture hashes; merge them into the
-        # single hash the DSL shape carries (later duplicate keys
-        # append, mirroring parslet's repeated-capture arrays).
+        # Captured sequences with embedded repetitions yield arrays
+        # of per-child capture hashes; merge them into the single hash
+        # the DSL shape carries (later duplicate keys append, matching
+        # parslet's repeated-capture behavior).
         def merge_items(items)
           return items unless items.is_a?(Array)
 
