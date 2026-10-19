@@ -4,9 +4,10 @@
 # the compiled PARG artifact vendored from asciichem-parg, adapted to
 # the shared TransformRules. (1) gates on the shared corpus, forked
 # per case so a native crash aborts the child — reported, not fatal;
-# (2) gates on end-of-input (the artifact runtime does not enforce
-# EOS — a short match must fail); (3) measures against the parslet
-# path. The model-equality gate against the reference engine lives in
+# (2) gates on capture completeness (a grammar edit leaving a
+# trailing literal uncaptured must fail loudly — the runtime itself
+# is parslet-strict about end of input); (3) measures against the
+# parslet path. The model-equality gate against the reference engine lives in
 # spec/asciichem/engine/parg_engine_spec.rb and the full suite green
 # under ASCIICHEM_ENGINE=parg is the L2 contract.
 #
@@ -32,8 +33,8 @@ def run_in_child
   [payload, status]
 end
 
-# -- 1. End-of-input gate ----------------------------------------------
-# The artifact runtime ignores trailing input; the engine must fail it.
+# -- 1. Capture-completeness gate --------------------------------------
+# Tails the grammar cannot capture must reject, as in the reference.
 EOS_CASES = { "A(oh)GARBAGE" => false, "H_2O extra" => false,
               "Ca(OH)_2 junk" => false, "H_2O" => true }.freeze
 
@@ -56,7 +57,7 @@ EOS_CASES.each do |input, should_parse|
   eos_fail += 1
   puts "  EOS FAIL: #{input.inspect} accepted=#{accepted} expected=#{should_parse}"
 end
-puts format("end-of-input gate: %d/%d ok", EOS_CASES.length - eos_fail, EOS_CASES.length)
+puts format("capture-completeness gate: %d/%d ok", EOS_CASES.length - eos_fail, EOS_CASES.length)
 
 # -- 2. Shared-corpus gate ---------------------------------------------
 corpus_dir = File.expand_path("../../asciichem-tests/corpus/fixtures", __dir__)

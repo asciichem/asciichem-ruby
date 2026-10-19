@@ -63,9 +63,9 @@ RSpec.describe AsciiChem::Engine::PargEngine do
     end
   end
 
-  # The artifact runtime does not enforce end-of-input (parsanol
-  # finding); Grammar#parse must fail the short match itself.
-  it 'rejects unconsumed trailing input' do
+  # Rejections must match the reference engine, including tail
+  # garbage the grammar cannot capture.
+  it 'rejects trailing input the reference engine rejects' do
     ['A(oh)GARBAGE', 'H_2O extra', 'Ca(OH)_2 junk'].each do |input|
       expect { reference_model(input) }.to raise_error(AsciiChem::ParseError)
       expect { AsciiChem.parse(input) }.to raise_error(AsciiChem::ParseError)
