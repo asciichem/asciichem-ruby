@@ -3,6 +3,27 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- The `:parg` engine (opt-in, third): parses through the compiled
+  PARG artifact of the AsciiChem grammar — vendored from
+  asciichem-parg (`lib/asciichem/engine/parg/asciichem.json`,
+  version-pinned, drift fails loudly) — and adapts its parse trees
+  to the same shapes the shared `TransformRules` consume. The full
+  suite (2024 examples: round-trip conformance, L2 MathML goldens,
+  CML three-way, edge cases) passes byte-identically under
+  `ASCIICHEM_ENGINE=parg`, the shared corpus gates 221/221 with
+  model equality against the reference engine, and the workload
+  benchmark runs ~2.7x parslet. `AsciiChem::Engine.use(:parg)` or
+  `ASCIICHEM_ENGINE=parg`; requires parsanol ≥ 1.3.94 (PARG),
+  still a soft dev dependency. The artifact runtime does not
+  enforce end-of-input and drops captures of uncaptured sequence
+  rules inside repetitions (both filed upstream), so the engine
+  fails short matches itself and the grammar captures every
+  structural rule; `benchmarks/parg_recheck.rb` is the standing
+  gate.
+
 ## [0.30.1] - 2026-09-23
 
 ### Fixed
