@@ -5,6 +5,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- elkrb floor raised to `~> 2.0` (from `~> 1.0`): the layout stack
+  migrates to elkrb 2.0's option-based API — the graph-level
+  `LayoutOptions` object is gone and the algorithm flows through
+  `Elkrb.layout(graph, algorithm:)` (the call site already passed
+  it). Full suite (2024 examples: structural-SVG goldens included)
+  green under both parse engines on elkrb 2.0.0; layered remains
+  the default algorithm and output is unchanged byte-for-byte.
+
 ### Added
 - The `:parg` engine (opt-in, third): parses through the compiled
   PARG artifact of the AsciiChem grammar — vendored from

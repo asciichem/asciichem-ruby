@@ -63,7 +63,7 @@ module AsciiChem
       # round-tripping through CML.
       return pre_positioned_result(walk) if all_positioned?(walk)
 
-      graph = GraphBuilder.new(walk).build(algorithm: algorithm)
+      graph = GraphBuilder.new(walk).build
       laid_out = Elkrb.layout(graph, algorithm: algorithm)
       ResultExtractor.new(laid_out, walk).extract
     end
@@ -201,14 +201,15 @@ module AsciiChem
         @walk = walk
       end
 
-      def build(algorithm:)
+      def build
         children = @walk.atoms.map { |a| elkrb_node(a) }
         edges = @walk.bonds.map { |b| elkrb_edge(b) }
+        # elkrb 2.0 takes the algorithm as a layout call option, not a
+        # graph-level LayoutOptions object (Layout.layout passes it).
         Elkrb::Graph::Graph.new(
           id: 'root',
           children: children,
-          edges: edges,
-          layout_options: Elkrb::Graph::LayoutOptions.new(algorithm: algorithm)
+          edges: edges
         )
       end
 
