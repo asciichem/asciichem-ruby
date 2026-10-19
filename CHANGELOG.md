@@ -3,7 +3,7 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.31.0] - 2026-10-19
 
 ### Changed
 - elkrb floor raised to `~> 2.0` (from `~> 1.0`): the layout stack
