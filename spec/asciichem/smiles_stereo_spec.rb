@@ -82,3 +82,14 @@ RSpec.describe 'SMILES stereo (L3 slice 1)' do
     end
   end
 end
+
+RSpec.describe 'stereo on the wire (L3 slice 4)' do
+  it 'carries chirality and direction through the wire round-trip' do
+    %w[N[C@@H](C)C(=O)O F/C=C/F F/C=C\\F].each do |source|
+      molecule = AsciiChem::Smiles.parse(source).nodes.first
+      wire = AsciiChem::WireAdapter.to_wire(molecule)
+      back = AsciiChem::WireAdapter.from_wire(wire)
+      expect(back).to eq(molecule), "#{source} did not survive the wire"
+    end
+  end
+end

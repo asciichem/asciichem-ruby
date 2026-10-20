@@ -107,7 +107,8 @@ module AsciiChem
           radical_electrons: int_or_nil(atom.radical_electrons),
           ring_closures: str_or_nil(atom.ring_closures),
           aromatic: bool_or_nil(atom.aromatic),
-          hydrogens: int_or_nil(atom.hydrogens)
+          hydrogens: int_or_nil(atom.hydrogens),
+          chirality: str_or_nil(atom.chirality)
         )
       end
 
@@ -165,7 +166,8 @@ module AsciiChem
       end
 
       def bond_to_wire(node)
-        AsciiChem::Wire::Bond.new(type: "bond", kind: node.kind.to_s)
+        AsciiChem::Wire::Bond.new(type: "bond", kind: node.kind.to_s,
+                                  direction: str_or_nil(node.direction&.to_s))
       end
 
       def identifier_to_wire(node)
@@ -302,7 +304,8 @@ module AsciiChem
           charge: wire.charge, oxidation_state: wire.oxidation_state,
           lone_pairs: wire.lone_pairs, radical_electrons: wire.radical_electrons,
           ring_closures: wire.ring_closures,
-          aromatic: wire.aromatic, hydrogens: wire.hydrogens
+          aromatic: wire.aromatic, hydrogens: wire.hydrogens,
+          chirality: wire.chirality
         )
       end
 
@@ -324,7 +327,8 @@ module AsciiChem
       end
 
       def bond_from_wire(wire)
-        AsciiChem::Model::Bond.new(kind: wire.kind.to_sym)
+        AsciiChem::Model::Bond.new(kind: wire.kind.to_sym,
+                                   direction: wire.direction&.to_sym)
       end
 
       def identifier_from_wire(wire)

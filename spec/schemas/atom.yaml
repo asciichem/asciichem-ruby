@@ -54,4 +54,12 @@ properties:
       Implicit hydrogen count as stated by the source (SMILES bracket
       atoms [CH4]/[nH], molfile atom-block H counts). Absent means
       "per valence rules" — never invented.
+  chirality:
+    enum: [TH1, TH2]
+    description: |
+      SMILES-style ordered-neighbour tetrahedral parity — `@` is TH1,
+      `@@` is TH2. The parity is relative to the neighbour order of
+      the structure it was parsed from (NOT a CIP label; CIP R/S
+      naming is derived, not stored). Absent means no stated
+      tetrahedral stereo.
 additionalProperties: false

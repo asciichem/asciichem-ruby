@@ -18,6 +18,7 @@ module AsciiChem
       attribute :ring_closures, :string
       attribute :aromatic, :boolean
       attribute :hydrogens, :integer
+      attribute :chirality, :string
       json do
         map "element", to: :element
         map "isotope", to: :isotope
@@ -28,6 +29,7 @@ module AsciiChem
         map "radicalElectrons", to: :radical_electrons
         map "ringClosures", to: :ring_closures
         map "aromatic", to: :aromatic
+        map "chirality", to: :chirality
         map "hydrogens", to: :hydrogens
       end
     end
@@ -90,8 +92,10 @@ module AsciiChem
       wire_type "bond"
 
       attribute :kind, :string
+      attribute :direction, :string
       json do
         map "kind", to: :kind
+        map "direction", to: :direction
       end
     end
   end
