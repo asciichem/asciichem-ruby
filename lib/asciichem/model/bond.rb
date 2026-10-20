@@ -4,40 +4,48 @@ module AsciiChem
   module Model
     # A bond between two adjacent nodes in a structural chain.
     class Bond < Node
-      attr_accessor :kind
+      attr_accessor :kind, :direction
 
       KINDS = {
-        single:    { ascii: "-",  mathml_entity: "-" },
-        double:    { ascii: "=",  mathml_entity: "=" },
-        triple:    { ascii: "#",  mathml_entity: "≡" },
-        quadruple: { ascii: "##", mathml_entity: "≣" },
-        wedge:     { ascii: ">-", mathml_entity: "↑" },
-        hash:      { ascii: "-<", mathml_entity: "↓" },
-        dative:    { ascii: "~>", mathml_entity: "→" },
-        wavy:      { ascii: "~~", mathml_entity: "∼" },
-        aromatic:  { ascii: ":",  mathml_entity: ":" }
+        single: { ascii: '-',  mathml_entity: '-' },
+        double: { ascii: '=',  mathml_entity: '=' },
+        triple: { ascii: '#',  mathml_entity: '≡' },
+        quadruple: { ascii: '##', mathml_entity: '≣' },
+        wedge: { ascii: '>-', mathml_entity: '↑' },
+        hash: { ascii: '-<', mathml_entity: '↓' },
+        dative: { ascii: '~>', mathml_entity: '→' },
+        wavy: { ascii: '~~', mathml_entity: '∼' },
+        aromatic: { ascii: ':', mathml_entity: ':' }
       }.freeze
 
       # CML wire order codes per bond kind. Single source of truth
       # for both adapter directions — to_canonical emits, from_canonical
       # parses. Adding a new bond kind = one entry here + one in KINDS.
       CML_ORDER_CODES = {
-        single: "S", double: "D", triple: "T",
-        quadruple: "Q", wedge: "W", hash: "H",
-        dative: "A", wavy: "V"
+        single: 'S', double: 'D', triple: 'T',
+        quadruple: 'Q', wedge: 'W', hash: 'H',
+        dative: 'A', wavy: 'V'
       }.freeze
       KIND_BY_CML_ORDER = CML_ORDER_CODES.invert.freeze
 
       # Subset that carries stereo meaning (wedge = out of page,
       # hash = into page). Used for <bondStereo> elements.
-      CML_STEREO_CODES = { wedge: "W", hash: "H" }.freeze
+      CML_STEREO_CODES = { wedge: 'W', hash: 'H' }.freeze
 
-      def initialize(kind: :single)
+      def initialize(kind: :single, direction: nil)
         @kind = kind
+        @direction = direction
+      end
+
+      # SMILES directional-bond orientation (`/` up, `\` down) on the
+      # single bonds flanking a stereogenic double bond. Orthogonal to
+      # the bond kind; only :single carries it.
+      def direction
+        @direction if kind == :single
       end
 
       def value_attributes
-        { kind: kind }
+        { kind: kind, direction: direction }
       end
 
       def ascii
@@ -49,7 +57,7 @@ module AsciiChem
       end
 
       def cml_order_code
-        CML_ORDER_CODES.fetch(kind, "S")
+        CML_ORDER_CODES.fetch(kind, 'S')
       end
 
       def cml_stereo_code

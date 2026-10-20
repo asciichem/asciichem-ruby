@@ -83,14 +83,12 @@ RSpec.describe AsciiChem::Smiles do
         .to raise_error(AsciiChem::ParseError, /unclosed ring bond/i)
     end
 
-    it "rejects chirality" do
-      expect { described_class.parse("[C@H](C)C") }
-        .to raise_error(AsciiChem::ParseError, /chirality/i)
-    end
-
-    it "rejects E/Z bond directions" do
-      expect { described_class.parse("C/C=C/C") }
-        .to raise_error(AsciiChem::ParseError, /bond direction/i)
+    # Stereo moved from the v1 rejections to supported features
+    # (corpus 0.5.0): @/@@ parse into Atom#chirality (TH1/TH2) and
+    # / \ into Bond#direction.
+    it "rejects malformed chirality tokens" do
+      expect { described_class.parse("[C@H") }
+        .to raise_error(AsciiChem::ParseError)
     end
 
     it "rejects bonded ring closures the model cannot represent" do

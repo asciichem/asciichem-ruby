@@ -21,7 +21,7 @@ module AsciiChem
       LOWERCASE_AROMATIC = %w[C N O S P B Se As].freeze
       ORGANIC = %w[B C N O P S F Cl Br I].freeze
       BOND_TOKENS = {
-        single: "-", double: "=", triple: "#", quadruple: "$", aromatic: ":"
+        single: '-', double: '=', triple: '#', quadruple: '$', aromatic: ':'
       }.freeze
       CONTINUATION_BONDS = %i[single aromatic].freeze
 
@@ -33,9 +33,7 @@ module AsciiChem
         atoms, edges = Structure::Graph.build(@molecule)
         # A single-atom component is valid SMILES (water "O", ions);
         # multiple atoms with no bonds is a formula, not a structure.
-        if edges.empty? && atoms.length > 1
-          raise ParseError, "molecule has no bonds — a formula is not a structure"
-        end
+        raise ParseError, 'molecule has no bonds — a formula is not a structure' if edges.empty? && atoms.length > 1
 
         @atoms = atoms
         build_adjacency(edges)
@@ -53,6 +51,7 @@ module AsciiChem
 
         build_tree(0, nil)
         compute_tree_size(0)
+        compute_written_orders
         emit(0, nil, nil)
 
         @units.map do |unit|
@@ -69,10 +68,60 @@ module AsciiChem
 
       def build_adjacency(edges)
         @adjacency = Array.new(@atoms.length) { {} }
+        @directions = {}
+        @model_neighbours = Array.new(@atoms.length) { [] }
         edges.each do |edge|
+          key = [edge.from, edge.to]
           @adjacency[edge.from][edge.to] = edge.kind
           @adjacency[edge.to][edge.from] = edge.kind
+          key = key.minmax
+          @directions[key] = edge.direction if edge.direction
+          # The edge array is in model node order: each atom's
+          # reference neighbours, for SMILES parity bookkeeping.
+          @model_neighbours[edge.from] << edge.to
+          @model_neighbours[edge.to] << edge.from
         end
+      end
+
+      # The order neighbours are WRITTEN in: parent first, then ring
+      # closures, then branches (rank order), then the continuation.
+      # Tetrahedral parity flips with odd permutations of this order
+      # against the model's reference order, so the emitted @/@@ is
+      # corrected per atom. Ring-closure neighbours in the reference
+      # order are slice-3 scope (acyclic stereo is corrected here).
+      def compute_written_orders
+        @written_order = Array.new(@atoms.length)
+        walk = lambda do |index, parent|
+          order = parent ? [parent] : []
+          order += @closures[index].dup
+          # Appearance order: branches (rank order), then the
+          # continuation — emit() writes them that way.
+          ordered = @tree_children[index].sort_by { |child| continuation_rank(index, child) }
+          order += ordered[1..] + [ordered.first] unless ordered.empty?
+          @written_order[index] = order
+          @tree_children[index].each { |child| walk.call(child, index) }
+        end
+        walk.call(0, nil)
+      end
+
+      # TH1 -> TH2 flip when the written order is an odd permutation
+      # of the model's reference order (implicit hydrogens sort first
+      # on both sides).
+      def chirality_token(index)
+        chirality = @atoms[index].chirality
+        return '' unless chirality
+
+        reference = ([:h] if @atoms[index].hydrogens) || []
+        reference += @model_neighbours[index]
+        written = ([:h] if @atoms[index].hydrogens) || []
+        written += @written_order[index]
+        inversions = 0
+        written.each_with_index do |item, i|
+          written[(i + 1)..].each do |later|
+            inversions += 1 if reference.index(item) > reference.index(later)
+          end
+        end
+        chirality == 'TH2' || inversions.odd? ? '@@' : '@'
       end
 
       # Post-order subtree sizes within the DFS tree.
@@ -111,9 +160,9 @@ module AsciiChem
         continuation, *branches = ordered
 
         branches.each do |child|
-          @units << [:literal, "("]
+          @units << [:literal, '(']
           emit(child, index, @adjacency[index][child])
-          @units << [:literal, ")"]
+          @units << [:literal, ')']
         end
         emit(continuation, index, @adjacency[index][continuation])
       end
@@ -125,7 +174,10 @@ module AsciiChem
       def continuation_rank(index, child)
         kind = @adjacency[index][child]
         priority = CONTINUATION_BONDS.include?(kind) ? 0 : 1
-        [priority, -@tree_size[child], atom_token(child)]
+        # The order-independent token: this rank runs inside the
+        # written-order pre-pass, where stereo tokens are not yet
+        # computable (and stereo does not affect the order).
+        [priority, -@tree_size[child], atom_token_for(child, stereo: false)]
       end
 
       def ring_digit_for(a, b)
@@ -133,7 +185,7 @@ module AsciiChem
         digit = @digit_by_edge[key]
         return digit if digit
 
-        raise ParseError, "too many ring closures for SMILES output" if @next_digit > 9
+        raise ParseError, 'too many ring closures for SMILES output' if @next_digit > 9
 
         digit = @next_digit.to_s
         @next_digit += 1
@@ -145,48 +197,61 @@ module AsciiChem
         digit
       end
 
-
       def bond_token(kind, from, to)
         token = BOND_TOKENS[kind]
         raise ParseError, "#{kind} bonds have no SMILES form (v1 subset)" unless token
 
         return token if kind != :single && kind != :aromatic
 
-        # Explicit only when the short form would change the meaning:
-        # a single bond between two aromatic atoms must be written;
-        # an aromatic bond is implicit between two aromatic atoms.
         if kind == :single
-          aromatic?(from) && aromatic?(to) ? token : ""
+          direction = @directions[[from, to].minmax]
+          return direction == :up ? '/' : '\\' if direction
+
+          return '' unless aromatic?(from) && aromatic?(to)
+
+          # Explicit only when the short form would change the meaning:
+          # a single bond between two aromatic atoms must be written.
+          token
         else
-          aromatic?(from) && aromatic?(to) ? "" : token
+          aromatic?(from) && aromatic?(to) ? '' : token
         end
       end
 
       def atom_token(index)
-        @atom_tokens ||= {}
-        @atom_tokens[index] ||= begin
-          atom = @atoms[index]
-          aromatic = atom.aromatic == true
-          lowercase = aromatic && LOWERCASE_AROMATIC.include?(atom.element)
-          needs_bracket =
-            atom.charge || atom.isotope || atom.hydrogens ||
-            (!ORGANIC.include?(atom.element) && !lowercase) ||
-            (aromatic && !lowercase)
-          unless needs_bracket
-            bare_symbol(atom, lowercase)
-          else
+        atom_token_for(index, stereo: true)
+      end
+
+      # `stereo: false` gives the order-independent form for ranking
+      # comparisons; the emitted token carries the corrected @/@@.
+      def atom_token_for(index, stereo:)
+        @plain_tokens ||= {}
+        return @plain_tokens[index] if !stereo && @plain_tokens[index]
+
+        atom = @atoms[index]
+        aromatic = atom.aromatic == true
+        lowercase = aromatic && LOWERCASE_AROMATIC.include?(atom.element)
+        needs_bracket =
+          atom.charge || atom.isotope || atom.hydrogens || atom.chirality ||
+          (!ORGANIC.include?(atom.element) && !lowercase) ||
+          (aromatic && !lowercase)
+        token =
+          if needs_bracket
             symbol = lowercase ? atom.element.downcase : atom.element
-            token = +"["
-            token << atom.isotope if atom.isotope
-            token << symbol
+            t = +'['
+            t << atom.isotope if atom.isotope
+            t << symbol
+            t << chirality_token(index) if stereo && atom.chirality
             if atom.hydrogens
-              token << "H"
-              token << atom.hydrogens.to_s if atom.hydrogens > 1
+              t << 'H'
+              t << atom.hydrogens.to_s if atom.hydrogens > 1
             end
-            token << charge_suffix(atom.charge) if atom.charge
-            token << "]"
+            t << charge_suffix(atom.charge) if atom.charge
+            t << ']'
+          else
+            bare_symbol(atom, lowercase)
           end
-        end
+        @plain_tokens[index] = token unless stereo
+        token
       end
 
       def bare_symbol(atom, lowercase)

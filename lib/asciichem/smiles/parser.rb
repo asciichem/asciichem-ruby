@@ -22,7 +22,7 @@ module AsciiChem
       # Returns a Model::Formula with one Molecule per dot component.
       def parse
         molecules = [component]
-        molecules << component while eat(".")
+        molecules << component while eat('.')
         unless @pos == @source.length
           raise ParseError,
                 "unexpected character #{peek.inspect} at position #{@pos} in #{@source.inspect}"
@@ -35,9 +35,11 @@ module AsciiChem
       def component
         @atoms = []
         @adjacency = []
+        @edge_directions = {}
         @open_rings = {}
         @parent = nil
         @pending_kind = nil
+        @pending_direction = nil
 
         chain
 
@@ -48,7 +50,14 @@ module AsciiChem
 
         edges = []
         @adjacency.each_with_index do |neighbors, index|
-          neighbors.each { |to, kind| edges << Structure::Graph::Edge.new(from: index, to: to, kind: kind) if to > index }
+          neighbors.each do |to, kind|
+            next unless to > index
+
+            edges << Structure::Graph::Edge.new(
+              from: index, to: to, kind: kind,
+              direction: @edge_directions[[index, to]]
+            )
+          end
         end
         Model::Molecule.new(nodes: Structure::Linearizer.new(atoms: @atoms, edges: edges).nodes)
       end
@@ -58,42 +67,51 @@ module AsciiChem
       def chain
         atom_token
         until eoc?
-          if peek == "("
+          if peek == '('
             branch
           elsif bond_start?
-            kind = bond_token
-            if peek == "("
-              branch(kind)
+            kind, direction = bond_token
+            if peek == '('
+              branch(kind, direction)
             elsif digit_start?
-              ringbond(kind)
+              ringbond(kind, direction)
             else
               @pending_kind = kind
+              @pending_direction = direction
               atom_token
             end
           elsif digit_start?
             ringbond(nil)
           else
             @pending_kind = nil
+            @pending_direction = nil
             atom_token
           end
         end
       end
 
-      def branch(kind = nil)
-        expect("(")
+      def branch(kind = nil, direction = nil)
+        expect('(')
         # The bond may lead the branch ("C-(O)") or open it ("C(=O)").
-        kind = bond_token if kind.nil? && bond_start?
+        kind, direction = bond_token if kind.nil? && bond_start?
         saved_parent = @parent
         saved_pending = @pending_kind
+        saved_direction = @pending_direction
         @pending_kind = kind
+        @pending_direction = direction
         chain
-        expect(")")
+        expect(')')
         @parent = saved_parent
         @pending_kind = saved_pending
+        @pending_direction = saved_direction
       end
 
-      def ringbond(kind)
+      def ringbond(kind, direction = nil)
         digit = ring_digit
+        if direction
+          raise ParseError,
+                "directional ring closures (#{direction}) are not representable in the model's ring-closure form"
+        end
         if @open_rings.key?(digit)
           opener = @open_rings.delete(digit)
           # The model's ring-closure digits carry no bond kind, so an
@@ -115,9 +133,13 @@ module AsciiChem
         index = @atoms.length
         @atoms << atom
         @adjacency[index] = {}
-        add_edge(@parent, index, @pending_kind) if @parent
+        if @parent
+          add_edge(@parent, index, @pending_kind)
+          @edge_directions[[@parent, index].minmax] = @pending_direction if @pending_direction
+        end
         @parent = index
         @pending_kind = nil
+        @pending_direction = nil
       end
 
       def add_edge(from, to, explicit)
@@ -133,7 +155,7 @@ module AsciiChem
       # -- tokens ----------------------------------------------------------
 
       def read_atom
-        return bracket_atom if peek == "["
+        return bracket_atom if peek == '['
 
         two = @source[@pos, 2].to_s
         if (symbol = ORGANIC.find { |s| two.start_with?(s) })
@@ -149,19 +171,20 @@ module AsciiChem
       end
 
       def bracket_atom
-        expect("[")
+        expect('[')
         isotope = digits
         symbol = bracket_symbol
-        reject_chirality
+        chirality = read_chirality
         hydrogens = hcount
         charge = bracket_charge
         skip_class
-        expect("]")
+        expect(']')
         Model::Atom.new(
           element: symbol.capitalize,
           isotope: isotope,
           charge: charge,
           hydrogens: hydrogens,
+          chirality: chirality,
           aromatic: symbol.match?(/\A[a-z]/) || nil
         )
       end
@@ -188,15 +211,23 @@ module AsciiChem
         raise ParseError, "expected an element symbol at position #{@pos} in #{@source.inspect}"
       end
 
-      def reject_chirality
-        return unless peek == "@"
+      # `@' (TH1) / `@@' (TH2): SMILES ordered-neighbour tetrahedral
+      # parity, stored verbatim on the atom — the writer recomputes
+      # the token for its own traversal order.
+      def read_chirality
+        return nil unless peek == '@'
 
-        token = @source[@pos, 2] == "@@" ? "'@@'" : "'@'"
-        raise ParseError, "chirality #{token} is not supported in the v1 subset"
+        if @source[@pos, 2] == '@@'
+          @pos += 2
+          'TH2'
+        else
+          @pos += 1
+          'TH1'
+        end
       end
 
       def hcount
-        return nil unless peek == "H"
+        return nil unless peek == 'H'
 
         @pos += 1
         count = digits
@@ -206,7 +237,7 @@ module AsciiChem
       # "+" | "++" | "+n" | "-" | "--" | "-n" → number-then-sign.
       def bracket_charge
         sign = peek
-        return nil unless sign == "+" || sign == "-"
+        return nil unless ['+', '-'].include?(sign)
 
         @pos += 1
         second = @source[@pos].to_s
@@ -221,32 +252,35 @@ module AsciiChem
       end
 
       def skip_class
-        return unless peek == ":"
+        return unless peek == ':'
 
         @pos += 1
         digits
       end
 
+      # Returns [kind, direction]: `/' and `\' are DIRECTIONAL SINGLE
+      # bonds (SMILES E/Z stereo) — kind stays :single, the direction
+      # rides the model's Bond#direction.
       def bond_token
         ch = peek
-        kind = { "-" => :single, "=" => :double, "#" => :triple, "$" => :quadruple,
-                 ":" => :aromatic }[ch]
+        kind = { '-' => :single, '=' => :double, '#' => :triple, '$' => :quadruple,
+                 ':' => :aromatic }[ch]
         unless kind
-          if ch == "/" || ch == "\\"
-            raise ParseError,
-                  "bond direction #{ch.inspect} (E/Z stereo) is not supported in the v1 subset"
+          if ['/', '\\'].include?(ch)
+            @pos += 1
+            return [:single, ch == '/' ? :up : :down]
           end
           raise ParseError, "expected a bond or atom at position #{@pos} in #{@source.inspect}"
         end
         @pos += 1
-        kind
+        [kind, nil]
       end
 
       def ring_digit
-        if peek == "%"
+        if peek == '%'
           @pos += 1
           digit = @source[@pos, 2].to_s
-          raise ParseError, "malformed %nn ring closure" unless digit.match?(/\A\d\d\z/)
+          raise ParseError, 'malformed %nn ring closure' unless digit.match?(/\A\d\d\z/)
 
           @pos += 2
           digit
@@ -291,9 +325,7 @@ module AsciiChem
       end
 
       def expect(char)
-        unless peek == char
-          raise ParseError, "expected #{char.inspect} at position #{@pos} in #{@source.inspect}"
-        end
+        raise ParseError, "expected #{char.inspect} at position #{@pos} in #{@source.inspect}" unless peek == char
 
         @pos += 1
       end
