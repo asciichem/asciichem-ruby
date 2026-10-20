@@ -45,6 +45,28 @@ formula.to_mathml  # => "<math>...</math>"
 formula.to_text    # => "H_2O"  (round trip)
 ----
 
+== Conformance
+
+The reference implementation of https://www.asciichem.org[the AsciiChem
+contract]. Every claim is gated by the shared corpus
+(https://github.com/asciichem/asciichem-tests[asciichem-tests]) in CI —
+a level without the green corpus run behind it does not ship.
+
+[cols="1,1,4"]
+|===
+|Level |Claim |Basis
+
+|L0 notation |yes |parse/reject contract; every `roundTrip` fixture returns its input
+|L1 semantics |yes |wire form validates against the v1 schemas and round-trips; the perception pass (implicit hydrogens, aromatic rings) is corpus-gated
+|L2 render |yes |MathML byte-goldens, canonical text, and the wire form for every construct
+|L3 stereo |yes |tetrahedral chirality, directional bonds, wedge/hash; parity-correct canonical SMILES including ring closures
+|L4 identity |partial |opt-in InChI engine with stereo layers, OPSIN adapter, identifier cross-check, citation bibitems; CAS source decision pending
+|===
+
+TypeScript and Python claim the same levels they pass; see their
+READMEs and the https://www.asciichem.org/guides/conformance-levels/[levels
+document].
+
 == Design
 
 See link:ARCHITECTURE.adoc[] and the specification at
