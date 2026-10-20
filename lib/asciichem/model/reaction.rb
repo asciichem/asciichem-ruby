@@ -29,6 +29,24 @@ module AsciiChem
           conditions: conditions }
       end
 
+      # Normalized stoichiometry (item 4): each side maps the species'
+      # coefficient-free canonical text to its integer coefficient
+      # (absent coefficient = 1). A species can appear on both sides.
+      def stoichiometry
+        { reactants: side_stoichiometry(reactants),
+          products: side_stoichiometry(products) }
+      end
+
+      private
+
+      def side_stoichiometry(side)
+        side.each_with_object(Hash.new(0)) do |molecule, out|
+          coefficient = (molecule.coefficient || '1').to_i
+          coefficient = 1 if coefficient.zero?
+          out[molecule.to_text.sub(/\A\d+/, '')] += coefficient
+        end
+      end
+
       def children
         reactants + products
       end
