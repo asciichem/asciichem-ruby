@@ -8,11 +8,11 @@ require 'spec_helper'
 # what a generator can reach. Seeded for determinism; failures print
 # the seed and the offending text.
 RSpec.describe 'property-based round-trip conformance' do
-  SEED = 2026_10_20
+  SEED = 20_261_020
   CASES = 300
 
   ELEMENTS = %w[H C N O F S P Cl].freeze
-  BOND_KINDS = [:single, :double, :single, :triple].freeze
+  BOND_KINDS = %i[single double single triple].freeze
 
   def rng
     @rng ||= Random.new(SEED)
@@ -30,21 +30,18 @@ RSpec.describe 'property-based round-trip conformance' do
     atoms = Array.new(size) do
       AsciiChem::Model::Atom.new(
         element: pick(ELEMENTS),
-        charge: (pick([nil, nil, nil, '2+', '-'])),
-        chirality: (pick([nil, nil, nil, nil, 'TH1', 'TH2']))
+        charge: pick([nil, nil, nil, '2+', '-']),
+        chirality: pick([nil, nil, nil, nil, 'TH1', 'TH2'])
       )
     end
-    bonds = []
-    (1...size).each do |i|
-      bonds << AsciiChem::Model::Bond.new(
+    bonds = (1...size).map do |_i|
+      AsciiChem::Model::Bond.new(
         kind: pick(BOND_KINDS),
         direction: (pick([nil, nil, nil, :up, :down]) if rng.rand(6).zero?)
       )
     end
     # One ring-closure attempt between two non-adjacent atoms.
-    if size >= 5 && rng.rand(3).zero?
-      bonds << AsciiChem::Model::Bond.new(kind: :single, direction: nil)
-    end
+    bonds << AsciiChem::Model::Bond.new(kind: :single, direction: nil) if size >= 5 && rng.rand(3).zero?
     AsciiChem::Model::Molecule.new(nodes: atoms.zip(bonds).flatten.compact)
   end
 
