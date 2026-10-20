@@ -102,5 +102,22 @@ RSpec.describe AsciiChem::Perception do
       atoms, edges = graph_for('O=C1C=CC(=O)C=C1')
       expect(described_class.aromatic_rings(atoms, edges)).to be_empty
     end
+
+    it 'perceives five-membered Hückel rings from Kekulé bond orders' do
+      {
+        'C1=COC=C1' => 'furan',
+        'C1=CNC=C1' => 'pyrrole',
+        'C1=CSC=C1' => 'thiophene'
+      }.each do |smiles, name|
+        atoms, edges = graph_for(smiles)
+        expect(described_class.aromatic_rings(atoms, edges).length)
+          .to eq(1), name
+      end
+    end
+
+    it 'does not perceive a four-pi or three-membered ring' do
+      expect(described_class.aromatic_rings(*graph_for('C1=CCC=C1'))).to be_empty
+      expect(described_class.aromatic_rings(*graph_for('C1=CC1'))).to be_empty
+    end
   end
 end
