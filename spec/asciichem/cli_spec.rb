@@ -82,6 +82,10 @@ RSpec.describe AsciiChem::Cli do
 
       out = run('convert', '-i', '2H_2 + O_2 -> 2H_2O', '-t', 'text', '--engine', 'parsanol')
       expect(out.strip).to eq('2H_2 + O_2 -> 2H_2O')
+    ensure
+      # --engine mutates the global selector; never leak it into the
+      # rest of the suite.
+      AsciiChem::Engine.use(:parslet)
     end
 
     it 'exits 6 for an unknown engine name' do
