@@ -3,6 +3,27 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.2] - 2026-10-20
+
+### Added
+- `Reaction#stoichiometry` (TODO.v2/13 item 4, slice 2): the
+  coefficients are already model data; the reaction now exposes them
+  normalized — per side, coefficient-free canonical species text to
+  integer (absent coefficient = 1, duplicate species sum). Pure
+  model read; wire format unchanged.
+- OPSIN source adapter (item 3): name-to-structure derivation via
+  the OPSIN service, feeding the resolver pipeline
+  (`AsciiChem::Resolver::Opsin`).
+- Reaction role hints (item 4, slice A): `ReactionRoles.roles_for`
+  classifies conditions into catalyst/solvent/reagent hints per the
+  above/below-arrow convention.
+- The perception pass (item 2): `AsciiChem::Perception` derives
+  implicit hydrogens and aromatic rings as pure model services; the
+  ValenceCheck linter consumes it.
+- Differential conformance harness (item 5): 300 seeded generated
+  cases shared through asciichem-tests (`corpus/generated/models.json`),
+  exercised by the Ruby property suite and by TS/PY gates.
+
 ## [0.31.1] - 2026-10-20
 
 ### Changed
