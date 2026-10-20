@@ -63,13 +63,22 @@ RSpec.describe 'SMILES stereo (L3 slice 1)' do
     end
   end
 
-  describe 'known limitations (slice 3 closes)' do
-    it 'leaves ring-closure neighbours uncorrected in the parity order' do
-      # Chiral atoms whose reference order includes ring-closure
-      # neighbours emit the stored token uncorrected — documented,
-      # spec'd, closed by the canonical-stereo slice.
-      written, stable = round_trip_stable?('C1[C@H](O)CCC1')
-      expect(stable).to eq(written.include?('@'))
+  describe 'cyclic stereo (slice 3)' do
+    # Ring-closure neighbours participate in the parity order: the
+    # model's reference order lists them from the ring edges (the
+    # correction handles the reordering, acyclic or not).
+    it 'round-trips cyclic chirality' do
+      ['C1[C@H](O)CCC1', 'C1[C@@H](O)CCC1'].each do |source|
+        written, stable = round_trip_stable?(source)
+        expect(stable).to be(true), "#{source} -> #{written} did not reparse equal"
+      end
+    end
+
+    it 'keeps the cyclic enantiomers distinct through the canonical form' do
+      a = smiles.parse('C1[C@H](O)CCC1').nodes.first
+      b = smiles.parse('C1[C@@H](O)CCC1').nodes.first
+      expect(AsciiChem::Smiles::Writer.new(a).write)
+        .not_to eq(AsciiChem::Smiles::Writer.new(b).write)
     end
   end
 end
