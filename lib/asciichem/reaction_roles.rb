@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
 module AsciiChem
-  # Reaction-roles perception (TODO.v2/13 item 4, slice A): the
-  # chemistry-writing convention puts catalysts and light reagents
-  # ABOVE the arrow and solvents/conditions BELOW; the conditions
-  # text carries them free-form. This derives structured role hints
-  # from that convention — pure functions, nothing mutates. A full
-  # roles syntax (structured entries in the grammar) is the later
-  # slice.
+  # Reaction-role derivation (TODO.v2/13 item 4): explicit typed
+  # entries (`[cat: Pd]`, `[solv: THF]`, `[reag: NaH]`) win; free-text
+  # entries fall back to the writing convention — catalysts and light
+  # reagents ABOVE the arrow, solvents BELOW — classified by hint
+  # matching. Pure functions, nothing mutates.
   module ReactionRoles
     CATALYST_HINTS = %w[pd pt ni fe catalyst cat].freeze
     SOLVENT_HINTS = %w[h2o thf dmso dmf etoh meoh toluene solvent sol water].freeze
@@ -15,19 +13,37 @@ module AsciiChem
     module_function
 
     # Returns { catalysts: [strings], solvents: [strings],
-    # reagents: [strings], other_above: [strings], other_below: [] }
-    # — entries split from the conditions text by whitespace, each
-    # classified by hint matching against the role vocabularies.
+    # reagents: [strings], other_below: [strings] }. Explicit roles
+    # route to their bucket regardless of side; free-text entries are
+    # split and classified by the above/below convention.
     def roles_for(reaction)
-      conditions = reaction.conditions
-      above = split_entries(conditions&.above)
-      below = split_entries(conditions&.below)
-      {
-        catalysts: above.select { |e| matches?(e, CATALYST_HINTS) },
-        reagents: above.reject { |e| matches?(e, CATALYST_HINTS) },
-        solvents: below.select { |e| matches?(e, SOLVENT_HINTS) },
-        other_below: below.reject { |e| matches?(e, SOLVENT_HINTS) }
-      }
+      roles = { catalysts: [], reagents: [], solvents: [], other_below: [] }
+      entries = reaction.conditions ? reaction.conditions.entries : []
+      entries.each { |entry| assign(entry, roles) }
+      roles
+    end
+
+    def assign(entry, roles)
+      case entry.role
+      when :catalyst then roles[:catalysts] << entry.value
+      when :solvent then roles[:solvents] << entry.value
+      when :reagent then roles[:reagents] << entry.value
+      else classify_free(entry, roles)
+      end
+    end
+
+    def classify_free(entry, roles)
+      split_entries(entry.value).each do |value|
+        roles[bucket(value, entry.side)] << value
+      end
+    end
+
+    def bucket(value, side)
+      if matches?(value, CATALYST_HINTS) then :catalysts
+      elsif matches?(value, SOLVENT_HINTS) then :solvents
+      elsif side == :above then :reagents
+      else :other_below
+      end
     end
 
     def split_entries(text)

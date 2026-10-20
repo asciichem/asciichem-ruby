@@ -5,7 +5,48 @@ module AsciiChem
     # A chemical reaction: reactants, an arrow, and products. Conditions
     # render above and below the arrow per IUPAC.
     class Reaction < Node
+      # Conditions carry the bracket text verbatim (the round-trip
+      # source) and derive typed entries from it: `[cat: Pd]` is a
+      # catalyst entry, `[water]` stays free text. `;` separates
+      # entries inside one bracket; unknown role prefixes are free text
+      # (lossless — never an error).
       Conditions = Struct.new(:above, :below, keyword_init: true)
+
+      class Conditions
+        ROLE_PREFIXES = {
+          'cat' => :catalyst, 'catalyst' => :catalyst,
+          'solv' => :solvent, 'solvent' => :solvent,
+          'reag' => :reagent, 'reagent' => :reagent
+        }.freeze
+        ENTRY_SEPARATOR = ';'
+        Entry = Struct.new(:role, :value, :side, keyword_init: true)
+
+        def entries
+          [[:above, above], [:below, below]].flat_map do |side, text|
+            entries_for(side, text)
+          end
+        end
+
+        private
+
+        def entries_for(side, text)
+          return [] if text.nil? || text.strip.empty?
+
+          text.split(ENTRY_SEPARATOR).filter_map do |chunk|
+            chunk = chunk.strip
+            next if chunk.empty?
+
+            role, value = split_role(chunk)
+            Entry.new(role: role, value: value, side: side)
+          end
+        end
+
+        def split_role(chunk)
+          prefix, rest = chunk.split(':', 2)
+          role = ROLE_PREFIXES[prefix.strip.downcase] unless rest.nil?
+          role ? [role, rest.strip] : [nil, chunk]
+        end
+      end
 
       ARROWS = {
         forward:     { ascii: '->',   mathml_entity: '→', wire: 'forward' },
