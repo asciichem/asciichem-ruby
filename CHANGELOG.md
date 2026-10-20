@@ -3,6 +3,41 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.4] - 2026-10-20
+
+### Changed
+- Canonical SMILES now consumes the perception pass (item 2): atoms
+  in perceived aromatic rings are written lowercase with implicit ring
+  bonds, so Kekulé input canonicalizes — `C1=CC=CC=C1` → `c1ccccc1`,
+  aspirin → `CC(=O)Oc1ccccc1C(=O)O`. Canonical-form stability is a
+  fixed point (`write(parse(write(x))) == write(x)`); composition and
+  connectivity are preserved. Perception's sp2 rule now requires the
+  double-bond partner to itself be in a ring, keeping quinone rings
+  Kekulé — the guard that makes aromatic canonicalization chemically
+  safe. Corpus contract 0.7.0 (`canonicalSmiles` fixture field).
+- `Molecule#stoichiometric_coefficient` is the single coefficient
+  rule shared by `Reaction#stoichiometry`, `BalanceCheck`, and
+  `element_counts`.
+
+### Added
+- Mechanism electron-flow markers (item 4, slice 4c): a step value may
+  carry `| flow: SOURCE > TARGET` clauses (semicolon-separated),
+  typed as `Mechanism::Flow`, carried by `MechanismGraph`, emitted on
+  the wire (`MechanismStep.flows`, asciichem-model v1 additive), and
+  re-emitted in canonical text. Malformed clauses raise; nothing is
+  dropped.
+- Depiction backends (item 7): `AsciiChem::Layout.backend` lets a
+  depiction engine (RDKit, CDK, a Rust layout core) replace the
+  built-in elkrb pipeline without touching the renderer or the model.
+
+### Fixed
+- Mechanism wire emission: the adapter passed raw step/spectator
+  strings to the reaction serializer, so `Mechanism#to_model_json`
+  had never worked. Steps and spectators are now parsed with the same
+  grammar; spectators that are not valid AsciiChem raise clearly.
+- Test isolation: the CLI `--engine parsanol` spec leaked the engine
+  selection into later examples.
+
 ## [0.31.3] - 2026-10-20
 
 ### Added
