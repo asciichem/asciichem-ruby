@@ -94,5 +94,13 @@ RSpec.describe AsciiChem::Perception do
       atoms, edges = graph_for('C1=CC=C2C=CC=CC2=C1')
       expect(described_class.aromatic_rings(atoms, edges).length).to eq(2)
     end
+
+    it 'does not perceive a quinone ring (exocyclic double bonds)' do
+      # Para-quinone's ring atoms are all sp2, but the double bonds
+      # that make them so point at oxygens outside any ring — writing
+      # the ring as aromatic SMILES would state the wrong bond orders.
+      atoms, edges = graph_for('O=C1C=CC(=O)C=C1')
+      expect(described_class.aromatic_rings(atoms, edges)).to be_empty
+    end
   end
 end

@@ -78,6 +78,19 @@ RSpec.describe "asciichem-tests conformance corpus" do
     end
   end
 
+  # Canonical SMILES (TODO.v2/13 item 2): the writer consumes the
+  # perception pass, so Kekulé aromatic input canonicalizes to the
+  # lowercase spelling. Fixtures whose input is not canonical state
+  # the exact output.
+  cases.select { |c| c.key?("canonicalSmiles") }.each do |fixture|
+    id = fixture.fetch("id")
+
+    it "#{id} canonicalizes to the perceived aromatic form" do
+      expect(AsciiChem.parse_smiles(fixture.fetch("smiles")).to_smiles)
+        .to eq(fixture.fetch("canonicalSmiles"))
+    end
+  end
+
   # Perception conformance (TODO.v2/13 item 2): implicit hydrogens and
   # aromatic rings are shared semantics — every implementation must
   # derive the same values (nil = perception declines, never invents).

@@ -46,7 +46,7 @@ RSpec.describe AsciiChem::Resolver::PubChem do
                                 fetch: RecordedFetch.new(fixture),
                                 cache: null_cache)
     expect(substance.structure).to be_a(AsciiChem::Model::Molecule)
-    expect(substance.structure.to_smiles).to eq("CC(=O)OC1=CC=CC=C1C(=O)O")
+    expect(substance.structure.to_smiles).to eq("CC(=O)Oc1ccccc1C(=O)O")
   end
 
   it "parses stereo SMILES into structures (chirality left intact)" do
