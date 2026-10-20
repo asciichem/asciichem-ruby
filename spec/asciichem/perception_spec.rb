@@ -14,8 +14,17 @@ RSpec.describe AsciiChem::Perception do
     def hydrogens_in(smiles, element, position = 0)
       atoms, edges = graph_for(smiles)
       picked = atoms.select { |a| a.element == element }[position]
-      order = described_class.bond_order_sum(atoms.index(picked), edges)
+      order = described_class.hydrogen_valence_sum(atoms.index(picked), edges)
       described_class.implicit_hydrogens(picked, order)
+    end
+
+    def all_hydrogens(smiles)
+      atoms, edges = graph_for(smiles)
+      atoms.each_with_index.map do |atom, index|
+        described_class.implicit_hydrogens(
+          atom, described_class.hydrogen_valence_sum(index, edges)
+        )
+      end
     end
 
     it 'gives bare methane carbon four implicit hydrogens' do
@@ -43,6 +52,23 @@ RSpec.describe AsciiChem::Perception do
       other = AsciiChem::Model::Atom.new(element: 'Xx')
       expect(described_class.implicit_hydrogens(other,
                                                 described_class.bond_order_sum(atoms.index(atoms.first), []))).to be_nil
+    end
+
+    it 'perceives the same hydrogens for both spellings of benzene' do
+      expect(all_hydrogens('C1=CC=CC=C1')).to eq(all_hydrogens('c1ccccc1'))
+      expect(all_hydrogens('c1ccccc1')).to all(eq(1))
+    end
+
+    it 'gives pyridine nitrogen zero and its carbons one' do
+      expect(all_hydrogens('c1ccncc1')).to eq([1, 1, 1, 0, 1, 1])
+    end
+
+    it 'declines on aromatic-schematic fusion atoms instead of inventing' do
+      # Naphthalene's fusion carbons carry three aromatic bonds: the
+      # Hückel sum 4.5 has no whole-number valence fit.
+      expect(all_hydrogens('c1ccc2ccccc2c1')).to eq(
+        [1, 1, 1, nil, 1, 1, 1, 1, nil, 1]
+      )
     end
   end
 

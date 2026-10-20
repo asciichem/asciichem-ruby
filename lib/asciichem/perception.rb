@@ -36,6 +36,8 @@ module AsciiChem
     # Sum of explicit bond orders at an atom (wedge/hash/dative/wavy
     # bonds order as single; aromatic orders as 1 — Hückel alternation
     # is a ring-perception concern, not a bond-order sum concern).
+    # This is the valence-feasibility sum: the linter's max-valence
+    # check consumes it.
     def bond_order_sum(atom_index, edges)
       edges.sum do |edge|
         next 0 unless edge.from == atom_index || edge.to == atom_index
@@ -44,26 +46,49 @@ module AsciiChem
       end
     end
 
+    # Hydrogen-counting sum: aromatic bonds order as 1.5 (Hückel), so
+    # both spellings of benzene sum to 3.0 at every carbon and perceive
+    # one implicit hydrogen — the two syntaxes share semantics. Whole
+    # numbers only: a fractional remainder means the Hückel arithmetic
+    # cannot decide (fused aromatic-schematic atoms), and perception
+    # declines rather than invents.
+    def hydrogen_valence_sum(atom_index, edges)
+      edges.sum do |edge|
+        next 0 unless edge.from == atom_index || edge.to == atom_index
+
+        edge.kind == :aromatic ? 1.5 : BOND_ORDER.fetch(edge.kind, 1)
+      end
+    end
+
     # Implicit hydrogens for an atom: the smallest default valence
-    # that the explicit bond order fits, minus the bond order.
+    # that the hydrogen-valence sum fits, minus that sum. The sum must
+    # come from #hydrogen_valence_sum (aromatic-aware).
     # - Atoms that STATE hydrogens ([NH4+], [CH4]) return 0 — never
     #   add to what the source said.
     # - Charged atoms return nil: charge algebra on valence is
     #   element-specific and deferred until the perception pass grows
     #   one (wrong implicit hydrogens are worse than none).
-    # - Elements without a table entry, or explicit orders exceeding
-    #   every default, return nil — never invent.
-    def implicit_hydrogens(atom, bond_order_sum)
+    # - Elements without a table entry, non-integral or over-valent
+    #   sums return nil — never invent.
+    def implicit_hydrogens(atom, valence_sum)
       return 0 if atom.hydrogens
       return nil if atom.charge
 
-      valences = DEFAULT_VALENCES[atom.element]
-      return nil if valences.nil?
+      deficits = valence_deficits(atom.element, valence_sum)
+      return nil if deficits.empty?
 
-      fitting = valences.select { |v| v >= bond_order_sum }
-      return nil if fitting.empty?
+      deficits.min.to_i
+    end
 
-      fitting.min - bond_order_sum
+    # Whole-number, non-negative gaps between each default valence and
+    # the hydrogen-valence sum; empty when the element is unknown or
+    # no valence fits integrally.
+    def valence_deficits(element, valence_sum)
+      valences = DEFAULT_VALENCES[element]
+      return [].freeze if valences.nil?
+
+      valences.map { |v| v - valence_sum }
+              .select { |deficit| deficit >= 0 && deficit.modulo(1).zero? }
     end
 
     # Six-membered cycles where every atom is sp2 (participates in a
