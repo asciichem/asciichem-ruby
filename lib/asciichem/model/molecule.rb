@@ -124,13 +124,19 @@ module AsciiChem
       # describe the substance, not the stoichiometric multiplier.
       def element_counts(with_coefficient: true)
         tally = Hash.new(0)
-        multiplier = 1
-        if with_coefficient
-          own = coefficient&.to_i
-          multiplier = own if own && own.positive?
-        end
+        multiplier = with_coefficient ? stoichiometric_coefficient : 1
         nodes.each { |node| tally_element(node, tally, multiplier) }
         tally
+      end
+
+      # The integer stoichiometric coefficient: the authored leading
+      # number, or 1 when absent or not positive. Single source for
+      # every consumer (reaction stoichiometry, the balance check,
+      # composition) — coefficients are model data, not per-caller
+      # parsing.
+      def stoichiometric_coefficient
+        own = coefficient&.to_i
+        own && own.positive? ? own : 1
       end
 
       private

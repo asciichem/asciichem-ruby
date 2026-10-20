@@ -113,9 +113,7 @@ module AsciiChem
 
       def side_stoichiometry(side)
         side.each_with_object(Hash.new(0)) do |molecule, out|
-          coefficient = (molecule.coefficient || '1').to_i
-          coefficient = 1 if coefficient.zero?
-          out[molecule.to_text.sub(/\A\d+/, '')] += coefficient
+          out[molecule.to_text.sub(/\A\d+/, '')] += molecule.stoichiometric_coefficient
         end
       end
     end
