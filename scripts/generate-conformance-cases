@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Differential conformance (TODO.v2/13 item 5): exports the property
+# harness's generated models as wire JSON + canonical text so the
+# TypeScript and Python implementations run the SAME cases (the
+# cross-implementation differential gate). Deterministic seed; the
+# output lives in asciichem-tests and is versioned like any corpus
+# artifact.
+#
+#   bundle exec ruby scripts/generate-conformance-cases \
+#     ../asciichem-tests/corpus/generated/models.json [count]
+require "asciichem"
+require "asciichem/wire_adapter"
+require "fileutils"
+require "json"
+
+seed = 20_261_020
+count = Integer(ARGV[1] || 300)
+out_path = ARGV[0] || "../asciichem-tests/corpus/generated/models.json"
+
+rng = Random.new(seed)
+ELEMENTS = %w[H C N O F S P Cl].freeze
+BOND_KINDS = %i[single double single triple].freeze
+
+pick = ->(list) { list[rng.rand(list.length)] }
+
+cases = []
+count.times do
+  size = 2 + rng.rand(6)
+  atoms = Array.new(size) do
+    AsciiChem::Model::Atom.new(
+      element: pick.call(ELEMENTS),
+      charge: pick.call([nil, nil, nil, '2+', '-']),
+      chirality: pick.call([nil, nil, nil, nil, 'TH1', 'TH2'])
+    )
+  end
+  bonds = (1...size).map do
+    AsciiChem::Model::Bond.new(
+      kind: pick.call(BOND_KINDS),
+      direction: (pick.call([nil, nil, nil, :up, :down]) if rng.rand(6).zero?)
+    )
+  end
+  molecule = AsciiChem::Model::Molecule.new(nodes: atoms.zip(bonds).flatten.compact)
+  text = molecule.to_text
+  reparsed = AsciiChem.parse(text)
+  raise "seed #{seed} generated an unstable case: #{text.inspect}" unless reparsed.nodes.first == molecule
+
+  # The wire root is the formula document (the canonical root).
+  wire = AsciiChem::WireAdapter.to_wire(AsciiChem.parse(text))
+  # Framework serialization (lutaml-model), never hand-rolled.
+  cases << { "wire" => JSON.parse(wire.to_json), "text" => text }
+end
+
+FileUtils.mkdir_p(File.dirname(out_path))
+File.write(out_path, JSON.pretty_generate({ "seed" => seed, "cases" => cases }) + "\n")
+puts "wrote #{cases.length} cases to #{out_path}"

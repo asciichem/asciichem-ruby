@@ -599,7 +599,7 @@ module AsciiChem
             lone_pairs: lewis_count(hash[:lone_pairs]),
             radical_electrons: lewis_count(hash[:radical_electrons]),
             ring_closures: ring_closures_string(hash[:ring_closures]),
-            chirality: hash[:chirality],
+            chirality: hash[:chirality]&.to_s,
             x2: float_or_nil(hash[:x2]),
             y2: float_or_nil(hash[:y2]),
             z2: float_or_nil(hash[:z2]),
