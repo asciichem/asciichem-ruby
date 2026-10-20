@@ -263,7 +263,9 @@ module AsciiChem
         #                    by the reaction arrow)
         #   wavy      `~~`  (resonance / delocalised)
         rule(:bond) do
-          str('##').as(:quadruple) |
+          str('/').as(:direction_up) |
+            str('\\').as(:direction_down) |
+            str('##').as(:quadruple) |
             str('>-').as(:wedge) |
             str('-<').as(:hash) |
             str('~>').as(:dative) |
@@ -306,6 +308,7 @@ module AsciiChem
         rule(:atom_annotation) do
           coordinate_annotation.maybe >>
             parity_annotation.maybe >>
+            chirality_annotation.maybe >>
             multiplicity_annotation.maybe >>
             atom_title_annotation.maybe >>
             fractional_annotation.maybe
@@ -313,6 +316,12 @@ module AsciiChem
 
         rule(:parity_annotation) do
           str('@') >> (str('R') | str('S')).as(:atom_parity)
+        end
+
+        # Tetrahedral parity classes (SMILES @/@@ semantics, spelled
+        # explicitly to stay unambiguous beside the CIP @R/@S label).
+        rule(:chirality_annotation) do
+          str('@') >> (str('TH1') | str('TH2')).as(:chirality)
         end
 
         rule(:coordinate_annotation) do

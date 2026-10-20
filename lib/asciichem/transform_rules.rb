@@ -62,6 +62,8 @@ module AsciiChem
   
       # -- bonds ------------------------------------------------------------
   
+      rule(direction_up: simple(:_u))   { Model::Bond.new(kind: :single, direction: :up) }
+      rule(direction_down: simple(:_d)) { Model::Bond.new(kind: :single, direction: :down) }
       rule(quadruple: simple(:_q)) { Model::Bond.new(kind: :quadruple) }
       rule(triple: simple(:_t))    { Model::Bond.new(kind: :triple) }
       rule(wedge: simple(:_w))     { Model::Bond.new(kind: :wedge) }
@@ -597,6 +599,7 @@ module AsciiChem
             lone_pairs: lewis_count(hash[:lone_pairs]),
             radical_electrons: lewis_count(hash[:radical_electrons]),
             ring_closures: ring_closures_string(hash[:ring_closures]),
+            chirality: hash[:chirality],
             x2: float_or_nil(hash[:x2]),
             y2: float_or_nil(hash[:y2]),
             z2: float_or_nil(hash[:z2]),
@@ -637,7 +640,7 @@ module AsciiChem
   
         def initialize(element, isotope: nil, subscript: nil, superscript: nil,
                        lone_pairs: nil, radical_electrons: nil,
-                       ring_closures: nil,
+                       ring_closures: nil, chirality: nil,
                        x2: nil, y2: nil, z2: nil, atom_parity: nil,
                        spin_multiplicity: nil, atom_title: nil,
                        x_fract: nil, y_fract: nil, z_fract: nil)
@@ -648,6 +651,7 @@ module AsciiChem
           @lone_pairs = lone_pairs
           @radical_electrons = radical_electrons
           @ring_closures = ring_closures
+          @chirality = chirality
           @x2 = x2
           @y2 = y2
           @z2 = z2
@@ -672,6 +676,7 @@ module AsciiChem
             lone_pairs: positive_int(@lone_pairs),
             radical_electrons: positive_int(@radical_electrons),
             ring_closures: @ring_closures,
+            chirality: @chirality,
             x2: @x2,
             y2: @y2,
             z2: @z2,

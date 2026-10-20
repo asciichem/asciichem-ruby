@@ -64,6 +64,7 @@ module AsciiChem
           parts << "#{coord})"
         end
         parts << "@#{atom.atom_parity}" if atom.atom_parity
+        parts << "@#{atom.chirality}" if atom.chirality
         parts << "@m(#{atom.spin_multiplicity})" if atom.spin_multiplicity
         parts << %(@t("#{atom.atom_title}")) if atom.atom_title
         if atom.x_fract && atom.y_fract && atom.z_fract
@@ -83,6 +84,11 @@ module AsciiChem
       end
 
       def visit_bond(bond)
+        # Directional single bonds spell the direction instead of the
+        # plain dash (the round-trip contract: text re-parses to the
+        # same model).
+        return { up: '/', down: '\\' }.fetch(bond.direction) if bond.direction
+
         bond.ascii
       end
 
