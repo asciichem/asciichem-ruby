@@ -105,8 +105,20 @@ RSpec.describe AsciiChem::Smiles do
   describe ".write" do
     it "round-trips simple canonical forms exactly" do
       %w[CCO CCC c1ccccc1 C1CCCCC1 [NH4+] [O-] [13CH4] N#N
-         C1=CC=CC=C1 CC(=O)O].each do |smiles|
+         C1=CC=CC=C1 CC(=O)O C1=CCC(C)C(C)C1].each do |smiles|
         expect(described_class.parse(smiles).to_smiles).to eq(smiles)
+      end
+    end
+
+    # #103: a closure-bearing child continues the chain, so the digit
+    # lands at the end of the traversal instead of inside a branch and
+    # the written atom order matches the model's.
+    it "keeps ring-closure digits out of branches" do
+      %w[C1=CCC(C)C(C)C1 C1CC2CCC1C2 C1CC(C)CCC1].each do |smiles|
+        molecule = described_class.parse(smiles)
+        written = molecule.to_smiles
+        expect(written).to eq(smiles)
+        expect(described_class.parse(written)).to eq(molecule)
       end
     end
 
