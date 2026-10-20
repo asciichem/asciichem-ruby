@@ -35,7 +35,7 @@ module AsciiChem
                     :charge, :oxidation_state,
                     :lone_pairs, :radical_electrons,
                     :ring_closures, :aromatic, :hydrogens,
-                    :x2, :y2, :z2, :atom_parity,
+                    :x2, :y2, :z2, :atom_parity, :chirality,
                     :spin_multiplicity, :atom_title,
                     :x_fract, :y_fract, :z_fract
 
@@ -60,6 +60,7 @@ module AsciiChem
                      lone_pairs: nil, radical_electrons: nil,
                      ring_closures: nil, aromatic: nil, hydrogens: nil,
                      x2: nil, y2: nil, z2: nil, atom_parity: nil,
+                     chirality: nil,
                      spin_multiplicity: nil, atom_title: nil,
                      x_fract: nil, y_fract: nil, z_fract: nil)
         @element = element
@@ -77,6 +78,7 @@ module AsciiChem
         @y2 = y2
         @z2 = z2
         @atom_parity = atom_parity
+        @chirality = chirality
         @spin_multiplicity = spin_multiplicity
         @atom_title = atom_title
         @x_fract = x_fract
@@ -92,6 +94,7 @@ module AsciiChem
           ring_closures: ring_closures, aromatic: aromatic,
           hydrogens: hydrogens,
           x2: x2, y2: y2, z2: z2, atom_parity: atom_parity,
+          chirality: chirality,
           spin_multiplicity: spin_multiplicity, atom_title: atom_title,
           x_fract: x_fract, y_fract: y_fract, z_fract: z_fract }
       end

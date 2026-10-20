@@ -55,13 +55,23 @@ RSpec.describe AsciiChem::Resolver::PubChem do
     expect(substance.structure.to_smiles).to eq("CC(=O)OC1=CC=CC=C1C(=O)O")
   end
 
-  it "keeps the SMILES as an identifier when it is outside the subset" do
+  it "parses stereo SMILES into structures (chirality left intact)" do
     stereo = fixture.gsub("CC(=O)OC1=CC=CC=C1C(=O)O", "C[C@H](N)C(=O)O")
     substance = adapter.resolve(value: "aspirin", convention: "name",
                                 fetch: RecordedFetch.new(stereo),
                                 cache: null_cache)
+    expect(substance.structure).to be_a(AsciiChem::Model::Molecule)
+    chiral = substance.structure.nodes.find { |n| n.is_a?(AsciiChem::Model::Atom) && n.chirality }
+    expect(chiral.chirality).to eq("TH1")
+  end
+
+  it "keeps the SMILES as an identifier when it is outside the subset" do
+    wildcard = fixture.gsub("CC(=O)OC1=CC=CC=C1C(=O)O", "[*]C(=O)OC1=CC=CC=C1C(=O)O")
+    substance = adapter.resolve(value: "aspirin", convention: "name",
+                                fetch: RecordedFetch.new(wildcard),
+                                cache: null_cache)
     expect(substance.structure).to be_nil
-    expect(substance.identifier_value("canonical-smiles")).to eq("C[C@H](N)C(=O)O")
+    expect(substance.identifier_value("canonical-smiles")).to include("[*]")
   end
 
   it "returns nil for a not-found response (unknown substance)" do

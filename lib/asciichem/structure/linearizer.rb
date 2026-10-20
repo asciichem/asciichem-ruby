@@ -32,7 +32,7 @@ module AsciiChem
         @edges.each do |edge|
           first, last = [edge.from, edge.to].minmax
           if last - first == 1
-            @token_before[last] = edge.kind
+            @token_before[last] = edge
           else
             digit = allocate_digit(first, last)
             @digits_for[first] += digit
@@ -42,8 +42,11 @@ module AsciiChem
 
         result = []
         @atoms.each_with_index do |atom, index|
-          kind = @token_before[index]
-          result << AsciiChem::Model::Bond.new(kind: kind || :single) if index.positive? && kind
+          edge = @token_before[index]
+          if index.positive? && edge
+            result << AsciiChem::Model::Bond.new(kind: edge.kind || :single,
+                                                 direction: edge.direction)
+          end
           atom.ring_closures = @digits_for[index] unless @digits_for[index].empty?
           result << atom
         end
