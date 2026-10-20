@@ -30,6 +30,7 @@ module AsciiChem
   autoload :Molfile, "asciichem/molfile"
   autoload :Parser, "asciichem/parser"
   autoload :Perception,        'asciichem/perception'
+  autoload :ReactionRoles,     'asciichem/reaction_roles'
   autoload :PeriodicTable, "asciichem/periodic_table"
   autoload :Resolver, "asciichem/resolver"
   autoload :RingBonds, "asciichem/ring_bonds"
