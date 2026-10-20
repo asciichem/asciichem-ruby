@@ -7,12 +7,21 @@ module AsciiChem
     # computed (Layout walks atoms in the same order as
     # Structure::Graph, so positions map by index). Charges and
     # isotopes are emitted as `M  CHG` / `M  ISO` property lines.
+    #
+    # Tetrahedral chirality crosses as the atom parity field
+    # (TH1 → 1 odd, TH2 → 2 even) relative to the neighbour order in
+    # the bond block, which is the model's linear order — the InChI
+    # binary consumes it when wedges or coordinates are absent.
+    # Directional bonds (`/`, `\`, E/Z) have no V2000 field: the
+    # model's Bond#direction is documented as a molfile loss rather
+    # than silently invented from geometry.
     class Writer
       BOND_TYPES = {
         single: 1, double: 2, triple: 3, aromatic: 4,
         wedge: 1, hash: 1
       }.freeze
       BOND_STEREO = { wedge: 1, hash: 6 }.freeze
+      CHIRALITY_PARITY = { 'TH1' => 1, 'TH2' => 2 }.freeze
 
       def initialize(molecule, name: nil)
         @molecule = molecule
@@ -32,8 +41,10 @@ module AsciiChem
         layout = nil
         atoms.each_with_index do |atom, index|
           x, y = coordinates(atom, index, atoms)
-          lines << format("%10.4f%10.4f%10.4f %-3s 0  0  0  0  0  0  0  0  0  0  0  0",
-                          x, y, atom.z2 || 0.0, atom.element)
+          lines << format("%10.4f%10.4f%10.4f %-3s 0  0%3d%3d  0  0  0  0  0  0  0  0  0",
+                          x, y, atom.z2 || 0.0, atom.element,
+                          CHIRALITY_PARITY.fetch(atom.chirality, 0),
+                          hcount_code(atom))
         end
 
         edges.each do |edge|
@@ -52,6 +63,12 @@ module AsciiChem
       end
 
       private
+
+      # MDL H-count code: 0 default, 1 H0, 2 H1, 3 H2, ... — so a
+      # stated count n crosses as n + 1.
+      def hcount_code(atom)
+        atom.hydrogens.nil? ? 0 : atom.hydrogens + 1
+      end
 
       # Authored coordinates win; otherwise positions from the
       # deterministic 2D layout (same walk order as the graph).
