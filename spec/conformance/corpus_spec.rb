@@ -104,6 +104,21 @@ RSpec.describe "asciichem-tests conformance corpus" do
     end
   end
 
+  # Structured condition entries (TODO.v2/13 item 4, slice 1): typed
+  # `role: value` entries and free text are shared semantics — the
+  # bracket text itself stays verbatim (round-trip source).
+  cases.select { |c| c.key?("conditionEntries") }.each do |fixture|
+    id = fixture.fetch("id")
+
+    it "#{id} derives the shared condition entries" do
+      reaction = AsciiChem.parse(fixture.fetch("input")).nodes.first
+      actual = reaction.conditions.entries.map do |entry|
+        { "role" => entry.role&.to_s, "value" => entry.value, "side" => entry.side.to_s }
+      end
+      expect(actual).to eq(fixture.fetch("conditionEntries"))
+    end
+  end
+
   molfile_cases = cases.select { |c| c.key?("molfile") }
   molfile_cases.each do |fixture|
     id = fixture.fetch("id")
