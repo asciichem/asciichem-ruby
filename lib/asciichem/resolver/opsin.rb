@@ -23,7 +23,7 @@ module AsciiChem
       BASE = 'https://opsin.ch.cam.ac.uk/opsin'
       private_constant :BASE
 
-      def fetch_record(value:, convention:, fetch:)
+      def fetch_record(value:, convention: nil, fetch:)
         body = fetch.get("#{BASE}/#{CGI.escape(value.to_s)}.smiles")
         return nil unless body
 
