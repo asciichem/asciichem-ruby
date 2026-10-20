@@ -247,7 +247,8 @@ module AsciiChem
             t << chirality_token(index) if stereo && atom.chirality
             if atom.hydrogens
               t << 'H'
-              t << atom.hydrogens.to_s if atom.hydrogens > 1
+              # Stated zero is H0, not a bare H (which means one).
+              t << atom.hydrogens.to_s unless atom.hydrogens == 1
             end
             t << charge_suffix(atom.charge) if atom.charge
             t << ']'

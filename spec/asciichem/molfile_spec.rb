@@ -140,3 +140,48 @@ RSpec.describe AsciiChem::Molfile do
     end
   end
 end
+
+RSpec.describe "molfile stereo (L3 slice 6)" do
+  subject(:molfile) { AsciiChem::Molfile }
+  let(:smiles) { AsciiChem::Smiles }
+
+  it "emits tetrahedral chirality as the MDL atom parity field" do
+    molecule = smiles.parse("N[C@@H](C)C(=O)O").nodes.first
+    text = molfile.write(molecule)
+    chiral_line = text.lines[5] # atom 2, the [C@@H]
+    expect(chiral_line[31, 3].strip).to eq("C")
+    expect(chiral_line[39, 3].to_i).to eq(2)
+  end
+
+  it "round-trips both alanine enantiomers through molfile" do
+    %w[N[C@@H](C)C(=O)O N[C@H](C)C(=O)O].each do |source|
+      molecule = smiles.parse(source).nodes.first
+      restored = molfile.parse(molfile.write(molecule))
+      expect(restored.to_smiles).to eq(source)
+    end
+  end
+
+  it "keeps enantiomers distinct after the molfile leg" do
+    first = smiles.parse("N[C@@H](C)C(=O)O").nodes.first
+    second = smiles.parse("N[C@H](C)C(=O)O").nodes.first
+    restored = molfile.parse(molfile.write(first))
+    expect(restored.to_smiles).not_to eq(molfile.parse(molfile.write(second)).to_smiles)
+  end
+
+  it "carries stated hydrogens through the H-count field" do
+    molecule = smiles.parse("C[CH3]").nodes.first
+    restored = molfile.parse(molfile.write(molecule))
+    methyl = restored.nodes.find { |n| n.is_a?(AsciiChem::Model::Atom) && n.element == "C" && n.hydrogens }
+    expect(methyl.hydrogens).to eq(3)
+  end
+
+  it "documents the V2000 directional-bond loss (E/Z)" do
+    # V2000 encodes E/Z through coordinates + double-bond stereo
+    # codes, not single-bond direction flags: the model's
+    # Bond#direction is not representable without stereo-aware
+    # geometry. The loss is asserted, not silent.
+    molecule = smiles.parse("F/C=C/F").nodes.first
+    restored = molfile.parse(molfile.write(molecule))
+    expect(restored.to_smiles).to eq("FC=CF")
+  end
+end

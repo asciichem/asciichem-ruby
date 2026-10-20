@@ -73,7 +73,9 @@ module AsciiChem
           Model::Atom.new(
             element: element,
             x2: x, y2: y, z2: z,
-            isotope: isotope_from_mass_diff(element, mass_diff)
+            isotope: isotope_from_mass_diff(element, mass_diff),
+            chirality: chirality_from_parity(line[39, 3].to_i),
+            hydrogens: hydrogens_from_hcount(line[42, 3].to_i)
           )
         end
       end
@@ -153,6 +155,20 @@ module AsciiChem
       def isotope_from_mass_diff(_element, mass_diff)
         nil
       end
+
+      # MDL atom parity: 1 odd, 2 even, 0/3 not stereo (or either).
+      # The parity is relative to the neighbour order in the bond
+      # block, which the linearizer preserves — the same ordering the
+      # SMILES TH1/TH2 convention uses.
+      def chirality_from_parity(parity)
+        { 1 => 'TH1', 2 => 'TH2' }[parity]
+      end
+
+      # MDL H-count code: 0 default, 1 H0, 2 H1, 3 H2, ...
+      def hydrogens_from_hcount(code)
+        code >= 1 ? code - 1 : nil
+      end
+
       def atoms_count
         field(3, 0, 3).to_i
       end

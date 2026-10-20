@@ -66,3 +66,16 @@ RSpec.describe AsciiChem::Inchi::BinaryEngine do
       .to raise_error(AsciiChem::Error, /produced no InChI/)
   end
 end
+
+RSpec.describe "InChI stereo layers (L3 slice 6)" do
+  it "distinguishes enantiomers when a real InChI binary is available" do
+    bin = ENV.fetch("ASCIICHEM_INCHI_BIN", nil)
+    skip "set ASCIICHEM_INCHI_BIN to run the real-binary stereo check" unless bin
+
+    engine = AsciiChem::Inchi::BinaryEngine.new(bin: bin)
+    left = AsciiChem.parse_smiles("N[C@@H](C)C(=O)O").nodes.first
+    right = AsciiChem.parse_smiles("N[C@H](C)C(=O)O").nodes.first
+    expect(AsciiChem::Inchi.identity_for(left, engine: engine).inchi)
+      .not_to eq(AsciiChem::Inchi.identity_for(right, engine: engine).inchi)
+  end
+end
