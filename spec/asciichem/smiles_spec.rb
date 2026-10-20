@@ -105,7 +105,28 @@ RSpec.describe AsciiChem::Smiles do
   describe ".write" do
     it "round-trips simple canonical forms exactly" do
       %w[CCO CCC c1ccccc1 C1CCCCC1 [NH4+] [O-] [13CH4] N#N
-         C1=CC=CC=C1 CC(=O)O C1=CCC(C)C(C)C1].each do |smiles|
+         CC(=O)O C1=CCC(C)C(C)C1].each do |smiles|
+        expect(described_class.parse(smiles).to_smiles).to eq(smiles)
+      end
+    end
+
+    # Item 2: the canonicalizer consumes the perception pass —
+    # Kekulé aromatic input converges on the lowercase spelling.
+    it "canonicalizes perceived aromatic rings to the aromatic form" do
+      {
+        "C1=CC=CC=C1" => "c1ccccc1",
+        "CC(=O)OC1=CC=CC=C1C(=O)O" => "CC(=O)Oc1ccccc1C(=O)O",
+        "ClC1=CC=CC=C1" => "Clc1ccccc1",
+        "C1=CC=NC=C1" => "c1ccncc1",
+        "C1=CC=C2C=CC=CC2=C1" => "c1ccc2ccccc2c1"
+      }.each do |kekule, canonical|
+        expect(described_class.parse(kekule).to_smiles).to eq(canonical)
+        expect(described_class.parse(canonical).to_smiles).to eq(canonical)
+      end
+    end
+
+    it "keeps quinones Kekulé (exocyclic double bonds are not aromatic)" do
+      %w[O=C1C=CC=CC1 O=C1C=CC(=O)C=C1].each do |smiles|
         expect(described_class.parse(smiles).to_smiles).to eq(smiles)
       end
     end
@@ -138,11 +159,21 @@ RSpec.describe AsciiChem::Smiles do
       end
     end
 
-    it "preserves structure through a write/parse cycle" do
+    # Canonicalization maps many models to one spelling (Kekulé →
+    # aromatic), so model equality is not the invariant — composition
+    # and connectivity must survive, and the canonical form must be a
+    # fixed point.
+    it "preserves composition and connectivity through a write/parse cycle" do
       %w[CC(=O)OC1=CC=CC=C1C(=O)O c1ccc2ccccc2c1 CC(C)(C)C].each do |smiles|
-        original = described_class.parse(smiles)
-        rewritten = described_class.parse(original.to_smiles)
-        expect(rewritten).to eq(original)
+        original = described_class.parse(smiles).nodes.first
+        rewritten = described_class.parse(original.to_smiles).nodes.first
+        expect(rewritten.element_counts).to eq(original.element_counts)
+        before_atoms, before_edges =
+          AsciiChem::Structure::Graph.build(original)
+        after_atoms, after_edges = AsciiChem::Structure::Graph.build(rewritten)
+        expect(after_atoms.length).to eq(before_atoms.length)
+        expect(after_edges.length).to eq(before_edges.length)
+        expect(rewritten.to_smiles).to eq(original.to_smiles)
       end
     end
 

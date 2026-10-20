@@ -43,7 +43,7 @@ RSpec.describe AsciiChem::Resolver::CommonChemistry do
   it "parses the structure from the source SMILES" do
     substance = described_class.new.resolve(value: "50-78-2", convention: "cas",
                                             fetch: fetch, cache: cache)
-    expect(substance.structure.to_smiles).to eq("CC(=O)OC1=CC=CC=C1C(=O)O")
+    expect(substance.structure.to_smiles).to eq("CC(=O)Oc1ccccc1C(=O)O")
   end
 
   it "queries the detail endpoint by CAS RN" do

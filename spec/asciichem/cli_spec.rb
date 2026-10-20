@@ -189,7 +189,7 @@ RSpec.describe AsciiChem::Cli do
 
     it 'ingests SMILES and re-emits canonical SMILES' do
       expect(run('convert', '-i', 'CC(=O)OC1=CC=CC=C1C(=O)O', '--from', 'smiles', '-t', 'smiles'))
-        .to eq("CC(=O)OC1=CC=CC=C1C(=O)O\n")
+        .to eq("CC(=O)Oc1ccccc1C(=O)O\n")
     end
 
     it 'ingests a molfile from a file' do

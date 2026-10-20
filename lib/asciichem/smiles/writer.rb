@@ -36,6 +36,7 @@ module AsciiChem
         raise ParseError, 'molecule has no bonds — a formula is not a structure' if edges.empty? && atoms.length > 1
 
         @atoms = atoms
+        perceive_aromaticity(atoms, edges)
         build_adjacency(edges)
         @visited = {}
         @digits = Array.new(atoms.length) { [] }
@@ -65,6 +66,35 @@ module AsciiChem
       end
 
       private
+
+      # The canonicalizer consumes the perception pass (TODO.v2/13
+      # item 2): atoms in perceived aromatic rings are written as
+      # aromatic (lowercase) and the ring bonds between them carry no
+      # bond symbol — Kekulé benzene canonicalizes to `c1ccccc1`, so
+      # both spellings converge. Perception's in-ring double-bond
+      # rule keeps quinone-like rings out.
+      def perceive_aromaticity(atoms, edges)
+        @perceived_aromatic = {}
+        @perceived_ring_edges = {}
+        AsciiChem::Perception.aromatic_rings(atoms, edges).each do |ring|
+          ring.each { |index| @perceived_aromatic[index] = true }
+          ring.each_with_index do |atom, i|
+            other = ring[(i + 1) % ring.length]
+            @perceived_ring_edges[[atom, other].minmax] = true
+          end
+        end
+      end
+
+      # Aromatic for WRITING: the source flagged the atom, or
+      # perception found it in an aromatic ring.
+      def aromatic?(index)
+        @atoms[index].aromatic == true || @perceived_aromatic.key?(index)
+      end
+
+      def perceived_ring_bond?(from, to)
+        @perceived_ring_edges.key?([from, to].minmax) &&
+          aromatic?(from) && aromatic?(to)
+      end
 
       def build_adjacency(edges)
         @adjacency = Array.new(@atoms.length) { {} }
@@ -205,6 +235,11 @@ module AsciiChem
         token = BOND_TOKENS[kind]
         raise ParseError, "#{kind} bonds have no SMILES form (v1 subset)" unless token
 
+        # A bond inside a perceived aromatic ring is implied by the
+        # lowercase atoms: writing `=`/`-` there would state Kekulé
+        # alternation the canonical form does not carry.
+        return '' if perceived_ring_bond?(from, to)
+
         return token if kind != :single && kind != :aromatic
 
         if kind == :single
@@ -232,7 +267,7 @@ module AsciiChem
         return @plain_tokens[index] if !stereo && @plain_tokens[index]
 
         atom = @atoms[index]
-        aromatic = atom.aromatic == true
+        aromatic = aromatic?(index)
         lowercase = aromatic && LOWERCASE_AROMATIC.include?(atom.element)
         needs_bracket =
           atom.charge || atom.isotope || atom.hydrogens || atom.chirality ||
@@ -270,10 +305,6 @@ module AsciiChem
         return sign unless count && count.to_i > 1
 
         "#{sign}#{count}"
-      end
-
-      def aromatic?(index)
-        @atoms[index].aromatic == true
       end
     end
   end

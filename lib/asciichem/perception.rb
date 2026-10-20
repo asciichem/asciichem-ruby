@@ -91,23 +91,33 @@ module AsciiChem
               .select { |deficit| deficit >= 0 && deficit.modulo(1).zero? }
     end
 
-    # Six-membered cycles where every atom is sp2 (participates in a
-    # double bond) or aromatic-flagged — the practical fused-system
-    # rule: per-ring strict alternation can never see both rings of
-    # naphthalene (the shared bond is single), but per-atom sp2 does.
-    # Returns arrays of atom indexes, one per perceived ring, or an
-    # empty list. Full Hückel pi-electron counting is a later slice.
+    # Six-membered cycles where every atom is sp2 — participates in a
+    # double bond to an atom that is itself in a ring, or is
+    # aromatic-flagged. The partner-in-a-ring requirement keeps
+    # quinones out: their carbons are sp2, but the double bonds that
+    # make them so point at exocyclic oxygens, and writing such a
+    # ring as aromatic SMILES would state the wrong bond orders. A
+    # fused system still qualifies — naphthalene's fusion carbons
+    # double-bond to atoms of the neighbouring ring. Per-ring strict
+    # alternation can never see both rings (the shared bond is
+    # single); per-atom sp2-in-the-system does. Full Hückel
+    # pi-electron counting is a later slice.
     def aromatic_rings(atoms, edges)
       cycles = ring_cycles(edges, max_size: 6, atom_count: atoms.length)
-        .select { |cycle| cycle.length == 6 }
-      cycles.select { |cycle| cycle.all? { |i| sp2?(i, atoms, edges) } }
+      cyclic_atoms = cycles.flatten.uniq
+      six = cycles.select { |cycle| cycle.length == 6 }
+      six.select { |cycle| cycle.all? { |i| sp2?(i, atoms, edges, cyclic_atoms) } }
     end
 
-    def sp2?(atom_index, atoms, edges)
+    def sp2?(atom_index, atoms, edges, cyclic_atoms)
       return true if atoms[atom_index].aromatic == true
 
       edges.any? do |edge|
-        (edge.from == atom_index || edge.to == atom_index) && edge.kind == :double
+        next false unless edge.from == atom_index || edge.to == atom_index
+        next false unless edge.kind == :double
+
+        partner = edge.from == atom_index ? edge.to : edge.from
+        cyclic_atoms.include?(partner)
       end
     end
 
