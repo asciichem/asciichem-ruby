@@ -3,6 +3,16 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.1] - 2026-10-20
+
+### Changed
+- `chemicalml` floor raised to `~> 0.4` (from `~> 0.3.0`, which
+  excluded the current line): the 0.4 line carries the CML
+  content-model completions and the Ruby 4.0 logger fix. Validated
+  2024/2024 under both parse engines against chemicalml 0.4.1.
+  Gemfile dev: `parsanol ~> 1.3.94` (the PARG artifact runtime the
+  `:parg` engine requires), validated against 1.3.95.
+
 ## [0.31.0] - 2026-10-19
 
 ### Changed
