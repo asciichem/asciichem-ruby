@@ -53,7 +53,11 @@ RSpec.describe AsciiChem::Resolver do
     begin
       results = described_class.resolve_all(value: "aspirin", convention: "name",
                                             fetch: fetch, cache: cache)
-      expect(results.map { |s| s.provenance.source }.sort).to eq(%w[pubchem spec_mirror])
+      # Membership, not a closed world: every registered adapter
+      # answering "name" joins the fan-out (opsin did exactly that).
+      sources = results.map { |s| s.provenance.source }.sort
+      expect(sources).to include("pubchem", "spec_mirror")
+      expect(sources.uniq.length).to eq(sources.length)
     ensure
       described_class.adapters.delete("spec_mirror")
     end

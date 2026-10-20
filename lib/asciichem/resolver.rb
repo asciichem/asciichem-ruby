@@ -17,6 +17,7 @@ module AsciiChem
     autoload :Adapter, "asciichem/resolver/adapter"
     autoload :Cache, "asciichem/resolver/cache"
     autoload :PubChem, "asciichem/resolver/pubchem"
+    autoload :Opsin, "asciichem/resolver/opsin"
     autoload :CommonChemistry, "asciichem/resolver/common_chemistry"
     autoload :Substance, "asciichem/resolver/substance"
 
