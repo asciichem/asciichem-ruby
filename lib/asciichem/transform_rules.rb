@@ -441,13 +441,44 @@ module AsciiChem
             if key == 'spectator'
               spectators.concat(value.split(/\s+/).map(&:strip))
             else
-              steps << Model::Mechanism::Step.new(label: key, reaction: value)
+              reaction, flows = split_flows(key, value)
+              steps << Model::Mechanism::Step.new(label: key, reaction: reaction, flows: flows)
             end
           end
           Model::Mechanism.new(steps: steps, spectators: spectators)
         end
-  
+
         private
+
+        # A step value is its reaction, optionally followed by
+        # `| flow: SOURCE > TARGET` clauses (semicolon-separated).
+        # Unknown clause kinds are rejected, never dropped.
+        def split_flows(label, value)
+          clauses = value.split('|').map(&:strip)
+          reaction = clauses.shift
+          flows = clauses.flat_map { |clause| parse_flow_clause(label, clause) }
+          [reaction, flows]
+        end
+
+        def parse_flow_clause(label, clause)
+          kind, payload = clause.split(':', 2)
+          unless kind&.strip == 'flow' && payload
+            raise AsciiChem::ParseError,
+                  "mechanism step #{label.inspect} has an unknown clause: #{clause.inspect} " \
+                  '(supported: "flow: SOURCE > TARGET")'
+          end
+
+          payload.split(';').map(&:strip).reject(&:empty?).map do |arrow|
+            source, target = arrow.split('>', 2).map(&:strip)
+            if source.nil? || target.nil? || source.empty? || target.empty?
+              raise AsciiChem::ParseError,
+                    "mechanism step #{label.inspect} has a malformed flow: #{arrow.inspect} " \
+                    '(expected "SOURCE > TARGET")'
+            end
+
+            Model::Mechanism::Flow.new(source: source, target: target)
+          end
+        end
   
         def parse_entries(str)
           return [] unless str

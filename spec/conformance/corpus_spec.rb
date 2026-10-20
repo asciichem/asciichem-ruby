@@ -132,6 +132,21 @@ RSpec.describe "asciichem-tests conformance corpus" do
     end
   end
 
+  # Mechanism electron-flow markers (TODO.v2/13 item 4): expected
+  # flow markers per step label, carried by the steps.
+  cases.select { |c| c.key?("flows") }.each do |fixture|
+    id = fixture.fetch("id")
+
+    it "#{id} carries the shared electron-flow markers" do
+      mechanism = AsciiChem.parse(fixture.fetch("input")).nodes.first
+      actual = mechanism.steps.to_h do |step|
+        [step.label,
+         (step.flows || []).map { |f| { "source" => f.source, "target" => f.target } }]
+      end
+      expect(actual).to eq(fixture.fetch("flows"))
+    end
+  end
+
   molfile_cases = cases.select { |c| c.key?("molfile") }
   molfile_cases.each do |fixture|
     id = fixture.fetch("id")
@@ -186,7 +201,7 @@ RSpec.describe "asciichem-tests conformance corpus" do
       end
 
       it "#{id} round-trips via model JSON" do
-        skip "not flagged" unless fixture["roundTrip"]
+        skip "not flagged" unless fixture.fetch("modelJsonRoundTrip", true) && fixture["roundTrip"]
 
         restored = AsciiChem.from_model_json(AsciiChem.parse(input).to_model_json).to_text
         expect(restored).to eq(input), "restored #{restored.inspect}"
