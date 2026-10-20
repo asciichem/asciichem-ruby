@@ -3,6 +3,44 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.3] - 2026-10-20
+
+### Added
+- Perception in the shared corpus (TODO.v2/13 item 2, slice C):
+  implicit hydrogens order aromatic bonds at 1.5 (Hückel) and declare
+  a value only when a default valence fits integrally — so
+  `c1ccccc1` and `C1=CC=CC=C1` perceive identically, and
+  aromatic-schematic fusion atoms decline rather than invent. Gated
+  by `fixtures/perception.json` in all three implementations.
+- Structured condition entries (item 4, slice 1):
+  `Conditions#entries` derives typed `cat:`/`solv:`/`reag:` entries
+  (semicolon-separated) from the verbatim bracket text; free text and
+  unknown prefixes stay lossless, and the wire form is unchanged.
+  `ReactionRoles` prefers explicit roles over the above/below
+  heuristic.
+- Reaction stoichiometry as model data (slice 2):
+  `Reaction#stoichiometry` and `Molecule#stoichiometric_coefficient`
+  — one coefficient rule shared by the reaction, `BalanceCheck`, and
+  composition counting.
+- Mechanism step graph (slice 4a): `MechanismGraph.for` derives
+  parsed steps, catalysts (species on both sides), and inter-step
+  links from the verbatim `mechanism{}` entries.
+- Reaction identity via RInChI (slice 4b): `Rxn::Writer` emits MDL
+  RXN V2000 and `Rinchi::BinaryEngine` wraps the opt-in `rinchi-1`
+  binary (install guidance, `EngineMissingError`, nothing vendored).
+- Molfile stereo (L3 slice 6): `Atom#chirality` crosses as MDL atom
+  parity and stated hydrogens as the H-count field, so the identity
+  pipe derives stereoisomer-distinct InChIs; `IdentityCrossCheck`
+  covers stereo-layer mismatches.
+
+### Fixed
+- SMILES writer ring-closure emission (#103): a closure-bearing
+  child continues the chain, so the digit lands at the end of the
+  traversal — `parse(write(parse(s))) == parse(s)` and writer
+  stability now hold for ring structures such as `C1=CCC(C)C(C)C1`.
+- SMILES writer rendered stated zero hydrogens as a bare `H` (one);
+  it now emits `H0`.
+
 ## [0.31.2] - 2026-10-20
 
 ### Added
