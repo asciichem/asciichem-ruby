@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+Dir[File.expand_path('support/**/*.rb', __dir__)].sort.each { |f| require f }
+
 require "asciichem"
 
 RSpec.configure do |config|

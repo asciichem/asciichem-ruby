@@ -6,12 +6,6 @@ require "asciichem/resolver"
 
 # Lightweight recorded-response transport (Struct — the house rule
 # against doubles applies to mocks, not value fakes carrying data).
-RecordedFetch = Struct.new(:body) do
-  def get(_url)
-    body
-  end
-end
-
 RSpec.describe AsciiChem::Resolver::PubChem do
   let(:fixture) { File.read(File.expand_path("../../fixtures/resolver/pubchem/aspirin.json", __dir__)) }
   let(:adapter) { described_class.new }
