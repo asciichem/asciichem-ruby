@@ -91,27 +91,56 @@ module AsciiChem
               .select { |deficit| deficit >= 0 && deficit.modulo(1).zero? }
     end
 
-    # Six-membered cycles where every atom is sp2 — participates in a
-    # double bond to an atom that is itself in a ring, or is
-    # aromatic-flagged. The partner-in-a-ring requirement keeps
-    # quinones out: their carbons are sp2, but the double bonds that
-    # make them so point at exocyclic oxygens, and writing such a
-    # ring as aromatic SMILES would state the wrong bond orders. A
-    # fused system still qualifies — naphthalene's fusion carbons
-    # double-bond to atoms of the neighbouring ring. Per-ring strict
-    # alternation can never see both rings (the shared bond is
-    # single); per-atom sp2-in-the-system does. Full Hückel
-    # pi-electron counting is a later slice.
+    # π-electron-donating heteroatoms: a ring atom with no double bond
+    # of its own contributes its lone pair (pyrrole N, furan O,
+    # thiophene S) — the 2 electrons that make those five-membered
+    # rings 4n+2.
+    LONE_PAIR_DONORS = %w[N O S P Se As].freeze
+
+    # Aromatic rings by Hückel counting: 5- and 6-membered cycles whose
+    # π-electron contributions total 6 or 10 (4n+2 with n >= 1; the
+    # n = 0 case is a charged three-membered ring, which perception
+    # declines, and a 2π six-ring would otherwise misread a diene as
+    # aromatic). Per
+    # atom: an in-system double bond contributes 1; a lone-pair donor
+    # with no double contributes 2; a carbon with only single bonds or
+    # an exocyclic double contributes 0. Charged atoms make the count
+    # undecidable and the ring is declined; aromatic-flagged rings are
+    # taken as stated.
+    #
+    # This sees fused systems (naphthalene's shared bond is single, but
+    # each atom's double bond lies in the ring system) and keeps
+    # quinones out (their carbons' only double bonds point at
+    # exocyclic oxygens, so the ring counts 5, not 4n+2).
     def aromatic_rings(atoms, edges)
       cycles = ring_cycles(edges, max_size: 6, atom_count: atoms.length)
       cyclic_atoms = cycles.flatten.uniq
-      six = cycles.select { |cycle| cycle.length == 6 }
-      six.select { |cycle| cycle.all? { |i| sp2?(i, atoms, edges, cyclic_atoms) } }
+      cycles.select { |cycle| aromatic_cycle?(cycle, atoms, edges, cyclic_atoms) }
     end
 
-    def sp2?(atom_index, atoms, edges, cyclic_atoms)
-      return true if atoms[atom_index].aromatic == true
+    def aromatic_cycle?(cycle, atoms, edges, cyclic_atoms)
+      return true if cycle.any? { |i| atoms[i].aromatic == true }
+      return false unless [5, 6].include?(cycle.length)
 
+      contributions = cycle.map do |i|
+        ring_pi_electrons(atoms[i], i, edges, cyclic_atoms)
+      end
+      return false if contributions.any?(&:nil?)
+
+      [6, 10].include?(contributions.sum)
+    end
+
+    # π electrons one ring atom contributes, or nil when the count is
+    # undecidable (charged atom).
+    def ring_pi_electrons(atom, atom_index, edges, cyclic_atoms)
+      return nil if atom.charge
+      return 1 if in_system_double?(atom_index, edges, cyclic_atoms)
+      return 2 if LONE_PAIR_DONORS.include?(atom.element)
+
+      0
+    end
+
+    def in_system_double?(atom_index, edges, cyclic_atoms)
       edges.any? do |edge|
         next false unless edge.from == atom_index || edge.to == atom_index
         next false unless edge.kind == :double

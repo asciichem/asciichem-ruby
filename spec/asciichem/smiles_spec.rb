@@ -118,7 +118,10 @@ RSpec.describe AsciiChem::Smiles do
         "CC(=O)OC1=CC=CC=C1C(=O)O" => "CC(=O)Oc1ccccc1C(=O)O",
         "ClC1=CC=CC=C1" => "Clc1ccccc1",
         "C1=CC=NC=C1" => "c1ccncc1",
-        "C1=CC=C2C=CC=CC2=C1" => "c1ccc2ccccc2c1"
+        "C1=CC=C2C=CC=CC2=C1" => "c1ccc2ccccc2c1",
+        "C1=COC=C1" => "c1cocc1",
+        "C1=CNC=C1" => "c1c[nH]cc1",
+        "C1=CSC=C1" => "c1cscc1"
       }.each do |kekule, canonical|
         expect(described_class.parse(kekule).to_smiles).to eq(canonical)
         expect(described_class.parse(canonical).to_smiles).to eq(canonical)

@@ -25,6 +25,10 @@ module AsciiChem
       }.freeze
       CONTINUATION_BONDS = %i[single aromatic].freeze
 
+      # Aromatic lowercase heteroatoms with an implicit hydrogen need
+      # brackets: bare `n`/`o`/`s` imply none.
+      HETERO_IMPLICIT_H = %w[N O S P Se As].freeze
+
       def initialize(molecule)
         @molecule = molecule
       end
@@ -71,18 +75,45 @@ module AsciiChem
       # item 2): atoms in perceived aromatic rings are written as
       # aromatic (lowercase) and the ring bonds between them carry no
       # bond symbol — Kekulé benzene canonicalizes to `c1ccccc1`, so
-      # both spellings converge. Perception's in-ring double-bond
-      # rule keeps quinone-like rings out.
+      # both spellings converge. Perception's Hückel counting keeps
+      # quinone-like rings out.
+      #
+      # Hydrogens are inferred for lowercase carbon but NOT for
+      # heteroatoms: pyrrole's N must be written `[nH]` or the SMILES
+      # states a pyridine-type nitrogen instead. The perceived
+      # implicit count for ring atoms is recorded for that decision.
       def perceive_aromaticity(atoms, edges)
         @perceived_aromatic = {}
         @perceived_ring_edges = {}
+        @perceived_hydrogens = {}
         AsciiChem::Perception.aromatic_rings(atoms, edges).each do |ring|
-          ring.each { |index| @perceived_aromatic[index] = true }
+          ring.each do |index|
+            @perceived_aromatic[index] = true
+            next if atoms[index].aromatic == true
+
+            @perceived_hydrogens[index] = AsciiChem::Perception.implicit_hydrogens(
+              atoms[index],
+              AsciiChem::Perception.hydrogen_valence_sum(index, edges)
+            )
+          end
           ring.each_with_index do |atom, i|
             other = ring[(i + 1) % ring.length]
             @perceived_ring_edges[[atom, other].minmax] = true
           end
         end
+      end
+
+      # Hydrogens the written token must state: the source's own count
+      # wins; otherwise only a ring PERCEIVED from Kekulé bond orders
+      # gets perception's implicit count. A source-aromatic atom
+      # already states its hydrogens the way SMILES does (`[nH]`), and
+      # aromatic 1.5 bond orders do not map onto heteroatom valences
+      # (thiophene's S would otherwise acquire a phantom H).
+      def writing_hydrogens(index)
+        stated = @atoms[index].hydrogens
+        return stated unless stated.nil?
+
+        @perceived_hydrogens[index]
       end
 
       # Aromatic for WRITING: the source flagged the atom, or
@@ -269,8 +300,12 @@ module AsciiChem
         atom = @atoms[index]
         aromatic = aromatic?(index)
         lowercase = aromatic && LOWERCASE_AROMATIC.include?(atom.element)
+        hyd = writing_hydrogens(index)
+        hetero_needs_h = aromatic && lowercase && hyd&.positive? &&
+                         HETERO_IMPLICIT_H.include?(atom.element)
         needs_bracket =
-          atom.charge || atom.isotope || atom.hydrogens || atom.chirality ||
+          atom.charge || atom.isotope || !atom.hydrogens.nil? || atom.chirality ||
+          hetero_needs_h ||
           (!ORGANIC.include?(atom.element) && !lowercase) ||
           (aromatic && !lowercase)
         token =
@@ -280,10 +315,10 @@ module AsciiChem
             t << atom.isotope if atom.isotope
             t << symbol
             t << chirality_token(index) if stereo && atom.chirality
-            if atom.hydrogens
+            if !atom.hydrogens.nil? || hetero_needs_h
               t << 'H'
               # Stated zero is H0, not a bare H (which means one).
-              t << atom.hydrogens.to_s unless atom.hydrogens == 1
+              t << hyd.to_s unless hyd == 1
             end
             t << charge_suffix(atom.charge) if atom.charge
             t << ']'
