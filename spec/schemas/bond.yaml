@@ -18,4 +18,10 @@ properties:
       single (-), double (=), triple (#), quadruple (##), wedge (>-),
       hash (-<), dative (~>), wavy (~~), aromatic (SMILES/molfile
       aromatic bonds).
+  direction:
+    enum: [up, down]
+    description: |
+      SMILES directional single bond (`/` up, `\` down) flanking a
+      stereogenic double bond — E/Z stereo. Only meaningful when kind
+      is single. Absent means the bond carries no stated direction.
 additionalProperties: false
