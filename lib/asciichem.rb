@@ -29,6 +29,7 @@ module AsciiChem
   autoload :ModelAdapter, "asciichem/model_adapter"
   autoload :Molfile, "asciichem/molfile"
   autoload :Parser, "asciichem/parser"
+  autoload :MechanismGraph,    'asciichem/mechanism_graph'
   autoload :Perception,        'asciichem/perception'
   autoload :ReactionRoles,     'asciichem/reaction_roles'
   autoload :PeriodicTable, "asciichem/periodic_table"
