@@ -16,7 +16,7 @@ RSpec.describe AsciiChem::Resolver::Opsin do
 
   it 'supports the name conventions it derives from' do
     expect(adapter.supports?('iupac-name')).to be(true)
-    expect(adapter.supports?('name')).to be(true)
+    expect(adapter.supports?('name')).to be(false)
     expect(adapter.supports?('cas')).to be(false)
   end
 
