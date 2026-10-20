@@ -37,16 +37,6 @@ module AsciiChem
           products: side_stoichiometry(products) }
       end
 
-      private
-
-      def side_stoichiometry(side)
-        side.each_with_object(Hash.new(0)) do |molecule, out|
-          coefficient = (molecule.coefficient || '1').to_i
-          coefficient = 1 if coefficient.zero?
-          out[molecule.to_text.sub(/\A\d+/, '')] += coefficient
-        end
-      end
-
       def children
         reactants + products
       end
@@ -76,6 +66,16 @@ module AsciiChem
       def to_s
         "Reaction(#{reactants.map(&:to_s).join(' + ')} " \
           "#{arrow_ascii} #{products.map(&:to_s).join(' + ')})"
+      end
+
+      private
+
+      def side_stoichiometry(side)
+        side.each_with_object(Hash.new(0)) do |molecule, out|
+          coefficient = (molecule.coefficient || '1').to_i
+          coefficient = 1 if coefficient.zero?
+          out[molecule.to_text.sub(/\A\d+/, '')] += coefficient
+        end
       end
     end
   end
