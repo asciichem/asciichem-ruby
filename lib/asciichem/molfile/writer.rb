@@ -30,7 +30,7 @@ module AsciiChem
 
       def write
         atoms, edges = Structure::Graph.build(@molecule)
-        raise ParseError, "molecule has no bonds — a formula is not a structure" if edges.empty?
+        raise ParseError, "molecule has no bonds — a formula is not a structure" if edges.empty? && atoms.length > 1
 
         lines = []
         lines << @name.to_s
