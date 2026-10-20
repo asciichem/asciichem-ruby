@@ -264,6 +264,23 @@ RSpec.describe "Value objects on Model classes" do
         expect(mol.atom_count).to eq(0)
       end
     end
+
+    describe "#stoichiometric_coefficient" do
+      it "is the authored leading number" do
+        expect(AsciiChem.parse("2H_2O").nodes.first.stoichiometric_coefficient).to eq(2)
+      end
+
+      it "is one when absent" do
+        expect(AsciiChem.parse("H_2O").nodes.first.stoichiometric_coefficient).to eq(1)
+      end
+
+      it "is one for a zero or non-positive coefficient" do
+        zero = AsciiChem::Model::Molecule.new(nodes: [], coefficient: "0")
+        expect(zero.stoichiometric_coefficient).to eq(1)
+        negative = AsciiChem::Model::Molecule.new(nodes: [], coefficient: "-2")
+        expect(negative.stoichiometric_coefficient).to eq(1)
+      end
+    end
   end
 
   describe AsciiChem::Model::Reaction do

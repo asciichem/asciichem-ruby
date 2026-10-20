@@ -51,11 +51,10 @@ module AsciiChem
       end
 
       def count_molecule(molecule)
-        coefficient = molecule.coefficient.to_i
-        coefficient = 1 if coefficient.zero?
         raw = enumerate(molecule, 1)
         return nil if raw.nil?
 
+        coefficient = molecule.stoichiometric_coefficient
         raw.transform_values { |v| v * coefficient }
       end
 
