@@ -167,17 +167,21 @@ module AsciiChem
         emit(continuation, index, @adjacency[index][continuation])
       end
 
-      # Lower sorts first: single/aromatic bonds continue the chain,
-      # then larger subtrees, then the lexicographically smallest atom
-      # token (order-independent, so the canonical form does not
-      # depend on how the input happened to number the atoms).
+      # Lower sorts first. A closure-bearing child continues the chain
+      # (SMILES writes ring-closure digits at the end of a traversal —
+      # this also keeps the written atom order equal to the model's,
+      # so re-parsing yields an equal model), then single/aromatic
+      # bonds, then larger subtrees, then the lexicographically
+      # smallest atom token (order-independent, so the canonical form
+      # does not depend on how the input happened to number the atoms).
       def continuation_rank(index, child)
         kind = @adjacency[index][child]
         priority = CONTINUATION_BONDS.include?(kind) ? 0 : 1
+        closure_first = @closures[child].empty? ? 1 : 0
         # The order-independent token: this rank runs inside the
         # written-order pre-pass, where stereo tokens are not yet
         # computable (and stereo does not affect the order).
-        [priority, -@tree_size[child], atom_token_for(child, stereo: false)]
+        [closure_first, priority, -@tree_size[child], atom_token_for(child, stereo: false)]
       end
 
       def ring_digit_for(a, b)
