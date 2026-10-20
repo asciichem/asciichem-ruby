@@ -18,7 +18,11 @@ module AsciiChem
     # Molecular Informatics; per-access retrievedAt provenance.
     class Opsin < Adapter
       source_name :opsin
-      supports 'iupac-name', 'name'
+      # Derivation only: 'name' is the curated-lookup convention
+      # (PubChem/Common Chemistry). OPSIN DERIVES structures from
+      # systematic names - reachable via 'iupac-name' so it can
+      # never preempt a lookup source.
+      supports 'iupac-name'
 
       BASE = 'https://opsin.ch.cam.ac.uk/opsin'
       private_constant :BASE
