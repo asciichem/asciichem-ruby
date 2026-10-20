@@ -21,6 +21,22 @@ properties:
           description: Step label, e.g. "initiation".
         reaction:
           $ref: "reaction.yaml"
+        flows:
+          type: array
+          description: |
+            Electron-flow markers drawn for this step: the source
+            (a bond or species, verbatim) the arrow starts at and
+            the target it points to. Atom-level binding is not yet
+            represented.
+          items:
+            type: object
+            required: [source, target]
+            properties:
+              source:
+                type: string
+              target:
+                type: string
+            additionalProperties: false
       additionalProperties: false
   spectators:
     type: array
