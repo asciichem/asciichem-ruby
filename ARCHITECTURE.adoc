@@ -390,3 +390,81 @@ Ten registered checks (auto-load via `Linter::Base.register`):
 * `#atom_count` — total atoms (recurses through groups/nested molecules)
 * `#hill_formula` — Hill-system canonical formula (C first, H second, alpha)
 * `#formula_weight` — sum of atomic_mass * count (v0.13+)
+
+== Perception pass (v0.31+)
+
+`AsciiChem::Perception` derives the chemistry the syntax leaves
+implicit, as pure functions over the neutral graph pair
+(`Structure::Graph.build` returns `[atoms, edges]`):
+
+* `bond_order_sum` — valence-feasibility sum (aromatic orders as 1);
+  consumed by the linter's `ValenceCheck`.
+* `hydrogen_valence_sum` — hydrogen-counting sum (aromatic orders as
+  1.5, Hückel); paired with `implicit_hydrogens`, which returns a
+  whole, non-negative count or declines (`nil`): stated hydrogens win,
+  charged atoms and non-integral/over-valent sums decline.
+* `aromatic_rings` — π-electron counting for 5- and 6-membered cycles
+  (in-system double = 1, lone-pair donor N/O/S/P/Se/As = 2,
+  exocyclic-double carbon = 0; aromatic at totals 6 or 10). Charged
+  rings decline; aromatic-flagged rings are taken as stated. This
+  perceives furan/pyrrole/thiophene, fused systems, keeps quinones
+  Kekulé, and rejects four-π and three-membered rings.
+
+Semantics are shared through the corpus (`fixtures/perception.json`) —
+per-atom implicit hydrogens plus perceived ring indexes, declines
+included — and mirrored in TypeScript and Python.
+
+== Canonical SMILES (v0.31+)
+
+`Smiles::Writer` is a deterministic serialiser that consumes the
+perception pass: perceived aromatic rings are written lowercase with
+their ring bonds implicit, so Kekulé input canonicalizes
+(`C1=CC=CC=C1` → `c1ccccc1`, pyrrole → `c1c[nH]cc1`). Ring-closure
+digits stay out of branches (a closure-bearing child continues the
+chain). Stated-zero hydrogens emit `H0`. The canonical form is a fixed
+point; corpus fixtures whose input is not canonical state the expected
+output in `canonicalSmiles`.
+
+== Reactions as semantics (v0.31+)
+
+* `Reaction::Conditions#entries` — typed role entries
+  (`[cat: Pd; solv: THF]`) derived from the verbatim bracket text;
+  `ReactionRoles.roles_for` prefers explicit roles, falls back to the
+  above/below convention for free text.
+* `Reaction#stoichiometry` and `Molecule#stoichiometric_coefficient` —
+  coefficient-free species → integer coefficient, one rule shared by
+  the reaction, `BalanceCheck`, and `element_counts`.
+* `MechanismGraph.for(mechanism)` — parsed steps, catalysts (species on
+  both sides), inter-step links (product → later reactant), and the
+  step's electron-flow markers.
+* `Mechanism::Flow` — `| flow: SOURCE > TARGET` clauses on a step
+  (semicolon-separated), verbatim names, carried on the wire as
+  `steps[].flows`; unknown clauses and malformed arrows raise.
+* `Rxn::Writer` — MDL RXN V2000 emission (species, not
+  stoichiometry); `Rinchi::BinaryEngine` wraps the opt-in `rinchi-1`
+  binary for reaction identity (same contract as the InChI engine:
+  install guidance, `EngineMissingError`, nothing vendored).
+
+== Depiction backends (v0.31+)
+
+`AsciiChem::Layout.backend` is the depiction seam: a backend responds
+to `layout(molecule, algorithm:)` and returns a `Layout::Result`.
+`Layout::BuiltinBackend` (authored coordinates or deterministic elkrb
+layered layout) is the default; external engines (RDKit, CDK, a Rust
+layout core) plug in with one assignment. The renderer, the model, and
+the wire form never learn which engine placed the atoms.
+
+== Conformance contracts (v0.31+)
+
+Two sibling repositories are normative, not the implementation:
+
+* `asciichem-model` — versioned wire schemas (additive changes only),
+  LUTAML definitions, generated TS types; the gem vendors the schemas
+  into `spec/schemas` via `scripts/update-model-schemas.sh`.
+* `asciichem-tests` — the shared corpus. Fixture families: parser
+  acceptance/rejection, canonical-text round-trip, CML, MathML
+  goldens, identifiers, linter expectations, SMILES/molfile
+  interchange, perception (`implicitHydrogens`, `aromaticRings`),
+  condition entries, mechanism flows, and 300 seeded generated models
+  shared across implementations. Contract changes are versioned and
+  state new expectations; fixtures are never weakened.
