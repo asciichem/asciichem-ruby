@@ -199,11 +199,21 @@ module AsciiChem
       def visit_mechanism(mech)
         parts = ["mechanism"]
         unless mech.steps.empty? && mech.spectators.empty?
-          lines = mech.steps.map { |s| "#{s.label}: #{s.reaction}" }
+          lines = mech.steps.map { |s| "#{s.label}: #{mechanism_step_text(s)}" }
           mech.spectators.each { |sp| lines << "spectator: #{sp}" }
           parts << "{\n  #{lines.join("\n  ")}\n}"
         end
         parts.join
+      end
+
+      # Reaction plus its electron-flow clauses in canonical form:
+      # ` | flow: SRC > DST; SRC2 > DST2`.
+      def mechanism_step_text(step)
+        flows = step.flows
+        return step.reaction if flows.nil? || flows.empty?
+
+        arrows = flows.map { |f| "#{f.source} > #{f.target}" }.join('; ')
+        "#{step.reaction} | flow: #{arrows}"
       end
 
       def visit_opaque_cml(opaque)

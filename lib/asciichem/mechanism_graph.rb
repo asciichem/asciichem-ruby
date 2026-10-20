@@ -12,7 +12,7 @@ module AsciiChem
   # a reaction (prose, "proton transfer") keeps a nil reaction and
   # takes part in no links — never an error.
   module MechanismGraph
-    Step = Struct.new(:label, :reaction, :catalysts, keyword_init: true)
+    Step = Struct.new(:label, :reaction, :catalysts, :flows, keyword_init: true)
     Link = Struct.new(:from, :to, :species, keyword_init: true)
     Graph = Struct.new(:steps, :links, keyword_init: true)
 
@@ -27,7 +27,8 @@ module AsciiChem
       reaction = parse_reaction(step.reaction)
       sides = sides_of(reaction)
       catalysts = sides ? sides[:reactants].keys & sides[:products].keys : []
-      Step.new(label: step.label, reaction: reaction, catalysts: catalysts)
+      Step.new(label: step.label, reaction: reaction, catalysts: catalysts,
+               flows: step.flows || [])
     end
 
     def links(steps)

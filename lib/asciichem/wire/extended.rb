@@ -6,12 +6,23 @@ module AsciiChem
     # zmatrix, calculation. Emission covers the full v1 schemas;
     # ingestion (from_wire) is currently implemented for the core
     # chemistry set only — see WireAdapter.
+    class MechanismFlow < Lutaml::Model::Serializable
+      attribute :source, :string
+      attribute :target, :string
+      json do
+        map "source", to: :source
+        map "target", to: :target
+      end
+    end
+
     class MechanismStep < Lutaml::Model::Serializable
       attribute :label, :string
       attribute :reaction, "AsciiChem::Wire::Reaction"
+      attribute :flows, MechanismFlow, collection: true
       json do
         map "label", to: :label
         map "reaction", to: :reaction
+        map "flows", to: :flows
       end
     end
 

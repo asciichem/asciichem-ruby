@@ -236,11 +236,44 @@ module AsciiChem
       def mechanism_to_wire(node)
         AsciiChem::Wire::Mechanism.new(
           type: "mechanism",
-          steps: node.steps.map do |step|
-            AsciiChem::Wire::MechanismStep.new(label: step.label, reaction: reaction_to_wire(step.reaction))
-          end,
-          spectators: node.spectators.map { |m| molecule_to_wire(m) }
+          steps: node.steps.map { |step| mechanism_step_to_wire(step) },
+          spectators: node.spectators.map { |sp| mechanism_spectator_to_wire(sp) }
         )
+      end
+
+      # Spectators are verbatim strings in the model (the mechanism
+      # body is text); the wire wants molecules, so the same grammar
+      # parses them here — a spectator that is not valid AsciiChem
+      # cannot reach the wire and says so.
+      def mechanism_spectator_to_wire(text)
+        molecule_to_wire(AsciiChem.parse(text).nodes.first)
+      rescue AsciiChem::ParseError
+        raise AsciiChem::ParseError,
+              "mechanism spectator is not valid AsciiChem: #{text.inspect}"
+      end
+
+      def mechanism_step_to_wire(step)
+        AsciiChem::Wire::MechanismStep.new(
+          label: step.label,
+          reaction: mechanism_reaction_to_wire(step.reaction),
+          flows: (step.flows || []).map do |flow|
+            AsciiChem::Wire::MechanismFlow.new(source: flow.source, target: flow.target)
+          end
+        )
+      end
+
+      # The model keeps a step's reaction as TEXT (the mechanism body
+      # is verbatim); the wire carries the typed node, so the same
+      # grammar parses it here.
+      def mechanism_reaction_to_wire(text)
+        node = AsciiChem.parse(text).nodes.first
+        case node
+        when AsciiChem::Model::Reaction then reaction_to_wire(node)
+        when AsciiChem::Model::ReactionCascade then cascade_to_wire(node)
+        else
+          raise AsciiChem::ParseError,
+                "mechanism step is not a reaction: #{text.inspect}"
+        end
       end
 
       def spectrum_to_wire(node)
