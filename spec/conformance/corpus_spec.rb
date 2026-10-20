@@ -78,6 +78,32 @@ RSpec.describe "asciichem-tests conformance corpus" do
     end
   end
 
+  # Perception conformance (TODO.v2/13 item 2): implicit hydrogens and
+  # aromatic rings are shared semantics — every implementation must
+  # derive the same values (nil = perception declines, never invents).
+  cases.select { |c| c.key?("perception") }.each do |fixture|
+    id = fixture.fetch("id")
+    expected = fixture.fetch("perception")
+
+    it "#{id} perceives the shared implicit hydrogens" do
+      molecule = AsciiChem.parse_smiles(fixture.fetch("smiles")).nodes.first
+      atoms, edges = AsciiChem::Structure::Graph.build(molecule)
+      actual = atoms.each_with_index.map do |atom, index|
+        AsciiChem::Perception.implicit_hydrogens(
+          atom, AsciiChem::Perception.hydrogen_valence_sum(index, edges)
+        )
+      end
+      expect(actual).to eq(expected.fetch("implicitHydrogens"))
+    end
+
+    it "#{id} perceives the shared aromatic rings" do
+      molecule = AsciiChem.parse_smiles(fixture.fetch("smiles")).nodes.first
+      atoms, edges = AsciiChem::Structure::Graph.build(molecule)
+      rings = AsciiChem::Perception.aromatic_rings(atoms, edges).map(&:sort).sort
+      expect(rings).to eq(expected.fetch("aromaticRings"))
+    end
+  end
+
   molfile_cases = cases.select { |c| c.key?("molfile") }
   molfile_cases.each do |fixture|
     id = fixture.fetch("id")
