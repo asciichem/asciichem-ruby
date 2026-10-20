@@ -46,13 +46,40 @@ module AsciiChem
       Result.new(atoms: [], bonds: [], width: 0.0, height: 0.0)
     end
 
-    # Compute 2D positions for a molecule's atoms and bonds.
-    # Returns a `Layout::Result`. Algorithm defaults to `layered`
+    # The built-in backend: elkrb layered layout (or authored
+    # coordinates when present).
+    class BuiltinBackend
+      def layout(molecule, algorithm: 'layered')
+        Layout.builtin_layout(molecule, algorithm: algorithm)
+      end
+    end
+
+    class << self
+      # Depictions are views: a backend maps a molecule to a
+      # Layout::Result and the renderer never learns which engine
+      # placed the atoms. The built-in elkrb backend is the default;
+      # external backends (RDKit, CDK, a Rust layout core) plug in
+      # with `AsciiChem::Layout.backend = backend`, where backend
+      # responds to `layout(molecule, algorithm:)`.
+      attr_writer :backend
+
+      def backend
+        @backend ||= BuiltinBackend.new
+      end
+
+      # Compute 2D positions through the configured backend.
+      def layout(molecule, algorithm: 'layered')
+        backend.layout(molecule, algorithm: algorithm)
+      end
+    end
+
+    # Compute 2D positions for a molecule's atoms and bonds with the
+    # built-in elkrb pipeline. Algorithm defaults to `layered`
     # (Sugiyama-style hierarchical) which is deterministic across
     # runs — essential for visual regression testing. Pass
     # `algorithm: "force"` for organic-looking layouts, with the
     # caveat that output may vary between runs.
-    def self.layout(molecule, algorithm: 'layered')
+    def self.builtin_layout(molecule, algorithm: 'layered')
       walker = MoleculeWalker.new(molecule)
       walk = walker.walk
       return empty_result if walk.atoms.empty?
