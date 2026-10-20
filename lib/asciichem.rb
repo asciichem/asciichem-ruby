@@ -35,6 +35,8 @@ module AsciiChem
   autoload :PeriodicTable, "asciichem/periodic_table"
   autoload :Resolver, "asciichem/resolver"
   autoload :RingBonds, "asciichem/ring_bonds"
+  autoload :Rinchi, "asciichem/rinchi"
+  autoload :Rxn, "asciichem/rxn"
   autoload :Smiles, "asciichem/smiles"
   autoload :Structure, "asciichem/structure"
   autoload :Transform, "asciichem/transform"
