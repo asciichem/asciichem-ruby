@@ -32,7 +32,7 @@ module AsciiChem
     class PargEngine
       # Version the vendored artifact was built from; the load fails
       # loudly on drift so the engine never runs a stale grammar.
-      PARG_GRAMMAR_VERSION = '0.3.1'
+      PARG_GRAMMAR_VERSION = '0.4.0'
 
       ARTIFACT_PATH = File.expand_path('parg/asciichem.json', __dir__)
 
