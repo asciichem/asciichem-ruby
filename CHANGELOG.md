@@ -3,6 +3,29 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.5] - 2026-10-20
+
+### Changed
+- Aromaticity perception is now **Hückel counting** (TODO.v2/13 item 2,
+  finishing the documented later slice): 5- and 6-membered cycles
+  count π electrons — in-system double = 1, lone-pair donor
+  (N/O/S/P/Se/As) with no double = 2, exocyclic-double carbon = 0 —
+  and are aromatic at totals 6 or 10. Charged rings decline;
+  aromatic-flagged rings are taken as stated. Furan, pyrrole, and
+  thiophene are perceived from Kekulé bond orders; quinones remain
+  excluded, as do four-π and three-membered rings.
+- Canonical SMILES covers the five-membered heteroaromatics:
+  `C1=COC=C1` → `c1cocc1`, `C1=CNC=C1` → `c1c[nH]cc1`,
+  `C1=CSC=C1` → `c1cscc1`. A perceived pyrrole nitrogen is written
+  `[nH]` (bare aromatic `n` implies no hydrogen); inferred heteroatom
+  hydrogens apply only to rings perceived from Kekulé orders, so
+  source-aromatic thiophene never gains a phantom H.
+- Corpus contract 0.8.0 (`asciichem-tests`): Hückel fixtures for
+  furan/pyrrole/thiophene, cyclopentadiene and cyclopropene pinned as
+  not aromatic, plus `canonicalSmiles` expectations. TS and Python
+  parity merged; the Python writer also emits `H0` for stated-zero
+  hydrogens.
+
 ## [0.31.4] - 2026-10-20
 
 ### Changed
