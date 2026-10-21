@@ -9,17 +9,19 @@ module AsciiChem
   # fields.
   #
   # Emission (to_wire/to_model_json) covers every wire type.
-  # Ingestion (from_wire/from_model_json) currently covers the
-  # lossless core set: formula, atom, molecule, group, bond,
+  # Ingestion (from_wire/from_model_json) covers the lossless core
+  # set plus mechanism: formula, atom, molecule, group, bond,
   # identifier, name, reaction (+conditions), reaction-cascade,
-  # electron-configuration, embedded-math, text. The beyond-formulas
-  # nodes (mechanism, spectrum, crystal, zmatrix, calculation) are
+  # electron-configuration, embedded-math, text, mechanism (steps as
+  # canonical reaction text, flows, spectators; cascade steps have no
+  # wire form). Spectrum, crystal, zmatrix and calculation remain
   # emission-only until their round-trip acceptance lands in the
   # corpus.
   module WireAdapter
     CORE_INGEST_TYPES = %w[
       formula atom molecule group bond identifier name reaction
       reaction-cascade electron-configuration embedded-math text
+      mechanism
     ].freeze
 
     class << self
@@ -72,20 +74,27 @@ module AsciiChem
       # only routes `type` and re-injects routed children into
       # polymorphic collections (which lutaml deserialises flat).
       def wire_tree_from_hash(hash)
-        type = hash.fetch("type") { raise KeyError, "wire node missing type discriminator" }
+        type = hash.fetch('type') { raise KeyError, 'wire node missing type discriminator' }
         klass = AsciiChem::Wire::REGISTRY.fetch(type) do
           raise KeyError, "unknown wire node type #{type.inspect}"
         end
 
         wire = klass.from_json(JSON.generate(hash))
         case type
-        when "formula", "molecule", "group"
-          wire.nodes = hash.fetch("nodes", []).map { |child| wire_tree_from_hash(child) }
-        when "reaction"
-          wire.reactants = hash.fetch("reactants", []).map { |child| wire_tree_from_hash(child) }
-          wire.products = hash.fetch("products", []).map { |child| wire_tree_from_hash(child) }
-        when "reaction-cascade"
-          wire.steps = hash.fetch("steps", []).map { |child| wire_tree_from_hash(child) }
+        when 'formula', 'molecule', 'group'
+          wire.nodes = hash.fetch('nodes', []).map { |child| wire_tree_from_hash(child) }
+        when 'reaction'
+          wire.reactants = hash.fetch('reactants', []).map { |child| wire_tree_from_hash(child) }
+          wire.products = hash.fetch('products', []).map { |child| wire_tree_from_hash(child) }
+        when 'reaction-cascade'
+          wire.steps = hash.fetch('steps', []).map { |child| wire_tree_from_hash(child) }
+        when 'mechanism'
+          wire.steps = hash.fetch('steps', []).map do |step_hash|
+            step = AsciiChem::Wire::MechanismStep.from_json(JSON.generate(step_hash))
+            step.reaction = wire_tree_from_hash(step_hash.fetch('reaction'))
+            step
+          end
+          wire.spectators = hash.fetch('spectators', []).map { |child| wire_tree_from_hash(child) }
         end
         wire
       end
@@ -93,12 +102,12 @@ module AsciiChem
       private
 
       def formula_to_wire(node)
-        AsciiChem::Wire::Formula.new(type: "formula", nodes: node.nodes.map { |n| to_wire(n) })
+        AsciiChem::Wire::Formula.new(type: 'formula', nodes: node.nodes.map { |n| to_wire(n) })
       end
 
       def atom_to_wire(atom)
         AsciiChem::Wire::Atom.new(
-          type: "atom",
+          type: 'atom',
           element: atom.element,
           isotope: digits_or_nil(atom.isotope), charge: str_or_nil(atom.charge),
           subscript: digits_or_nil(atom.subscript),
@@ -134,7 +143,7 @@ module AsciiChem
 
       def molecule_to_wire(node)
         AsciiChem::Wire::Molecule.new(
-          type: "molecule",
+          type: 'molecule',
           nodes: node.nodes.map { |n| to_wire(n) },
           coefficient: node.coefficient,
           stereo: stereo_to_wire(node.stereo),
@@ -158,7 +167,7 @@ module AsciiChem
 
       def group_to_wire(node)
         AsciiChem::Wire::Group.new(
-          type: "group",
+          type: 'group',
           nodes: node.nodes.map { |n| to_wire(n) },
           multiplicity: node.multiplicity,
           bracket: node.bracket.to_s
@@ -166,27 +175,27 @@ module AsciiChem
       end
 
       def bond_to_wire(node)
-        AsciiChem::Wire::Bond.new(type: "bond", kind: node.kind.to_s,
+        AsciiChem::Wire::Bond.new(type: 'bond', kind: node.kind.to_s,
                                   direction: str_or_nil(node.direction&.to_s))
       end
 
       def identifier_to_wire(node)
         AsciiChem::Wire::Identifier.new(
-          type: "identifier",
+          type: 'identifier',
           value: node.value, convention: node.convention.to_s, dict_ref: node.dict_ref
         )
       end
 
       def name_to_wire(node)
         AsciiChem::Wire::Name.new(
-          type: "name",
+          type: 'name',
           content: node.content, convention: node.convention, dict_ref: node.dict_ref
         )
       end
 
       def reaction_to_wire(node)
         AsciiChem::Wire::Reaction.new(
-          type: "reaction",
+          type: 'reaction',
           reactants: node.reactants.map { |m| molecule_to_wire(m) },
           products: node.products.map { |m| molecule_to_wire(m) },
           arrow: node.arrow.to_s,
@@ -202,14 +211,14 @@ module AsciiChem
 
       def cascade_to_wire(node)
         AsciiChem::Wire::ReactionCascade.new(
-          type: "reaction-cascade",
+          type: 'reaction-cascade',
           steps: node.steps.map { |r| reaction_to_wire(r) }
         )
       end
 
       def econfig_to_wire(node)
         AsciiChem::Wire::ElectronConfiguration.new(
-          type: "electron-configuration",
+          type: 'electron-configuration',
           orbitals: node.orbitals.map do |(label, count)|
             AsciiChem::Wire::OrbitalOccupancy.new(orbital: label.to_s, occupancy: count.to_s)
           end,
@@ -226,16 +235,16 @@ module AsciiChem
       end
 
       def math_to_wire(node)
-        AsciiChem::Wire::EmbeddedMath.new(type: "embedded-math", source: node.source)
+        AsciiChem::Wire::EmbeddedMath.new(type: 'embedded-math', source: node.source)
       end
 
       def text_to_wire(node)
-        AsciiChem::Wire::Text.new(type: "text", content: node.content)
+        AsciiChem::Wire::Text.new(type: 'text', content: node.content)
       end
 
       def mechanism_to_wire(node)
         AsciiChem::Wire::Mechanism.new(
-          type: "mechanism",
+          type: 'mechanism',
           steps: node.steps.map { |step| mechanism_step_to_wire(step) },
           spectators: node.spectators.map { |sp| mechanism_spectator_to_wire(sp) }
         )
@@ -264,12 +273,16 @@ module AsciiChem
 
       # The model keeps a step's reaction as TEXT (the mechanism body
       # is verbatim); the wire carries the typed node, so the same
-      # grammar parses it here.
+      # grammar parses it here. A cascade step has no wire form —
+      # MechanismStep.reaction is typed Reaction — and says so instead
+      # of silently flattening the chain.
       def mechanism_reaction_to_wire(text)
         node = AsciiChem.parse(text).nodes.first
         case node
         when AsciiChem::Model::Reaction then reaction_to_wire(node)
-        when AsciiChem::Model::ReactionCascade then cascade_to_wire(node)
+        when AsciiChem::Model::ReactionCascade
+          raise AsciiChem::ParseError,
+                "mechanism step cascades have no wire form: #{text.inspect}"
         else
           raise AsciiChem::ParseError,
                 "mechanism step is not a reaction: #{text.inspect}"
@@ -278,7 +291,7 @@ module AsciiChem
 
       def spectrum_to_wire(node)
         AsciiChem::Wire::Spectrum.new(
-          type: "spectrum",
+          type: 'spectrum',
           technique: node.type,
           params: node.params,
           peaks: node.peaks.map do |peak|
@@ -292,7 +305,7 @@ module AsciiChem
 
       def crystal_to_wire(node)
         AsciiChem::Wire::Crystal.new(
-          type: "crystal",
+          type: 'crystal',
           name: node.name, a: node.a, b: node.b, c: node.c,
           alpha: node.alpha, beta: node.beta, gamma: node.gamma,
           spacegroup: node.spacegroup,
@@ -302,7 +315,7 @@ module AsciiChem
 
       def zmatrix_to_wire(node)
         AsciiChem::Wire::ZMatrix.new(
-          type: "zmatrix",
+          type: 'zmatrix',
           rows: node.rows.map do |row|
             AsciiChem::Wire::ZRow.new(
               atom: row.atom, ref1: row.ref1, distance: row.distance,
@@ -314,7 +327,7 @@ module AsciiChem
 
       def calculation_to_wire(node)
         AsciiChem::Wire::Calculation.new(
-          type: "calculation",
+          type: 'calculation',
           method: node.method, basis: node.basis,
           properties: node.properties.map do |prop|
             AsciiChem::Wire::CalculatedProperty.new(
@@ -391,6 +404,26 @@ module AsciiChem
       def reaction_cascade_from_wire(wire)
         AsciiChem::Model::ReactionCascade.new(
           steps: Array(wire.steps).map { |r| reaction_from_wire(r) }
+        )
+      end
+
+      def mechanism_from_wire(wire)
+        AsciiChem::Model::Mechanism.new(
+          steps: Array(wire.steps).map { |s| mechanism_step_from_wire(s) },
+          spectators: Array(wire.spectators).map { |sp| molecule_from_wire(sp).to_text }
+        )
+      end
+
+      # The model keeps a step's reaction as TEXT; the wire carries the
+      # typed node, so ingestion renders it back through the canonical
+      # text form.
+      def mechanism_step_from_wire(step)
+        AsciiChem::Model::Mechanism::Step.new(
+          label: step.label,
+          reaction: from_wire(step.reaction).to_text,
+          flows: Array(step.flows).map do |flow|
+            AsciiChem::Model::Mechanism::Flow.new(source: flow.source, target: flow.target)
+          end
         )
       end
 

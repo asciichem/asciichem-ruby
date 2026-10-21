@@ -69,4 +69,23 @@ RSpec.describe 'Mechanism electron-flow markers' do
     expect { mechanism_for("s1: A -> B\n  spectator: Na+").to_model_json }
       .to raise_error(AsciiChem::ParseError, /spectator is not valid AsciiChem/)
   end
+
+  # Wire ingestion (TODO.v2/13 item 4): steps come back as canonical
+  # reaction text, flows and spectators intact.
+  it 'round-trips through the wire form' do
+    source = mechanism_for("s1: A-B -> A + B | flow: A-B > A; B > B-C\n" \
+                           "s2: 2C ->[cat: Pd] D\n  spectator: Na^+")
+    round = AsciiChem.from_model_json(source.to_model_json)
+    expect(round.to_text).to eq(source.to_text)
+    step = round.nodes.first.steps.first
+    expect(step.flows.map { |f| [f.source, f.target] }).to eq(
+      [['A-B', 'A'], ['B', 'B-C']]
+    )
+    expect(round.nodes.first.spectators).to eq(['Na^+'])
+  end
+
+  it 'rejects cascade steps on the wire instead of flattening' do
+    expect { mechanism_for('s1: A -> B -> C').to_model_json }
+      .to raise_error(AsciiChem::ParseError, /cascades have no wire form/)
+  end
 end
