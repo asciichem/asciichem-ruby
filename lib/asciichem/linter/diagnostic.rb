@@ -2,7 +2,12 @@
 
 module AsciiChem
   module Linter
-    Diagnostic = Struct.new(:severity, :message, :node, keyword_init: true) do
+    # `details` carries optional structured data behind the message
+    # (e.g. BalanceCheck's per-element [reactants, products] counts)
+    # for consumers that want the numbers, not the prose. Human-facing
+    # output stays the message.
+    Diagnostic = Struct.new(:severity, :message, :node, :details,
+                            keyword_init: true) do
       def to_s
         context = node&.diagnostic_label
         if context

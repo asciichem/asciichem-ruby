@@ -36,6 +36,17 @@ RSpec.describe AsciiChem::Linter do
       expect(errors.first.message).to include("O: 2 vs 1")
     end
 
+    # Structured diagnostics: the numbers behind the message, for
+    # consumers that want them without parsing prose.
+    it "carries per-element deltas as details" do
+      diagnostic = lint("H_2 + O_2 -> H_2O").first
+      expect(diagnostic.details).to eq("O" => [2, 1])
+    end
+
+    it "leaves details empty for balanced reactions" do
+      expect(lint("2H_2 + O_2 -> 2H_2O").map(&:details).compact).to be_empty
+    end
+
     it "handles group multiplicities" do
       expect(lint("Ca(OH)_2 + 2HCl -> CaCl_2 + 2H_2O")
               .select { |d| d.severity == :error }).to be_empty

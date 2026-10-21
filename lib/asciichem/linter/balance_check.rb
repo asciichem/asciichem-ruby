@@ -33,7 +33,8 @@ module AsciiChem
         diffs = compute_diffs(reactants, products)
         diagnostics << error(
           "Reaction is not balanced: #{diffs}",
-          node: reaction
+          node: reaction,
+          details: element_deltas(reactants, products)
         )
       end
 
@@ -85,6 +86,16 @@ module AsciiChem
           sub.each { |element, n| result[element] += n }
         end
         result
+      end
+
+      # Element => [reactant_count, product_count] for every element
+      # whose counts differ — the numbers behind the message.
+      def element_deltas(reactants, products)
+        (reactants.keys | products.keys).sort.each_with_object({}) do |element, out|
+          r = reactants.fetch(element, 0)
+          p = products.fetch(element, 0)
+          out[element] = [r, p] if r != p
+        end
       end
 
       def compute_diffs(reactants, products)
