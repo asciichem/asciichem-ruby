@@ -201,7 +201,7 @@ RSpec.describe "asciichem-tests conformance corpus" do
       end
 
       it "#{id} round-trips via model JSON" do
-        skip "not flagged" unless fixture.fetch("modelJsonRoundTrip", true) && fixture["roundTrip"]
+        skip "not flagged" unless fixture["roundTrip"]
 
         restored = AsciiChem.from_model_json(AsciiChem.parse(input).to_model_json).to_text
         expect(restored).to eq(input), "restored #{restored.inspect}"
