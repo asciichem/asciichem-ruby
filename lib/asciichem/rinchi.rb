@@ -15,9 +15,11 @@ module AsciiChem
     autoload :Identity, 'asciichem/rinchi/identity'
 
     INSTALL_GUIDE = 'install the IUPAC RInChI software ' \
-                    '(https://github.com/IUPAC-InChI/RInChI) and set ' \
-                    'AsciiChem::Rinchi.engine = AsciiChem::Rinchi::BinaryEngine.new ' \
-                    '(or pass bin: "path/to/rinchi-1")'
+                    '(https://github.com/IUPAC-InChI/RInChI — build ' \
+                    'src/example_apps/rinchi_cmdline against InChI v1.07.5) ' \
+                    'and set AsciiChem::Rinchi.engine = ' \
+                    'AsciiChem::Rinchi::BinaryEngine.new ' \
+                    '(or pass bin: "path/to/rinchi_cmdline")'
 
     class << self
       attr_accessor :engine

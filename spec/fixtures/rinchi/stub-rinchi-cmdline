@@ -1,0 +1,24 @@
+#!/bin/sh
+# Deterministic stand-in for the IUPAC `rinchi_cmdline` binary (offline
+# specs). Emulates its contract: RXN file as $1 (no flags), writes
+# RInChI= and key lines to stdout. Keyed on the counts line (line 5) so
+# the spec exercises the real RXN pipe.
+#
+# Known shape:
+#   1 reactant / 1 product  -> canned RInChI
+#   anything else           -> engine failure (exit 1)
+counts=$(sed -n '5p' "$1")
+reactants=$(printf '%s' "$counts" | cut -c1-3 | tr -d ' ')
+products=$(printf '%s' "$counts" | cut -c4-6 | tr -d ' ')
+
+case "${reactants}_${products}" in
+  1_1)
+    printf 'RInChI=1.00.1S/C2H6O/c1-2-3/h3H,2H2,1H3<>C2H4O/c1-2-3/h1H,2H3/d-\n'
+    printf 'Short-RInChIKey=SA-BUHFF-IKHGUXGNUI-LFQSCWFLJH-UHFFFADPSC-NUHFF-NUHFF-NUHFF-ZZZ\n'
+    printf 'Long-RInChIKey=SA-BUHFF-IKHGUXGNUITLKF-UHFFFAOYSA-N--LFQSCWFLJHTTHZ-UHFFFAOYSA-N\n'
+    ;;
+  *)
+    echo "Error: stub-rinchi-cmdline does not know this reaction" >&2
+    exit 1
+    ;;
+esac
