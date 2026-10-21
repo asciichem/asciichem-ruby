@@ -3,6 +3,27 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.6] - 2026-10-21
+
+### Added
+- **Mechanism wire ingestion** (TODO.v2/13 item 4): `from_model_json`
+  restores mechanisms — steps return as canonical reaction text, flows
+  and spectators intact; cascade steps have no wire form and raise
+  instead of silently flattening. Mechanism round-trip is asserted
+  corpus-wide (the `modelJsonRoundTrip` flag is gone).
+
+### Changed
+- **BalanceCheck diagnostics carry structured details**: each
+  imbalance reports `element => [reactants, products]` deltas for
+  every element whose counts differ, alongside the message.
+- **RInChI engine matches the real `rinchi_cmdline` contract**
+  (validated end-to-end against the IUPAC binary built from source):
+  the RXN file is the positional argument (no flags), direction-distinct
+  identities for a reaction and its reverse.
+- Hermetic CI: the conformance corpus is pinned (`CORPUS_REF: v0.8.0`)
+  and the schema re-vendor script defaults to the released
+  asciichem-model tag (v0.6.0) — CI inputs no longer float at `main`.
+
 ## [0.31.5] - 2026-10-20
 
 ### Changed
