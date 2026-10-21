@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Re-vendor the asciichem-model v1 JSON Schemas (YAML) and examples.
-# Usage: scripts/update-model-schemas.sh [model-tag] (default: main).
+# Usage: scripts/update-model-schemas.sh [model-tag]. Default is the
+# released tag — vendored schemas stay hermetic, never floating.
 set -euo pipefail
 
-tag="${1:-main}"
+tag="${1:-v0.6.0}"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
