@@ -8,13 +8,14 @@ module AsciiChem
     # Structure::Graph, so positions map by index). Charges and
     # isotopes are emitted as `M  CHG` / `M  ISO` property lines.
     #
-    # Tetrahedral chirality crosses as the atom parity field
-    # (TH1 → 1 odd, TH2 → 2 even) relative to the neighbour order in
-    # the bond block, which is the model's linear order — the InChI
-    # binary consumes it when wedges or coordinates are absent.
-    # Directional bonds (`/`, `\`, E/Z) have no V2000 field: the
-    # model's Bond#direction is documented as a molfile loss rather
-    # than silently invented from geometry.
+    # Tetrahedral chirality crosses as a WEDGE on the stereocentre's
+    # first bond (TH1 → up, TH2 → down), oriented centre → neighbour:
+    # the oracle ignores the V2000 atom-parity field for 2D input
+    # (verified against inchi-1 1.07.5 — enantiomers only separate
+    # through the wedge), so the parity field alone never carries
+    # stereo. Directional bonds (`/`, `\`, E/Z) have no V2000 field:
+    # the model's Bond#direction is documented as a molfile loss
+    # rather than silently invented from geometry.
     class Writer
       BOND_TYPES = {
         single: 1, double: 2, triple: 3, aromatic: 4,
@@ -29,7 +30,7 @@ module AsciiChem
       end
 
       def write
-        atoms, edges = Structure::Graph.build(@molecule)
+        atoms, edges = Structure::Graph.build!(@molecule)
         raise ParseError, "molecule has no bonds — a formula is not a structure" if edges.empty? && atoms.length > 1
 
         lines = []
@@ -47,13 +48,18 @@ module AsciiChem
                           hcount_code(atom))
         end
 
+        wedges = wedge_bonds(atoms, edges)
         edges.each do |edge|
           type = BOND_TYPES.fetch(edge.kind) do
             raise ParseError, "#{edge.kind} bonds have no molfile V2000 type"
           end
           stereo = BOND_STEREO.fetch(edge.kind, 0)
+          from, to = edge.from, edge.to
+          if (wedge = wedges[edge.object_id])
+            from, to, stereo = wedge
+          end
           lines << format("%3d%3d%3d%3d  0  0  0  0  0  0  0",
-                          edge.from + 1, edge.to + 1, type, stereo)
+                          from + 1, to + 1, type, stereo)
         end
 
         lines << property_line("M  CHG", charge_pairs(atoms))
@@ -63,6 +69,28 @@ module AsciiChem
       end
 
       private
+
+      # One wedge per chiral atom, on its first bond, oriented
+      # centre → neighbour: TH1 rises (stereo 1), TH2 falls (6).
+      # Returns { edge.object_id => [from, to, stereo] }.
+      def wedge_bonds(atoms, edges)
+        wedges = {}
+        atoms.each_with_index do |atom, index|
+          next unless CHIRALITY_PARITY.key?(atom.chirality)
+
+          edge = edges.find { |e| e.from == index || e.to == index }
+          next unless edge
+
+          stereo = atom.chirality == 'TH1' ? 1 : 6
+          wedges[edge.object_id] =
+            if edge.from == index
+              [index, edge.to, stereo]
+            else
+              [index, edge.from, stereo]
+            end
+        end
+        wedges
+      end
 
       # MDL H-count code: 0 default, 1 H0, 2 H1, 3 H2, ... — so a
       # stated count n crosses as n + 1.

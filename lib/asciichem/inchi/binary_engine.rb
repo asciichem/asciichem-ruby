@@ -6,13 +6,20 @@ module AsciiChem
   module Inchi
     # Engine that shells out to the standalone IUPAC `inchi-1`
     # binary. The binary is a documented external dependency — nothing
-    # is vendored (vendoring the InChI library requires the licence
-    # review recorded in TODO.v2 10, a maintainer decision).
+    # is vendored (TODO.v2 16 keeps it that way; the native path is a
+    # separate engine).
+    #
+    # Contract: the distributed binary's file interface
+    # (`inchi-1 input.mol output.txt [flags]`). `-STDIO` is NOT part
+    # of it — the standard distribution ignores it and prints usage
+    # (caught against the brew 1.07.5 build), so the engine stages the
+    # molfile to a temp file and reads the output file back, the same
+    # shape as the RInChI engine.
     #
     #   AsciiChem::Inchi.engine = AsciiChem::Inchi::BinaryEngine.new
     #   AsciiChem::Inchi.engine = AsciiChem::Inchi::BinaryEngine.new(bin: "/usr/local/bin/inchi-1")
     class BinaryEngine < Engine
-      DEFAULT_FLAGS = %w[-STDIO -AuxNone -NoLabels -Key].freeze
+      DEFAULT_FLAGS = %w[-AuxNone -NoLabels -Key].freeze
 
       attr_reader :bin, :flags
 
@@ -39,13 +46,21 @@ module AsciiChem
 
       private
 
-      def execute(input)
-        out, err, status = Open3.capture3(bin, *flags, stdin_data: input)
-        unless status.success?
-          raise AsciiChem::Error, "#{bin} failed (exit #{status.exitstatus}): #{(err + out).strip[0, 500]}"
-        end
+      def execute(molfile)
+        require 'tmpdir'
+        Dir.mktmpdir('asciichem-inchi') do |dir|
+          input = File.join(dir, 'structure.mol')
+          output = File.join(dir, 'structure.txt')
+          File.write(input, molfile)
+          _out, err, status = Open3.capture3(bin, input, output, *flags)
+          unless status.success?
+            raise AsciiChem::Error, "#{bin} failed (exit #{status.exitstatus}): #{err.strip[0, 500]}"
+          end
 
-        out
+          # A clean run with no output file means no structure output;
+          # the caller's InChI= regex raises the no-InChI error.
+          File.exist?(output) ? File.read(output) : ''
+        end
       rescue Errno::ENOENT
         raise EngineMissingError, "InChI engine binary #{bin.inspect} not found — #{AsciiChem::Inchi::INSTALL_GUIDE}"
       end

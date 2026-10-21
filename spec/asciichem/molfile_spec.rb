@@ -185,3 +185,45 @@ RSpec.describe "molfile stereo (L3 slice 6)" do
     expect(restored.to_smiles).to eq("FC=CF")
   end
 end
+
+RSpec.describe 'Structure::Graph.build! (structure writers)' do
+  def build(kind, source)
+    molecule = (kind == :smiles ? AsciiChem.parse_smiles(source) : AsciiChem.parse(source)).nodes.first
+    AsciiChem::Structure::Graph.build!(molecule)
+  end
+
+  it 'accepts fully bonded SMILES models across branch boundaries' do
+    atoms, edges = build(:smiles, 'CC(=O)O')
+    expect(atoms.map(&:element)).to eq(%w[C C O O])
+    expect(edges.length).to eq(3)
+  end
+
+  it 'treats an explicit salt as separate single-atom components' do
+    molecules = AsciiChem.parse_smiles('[Na+].[Cl-]').nodes
+    expect(molecules.length).to eq(2)
+    molecules.each do |molecule|
+      atoms, edges = AsciiChem::Structure::Graph.build!(molecule)
+      expect(atoms.length).to eq(1)
+      expect(edges).to be_empty
+    end
+  end
+
+  it 'declines formula-style adjacency instead of fragmenting silently' do
+    expect { build(:text, 'CCO') }
+      .to raise_error(AsciiChem::ParseError, /adjacent atoms have no explicit bond token/)
+  end
+
+  it 'declines undashed mixtures that would silently lose ring bonds' do
+    # C1=CC=CC=C1 carries only its double bonds + one ring closure as
+    # explicit tokens; the undashed spacers would fragment the ring.
+    expect { build(:text, 'C1=CC=CC=C1') }
+      .to raise_error(AsciiChem::ParseError, /adjacent atoms have no explicit bond token/)
+  end
+
+  it 'keeps the tolerant build usable for the linter' do
+    molecule = AsciiChem.parse('CCO').nodes.first
+    atoms, edges = AsciiChem::Structure::Graph.build(molecule)
+    expect(atoms.length).to eq(3)
+    expect(edges).to be_empty
+  end
+end
