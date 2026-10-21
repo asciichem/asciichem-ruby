@@ -22,16 +22,16 @@ module AsciiChem
 
       protected
 
-      def error(message, node: nil)
-        Diagnostic.new(severity: :error, message: message, node: node)
+      def error(message, node: nil, details: nil)
+        Diagnostic.new(severity: :error, message: message, node: node, details: details)
       end
 
-      def warning(message, node: nil)
-        Diagnostic.new(severity: :warning, message: message, node: node)
+      def warning(message, node: nil, details: nil)
+        Diagnostic.new(severity: :warning, message: message, node: node, details: details)
       end
 
-      def info(message, node: nil)
-        Diagnostic.new(severity: :info, message: message, node: node)
+      def info(message, node: nil, details: nil)
+        Diagnostic.new(severity: :info, message: message, node: node, details: details)
       end
 
       # Depth-first walk over every node in the formula. Yields each
