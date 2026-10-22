@@ -3,6 +3,14 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.8] - 2026-10-22
+
+### Fixed
+- The SMILES writer joins the strict structure decline (a line
+  missed in 0.31.7's staging): `to_smiles` no longer silently
+  fragments undashed text — `C1=CC=CC=C1` declines with guidance
+  like the molfile writer.
+
 ## [0.31.7] - 2026-10-22
 
 ### Fixed
