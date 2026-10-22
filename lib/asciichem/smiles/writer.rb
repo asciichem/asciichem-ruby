@@ -34,7 +34,7 @@ module AsciiChem
       end
 
       def write
-        atoms, edges = Structure::Graph.build(@molecule)
+        atoms, edges = Structure::Graph.build!(@molecule)
         # A single-atom component is valid SMILES (water "O", ions);
         # multiple atoms with no bonds is a formula, not a structure.
         raise ParseError, 'molecule has no bonds — a formula is not a structure' if edges.empty? && atoms.length > 1
