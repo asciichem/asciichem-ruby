@@ -3,7 +3,7 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [0.31.7] - 2026-10-22
 
 ### Fixed
 - **InChI engine matches the distributed binary's real contract**
