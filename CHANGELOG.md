@@ -3,6 +3,34 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+- **InChI engine matches the distributed binary's real contract**
+  (found by the TODO.v2/16 oracle work): `-STDIO` is not part of the
+  standard `inchi-1` interface — the engine now stages the molfile to
+  a temp file and reads the output file, the same shape as the RInChI
+  engine. Verified against the brew 1.07.5 build.
+- **Tetrahedral stereo actually reaches the oracle now**: the writer
+  emits a wedge on the stereocentre's first bond (TH1 up, TH2 down);
+  the V2000 atom-parity field alone is ignored by `inchi-1` for 2D
+  input, so the previous parity-only claim never produced stereo
+  InChIs. Enantiomers now derive distinct standard InChIs
+  (`N[C@H](C)C(=O)O` → the published L-alanine key), gated by the
+  real-binary spec (`ASCIICHEM_INCHI_BIN`).
+- **Molfile round-trip folds chirality wedges back**: a wedge/hash
+  bond on a parity-chiral atom reads as the plain single bond it was
+  written from, instead of re-entering the model as a wedge/hash
+  bond kind.
+- **Structure writers decline formula-style adjacency instead of
+  silently fragmenting**: `CCO` and undashed mixtures
+  (`C1=CC=CC=C1` — only its double bonds + one ring closure are
+  explicit) used to write disconnected graphs and garbage SMILES;
+  `Structure::Graph.build!` now declines with guidance while the
+  tolerant `build` stays available to the linter. SMILES-ingested
+  models are unaffected (their branch reconnection crosses as a
+  ring-closure digit, so the graph is connected).
+
 ## [0.31.6] - 2026-10-21
 
 ### Added

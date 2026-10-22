@@ -26,6 +26,22 @@ module AsciiChem
         bonds = parse_bonds(bond_count)
         properties = parse_properties
 
+        # A wedge/hash bond on an atom whose parity field already
+        # carries chirality is that chirality's wedge (our writer
+        # emits exactly that pair), not an independent bond kind —
+        # fold it back to its plain single bond.
+        chiral = atoms.each_with_index
+                      .select { |atom, _| atom.chirality }
+                      .map { |_, i| i }
+        bonds = bonds.map do |bond|
+          if %i[wedge hash].include?(bond[:kind]) &&
+             (chiral.include?(bond[:from]) || chiral.include?(bond[:to]))
+            bond.merge(kind: :single)
+          else
+            bond
+          end
+        end
+
         apply_legacy_charge!(atoms)
         apply_charges!(atoms, properties[:charges])
         apply_isotopes!(atoms, properties[:isotopes])
