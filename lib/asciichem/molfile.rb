@@ -18,8 +18,8 @@ module AsciiChem
 
       # Emits a V2000 molfile. Uses authored x2/y2 coordinates;
       # computes a 2D layout otherwise.
-      def write(molecule, name: nil)
-        Writer.new(molecule, name: name).write
+      def write(molecule, name: nil, layout: true)
+        Writer.new(molecule, name: name, layout: layout).write
       end
     end
   end

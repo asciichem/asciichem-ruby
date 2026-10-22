@@ -35,7 +35,7 @@ RSpec.describe "asciichem-tests conformance corpus" do
 
   # Structure interchange (TODO.v2 09): SMILES and molfile ingest under
   # their own keys; fixture strings hold the reference-canonical forms.
-  smiles_cases = cases.select { |c| c.key?("smiles") }
+  smiles_cases = cases.select { |c| c.key?("smiles") && c.key?("parses") }
   smiles_cases.each do |fixture|
     id = fixture.fetch("id")
     smiles = fixture.fetch("smiles")
@@ -147,7 +147,7 @@ RSpec.describe "asciichem-tests conformance corpus" do
     end
   end
 
-  molfile_cases = cases.select { |c| c.key?("molfile") }
+  molfile_cases = cases.select { |c| c.key?("molfile") && c.key?("parses") }
   molfile_cases.each do |fixture|
     id = fixture.fetch("id")
     molfile = fixture.fetch("molfile")

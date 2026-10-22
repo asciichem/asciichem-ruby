@@ -33,7 +33,7 @@ module AsciiChem
       # the pipe: atom coordinates, charges and isotopes cross into
       # the engine through the V2000 block.
       def identity(molecule)
-        molfile = AsciiChem::Molfile.write(molecule)
+        molfile = AsciiChem::Molfile.write(molecule, layout: false)
         out = execute(molfile)
         inchi = out[/^InChI=\S+/]
         raise AsciiChem::Error, "#{bin} produced no InChI:\n#{out}" unless inchi
