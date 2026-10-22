@@ -24,13 +24,16 @@ module AsciiChem
       BOND_STEREO = { wedge: 1, hash: 6 }.freeze
       CHIRALITY_PARITY = { 'TH1' => 1, 'TH2' => 2 }.freeze
 
-      def initialize(molecule, name: nil)
+      def initialize(molecule, name: nil, layout: true)
         @molecule = molecule
         @name = name
+      @layout = layout
       end
 
       def write
-        atoms, edges = Structure::Graph.build!(@molecule)
+        @atoms, @edges = Structure::Graph.build!(@molecule)
+        atoms = @atoms
+        edges = @edges
         raise ParseError, "molecule has no bonds — a formula is not a structure" if edges.empty? && atoms.length > 1
 
         lines = []
@@ -100,11 +103,11 @@ module AsciiChem
 
       # Authored coordinates win; otherwise positions from the
       # deterministic 2D layout (same walk order as the graph).
-      def coordinates(atom, index, atoms)
-        return [atom.x2, atom.y2] if atom.x2 && atom.y2
+      def coordinates(atom, index, _atoms)
+        return [0.0, 0.0] unless @layout
 
-        @layout ||= AsciiChem::Layout.layout(@molecule)
-        placed = @layout.atoms[index]
+        @layout_positions ||= AsciiChem::Layout.layout(@molecule).atoms
+        placed = @layout_positions[index]
         placed ? [placed.x, placed.y] : [0.0, 0.0]
       end
 
