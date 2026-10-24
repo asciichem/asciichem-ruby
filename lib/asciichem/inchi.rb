@@ -14,6 +14,7 @@ module AsciiChem
     autoload :BinaryEngine, 'asciichem/inchi/binary_engine'
     autoload :Engine, 'asciichem/inchi/engine'
     autoload :Identity, 'asciichem/inchi/identity'
+    autoload :NativeEngine, 'asciichem/inchi/native_engine'
 
     INSTALL_GUIDE = 'install the IUPAC InChI software ' \
                     '(https://www.inchi-trust.org/downloads/) and set ' \
