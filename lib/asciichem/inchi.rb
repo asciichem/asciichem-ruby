@@ -19,7 +19,10 @@ module AsciiChem
     INSTALL_GUIDE = 'install the IUPAC InChI software ' \
                     '(https://www.inchi-trust.org/downloads/) and set ' \
                     'AsciiChem::Inchi.engine = AsciiChem::Inchi::BinaryEngine.new ' \
-                    '(or pass bin: "path/to/inchi-1")'
+                    '(or pass bin: "path/to/inchi-1") — or, for the native ' \
+                    'Rust engine, build inchi-rs and set ' \
+                    'AsciiChem::Inchi.engine = AsciiChem::Inchi::NativeEngine.new ' \
+                    '(pointing INCHI_RS_LIB at the built cdylib)'
 
     class << self
       attr_accessor :engine

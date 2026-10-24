@@ -3,6 +3,19 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.9] - 2026-10-24
+
+### Added
+- `AsciiChem::Inchi::NativeEngine`: the identity engine drives the
+  native inchi-rs Rust engine through its C ABI (model → molfile →
+  identifier + InChIKey). The library is an external artifact built
+  from the inchi-rs checkout and located via `INCHI_RS_LIB`; the
+  `ffi` gem loads lazily, so the core gem stays dependency-free.
+  Opt-in registration matches the BinaryEngine:
+  `AsciiChem::Inchi.engine = AsciiChem::Inchi::NativeEngine.new`.
+- The install guide mentions the native path alongside the IUPAC
+  binary.
+
 ## [0.31.8] - 2026-10-22
 
 ### Fixed
