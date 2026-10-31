@@ -5,18 +5,18 @@ require 'spec_helper'
 RSpec.describe AsciiChem::Inchi::NativeEngine do
   it 'documents the opt-in contract without a library' do
     expect { described_class.new(lib: nil) }
-      .to raise_error(AsciiChem::Error, /INCHI_RS_LIB/)
+      .to raise_error(AsciiChem::Error, /CHEMOMER_LIB/)
   end
 
   it 'refuses an unreadable library path' do
-    expect { described_class.new(lib: '/nonexistent/libinchi_rs.so') }
+    expect { described_class.new(lib: '/nonexistent/libchemomer.so') }
       .to raise_error(AsciiChem::Error, /not readable/)
   end
 
   # The real-library check mirrors the BinaryEngine's real-binary
-  # spec: set INCHI_RS_LIB to the built cdylib (cargo build --release
-  # in the inchi-rs checkout) to run it.
-  lib = ENV.fetch('INCHI_RS_LIB', nil)
+  # spec: set CHEMOMER_LIB to the built cdylib (cargo build --release
+  # in the chemomer checkout) to run it.
+  lib = ENV.fetch('CHEMOMER_LIB', nil)
   next unless lib
 
   describe 'against a built cdylib' do
