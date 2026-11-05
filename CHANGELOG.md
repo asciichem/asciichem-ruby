@@ -3,6 +3,16 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.10] - 2026-11-05
+
+### Changed
+- The native engine binding points at the renamed **chemomer** crate
+  (chemomer/chemomer): the dylib is `libchemomer.dylib` with
+  `chemomer_*` symbols and `CHEMOMER_LIB` replaces `INCHI_RS_LIB`.
+  Same contract, new spelling.
+- moxml is pinned to the 0.6 line from 0.6.1 (resolves to 0.6.2);
+  the full suite runs green against it.
+
 ## [0.31.9] - 2026-10-24
 
 ### Added
