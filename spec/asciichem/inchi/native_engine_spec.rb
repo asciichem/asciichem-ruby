@@ -29,5 +29,16 @@ RSpec.describe AsciiChem::Inchi::NativeEngine do
         .to eq('InChI=1S/C2H4O2/c1-2(3)4/h1H3,(H,3,4)')
       expect(identity.inchikey).to eq('QTBSBXVTEAMEQO-UHFFFAOYSA-N')
     end
+
+    it 'raises the engine error on a rejected molfile, not a null crash' do
+      # An empty element writes an empty molfile element field; the
+      # engine's reader rejects it and answers a null POINTER (truthy
+      # as an FFI object) — the error path must nil?/null? it and
+      # surface the engine's last_error as AsciiChem::Error.
+      empty_element = AsciiChem::Model::Atom.new(element: '')
+      formula = AsciiChem::Model::Formula.new(nodes: [empty_element])
+      expect { engine.identity(formula) }
+        .to raise_error(AsciiChem::Error, /chemomer native engine/)
+    end
   end
 end
