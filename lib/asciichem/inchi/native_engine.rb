@@ -44,7 +44,9 @@ module AsciiChem
       def call(molfile, function)
         binding_class = self.class.binding_class(@lib)
         pointer = binding_class.public_send(function, molfile)
-        unless pointer
+        # An FFI null return is a TRUTHY pointer object — `unless pointer`
+        # never fires; nil?/null? is the only correct emptiness test.
+        if pointer.nil? || pointer.null?
           message = binding_class.last_error
           raise AsciiChem::Error, "chemomer native engine: #{message || 'call failed'}"
         end
