@@ -3,6 +3,18 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.11] - 2026-11-10
+
+### Added
+- Dataset bibitems carry the resolver provenance as a
+  `type="provenance"` note: retrieval source (and version, when
+  recorded) plus the source's required attribution — CAS Common
+  Chemistry results now carry the CC BY-NC 4.0 terms into the
+  rendered document. `Provenance#note_text` renders the record; the
+  note is suppressed when it would duplicate publisher/docidentifier.
+  The Metanorma plugin and `asciichem cite` inherit it through the
+  shared Citation path.
+
 ## [0.31.10] - 2026-11-05
 
 ### Changed
