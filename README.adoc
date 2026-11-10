@@ -60,7 +60,7 @@ a level without the green corpus run behind it does not ship.
 |L1 semantics |yes |wire form validates against the v1 schemas and round-trips; the perception pass (implicit hydrogens, aromatic rings) is corpus-gated
 |L2 render |yes |MathML byte-goldens, canonical text, and the wire form for every construct
 |L3 stereo |yes |tetrahedral chirality, directional bonds, wedge/hash; parity-correct canonical SMILES including ring closures
-|L4 identity |partial |opt-in InChI engine with stereo layers, OPSIN adapter, identifier cross-check, citation bibitems; CAS source decision pending
+|L4 identity |yes |opt-in InChI engine (binary or native) with stereo layers, OPSIN adapter, identifier cross-check, resolver (PubChem default; Common Chemistry opt-in, attributed), citation bibitems
 |===
 
 TypeScript and Python claim the same levels they pass; see their
