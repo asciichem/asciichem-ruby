@@ -46,6 +46,52 @@ RSpec.describe AsciiChem::Citation do
     expect(xml).to include('https://commonchemistry.cas.org/detail?cas_rn=50-78-2')
   end
 
+  it 'carries the source attribution as a provenance note (licence terms survive into documents)' do
+    substance = aspirin_from(pubchem_fixture, :pubchem)
+    xml = described_class.to_xml(substance)
+    expect(xml).to include('<note type="provenance">')
+    expect(xml).to include('Retrieved from pubchem')
+    expect(xml).to include('PubChem, U.S. National Library of Medicine')
+  end
+
+  it 'emits the CC BY-NC attribution for Common Chemistry results' do
+    cc_fixture = File.read(File.expand_path('../fixtures/resolver/common_chemistry/aspirin.json', __dir__))
+    cc_fetch = Struct.new(:body).new(cc_fixture)
+    def cc_fetch.get(_url) = body
+    substance = AsciiChem::Resolver::CommonChemistry.new.resolve(
+      value: '50-78-2', convention: 'cas', fetch: cc_fetch,
+      cache: AsciiChem::Resolver::Cache.new(dir: "/tmp/asciichem-cite-cc-note-#{rand(1e9)}")
+    )
+    xml = described_class.to_xml(substance)
+    expect(xml).to include('CAS Common Chemistry (CC BY-NC 4.0)')
+  end
+
+  it 'includes the source version in the provenance note when recorded' do
+    provenance = AsciiChem::Resolver::Provenance.new(
+      source: 'example', retrieved_at: '2026-11-10T00:00:00Z',
+      source_version: '2026.11', attribution: 'Example Data Source'
+    )
+    substance = AsciiChem::Resolver::Substance.new(
+      identifiers: [AsciiChem::Resolver::Identifier.new(
+        value: '50-78-2', convention: 'cas', provenance: provenance
+      )]
+    )
+    xml = described_class.to_xml(substance)
+    expect(xml).to include('Retrieved from example; version 2026.11; Example Data Source')
+  end
+
+  it 'suppresses the provenance note when it would duplicate publisher/docid' do
+    provenance = AsciiChem::Resolver::Provenance.new(
+      source: 'example', retrieved_at: '2026-11-10T00:00:00Z'
+    )
+    substance = AsciiChem::Resolver::Substance.new(
+      identifiers: [AsciiChem::Resolver::Identifier.new(
+        value: '50-78-2', convention: 'cas', provenance: provenance
+      )]
+    )
+    expect(described_class.to_xml(substance)).not_to include('<note')
+  end
+
   it 'raises for substances without provenance' do
     bare = AsciiChem::Resolver::Substance.new(
       identifiers: [AsciiChem::Resolver::Identifier.new(value: '50-78-2', convention: 'cas')]

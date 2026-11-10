@@ -108,7 +108,8 @@ module AsciiChem
       private
 
       # The version-independent field payload: one hash describing the
-      # citation, translated to Relaton objects by RelatonApi.
+      # citation, translated to Relaton objects by RelatonApi. The
+      # provenance record travels as `notes` (Provenance#note_text).
       def fields(substance, profile, provenance)
         publisher = profile.publisher || provenance.source
         {
@@ -119,7 +120,8 @@ module AsciiChem
           publisher: publisher,
           accessed_on: accessed_on(provenance),
           link: profile.link_for.call(substance),
-          keywords: substance.identifiers.map { |i| "#{i.convention}=#{i.value}" }
+          keywords: substance.identifiers.map { |i| "#{i.convention}=#{i.value}" },
+          notes: [provenance.note_text].compact
         }
       end
 
@@ -203,9 +205,21 @@ module AsciiChem
             docidentifier: [docidentifier(fields[:docid])],
             contributor: [contributor(fields[:publisher])],
             date: [Relaton::Bib::Date.new(type: 'accessed', at: fields[:accessed_on])],
-            source: fields[:link] ? [Relaton::Bib::Uri.new(type: 'src', content: fields[:link])] : [],
-            keyword: fields[:keywords].map { |text| keyword(text) }
+            source: links(fields),
+            keyword: fields[:keywords].map { |text| keyword(text) },
+            note: notes(fields)
           )
+        end
+
+        def links(fields)
+          fields[:link] ? [Relaton::Bib::Uri.new(type: 'src', content: fields[:link])] : []
+        end
+
+        # The provenance record as a bibliographic note (TODO.v2
+        # item 3): retrieval source/version and the source's required
+        # attribution — licence terms must survive into the document.
+        def notes(fields)
+          fields[:notes].map { |text| Relaton::Bib::Note.new(type: 'provenance', content: text) }
         end
 
         def docidentifier(docid)
