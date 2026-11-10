@@ -5,7 +5,19 @@ module AsciiChem
     # Domain value objects for resolution results. These are data
     # carriers; (de)serialization to the canonical wire form goes
     # through the lutaml-model Wire classes only.
-    Provenance = Struct.new(:source, :retrieved_at, :source_version, :attribution, keyword_init: true)
+    Provenance = Struct.new(:source, :retrieved_at, :source_version, :attribution, keyword_init: true) do
+      # The provenance record as one sentence (the citation track's
+      # bibitem note): retrieval source and version plus the source's
+      # required attribution — licence terms (CAS Common Chemistry is
+      # CC BY-NC 4.0) must survive into the rendered document. Nil
+      # when there is nothing beyond the source name itself.
+      def note_text
+        details = [source_version && "version #{source_version}", attribution].compact
+        return nil if details.empty?
+
+        "Retrieved from #{source}; #{details.join('; ')}"
+      end
+    end
     Identifier = Struct.new(:value, :convention, :provenance, keyword_init: true)
     Property = Struct.new(:name, :value, :units, :provenance, keyword_init: true)
 
