@@ -3,6 +3,21 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.13] - 2026-11-11
+
+### Fixed
+- `Resolver.resolve_all` isolates source-level failures: a live probe
+  found the Common Chemistry API now answers 401 without an API key
+  (CAS key-gated the endpoint); with it registered by default, that
+  401 raised through the multi-source fan-out and took the other
+  sources down with it. A source-level error now skips that source —
+  callers see what answered.
+
+### Changed
+- The README documents the full capability surface: structures,
+  lint, local identity, resolution with provenance, citations, and
+  the command line.
+
 ## [0.31.12] - 2026-11-11
 
 ### Changed
