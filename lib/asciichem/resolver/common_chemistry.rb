@@ -14,14 +14,32 @@ module AsciiChem
     # that must stay NC-free limit sources with the
     # `asciichem-sources` attribute (metanorma-plugin-asciichem) or
     # `Resolver.resolve(sources:)`.
+    #
+    # API access: CAS key-gated the API (401 without a key; request
+    # one at cas.org/services/commonchemistry-api — the exact contract
+    # arrives with the access email). The adapter sends the key as the
+    # `apikey` query parameter; set it per instance (`api_key:`) or
+    # through COMMON_CHEMISTRY_API_KEY, which the resolver's own
+    # instantiation picks up. Without a key, live lookups answer 401
+    # and the resolver skips this source (the other sources still
+    # resolve; seeded caches keep working).
     class CommonChemistry < Adapter
       source_name :common_chemistry
       supports "cas"
 
       BASE = "https://commonchemistry.cas.org/api/detail"
 
+      attr_reader :api_key
+
+      def initialize(api_key: ENV.fetch("COMMON_CHEMISTRY_API_KEY", nil))
+        super()
+        @api_key = api_key
+      end
+
       def fetch_record(value:, convention:, fetch:)
-        body = fetch.get("#{BASE}?cas_rn=#{CGI.escape(value.to_s)}")
+        url = "#{BASE}?cas_rn=#{CGI.escape(value.to_s)}"
+        url = "#{url}&apikey=#{CGI.escape(api_key)}" if api_key
+        body = fetch.get(url)
         return nil unless body
 
         data = JSON.parse(body)
