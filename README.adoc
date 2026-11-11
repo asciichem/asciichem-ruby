@@ -45,6 +45,91 @@ formula.to_mathml  # => "<math>...</math>"
 formula.to_text    # => "H_2O"  (round trip)
 ----
 
+The parsed model is the canonical form: MathML, HTML, LaTeX, text,
+linear and 2D structural SVG, and CML are views over the same tree.
+
+=== Structures: SMILES and molfile in, AsciiChem out
+
+[source,ruby]
+----
+formula = AsciiChem.parse_smiles("CC(=O)Oc1ccccc1C(=O)O")
+formula.to_structural_svg   # 2D depiction, deterministic layout
+formula.to_smiles           # canonical aromatic SMILES
+formula.to_text             # AsciiChem text
+
+formula = AsciiChem.parse_molfile(molfile_text)   # V2000 in and out
+----
+
+=== Lint
+
+[source,ruby]
+----
+AsciiChem::Linter.run(formula)   # chemistry diagnostics: balance,
+                                 # valence, charge, isotopes, rings,
+                                 # identifier consistency, ...
+AsciiChem::Linter.errors?(formula) # => true/false
+----
+
+=== Local identity: InChI, AuxInfo, InChIKey
+
+[source,ruby]
+----
+require "asciichem/inchi"
+
+# the native chemomer engine (byte-exact vs the IUPAC oracle;
+# CHEMOMER_LIB points at the built cdylib) or the IUPAC binary:
+AsciiChem::Inchi.engine = AsciiChem::Inchi::NativeEngine.new
+
+identity = AsciiChem::Inchi.identity_for(molecule)
+identity.inchi     # "InChI=1S/C9H8O4/..."
+identity.inchikey  # "BSYNRYMUTXBXSQ-UHFFFAOYSA-N"
+----
+
+=== Resolution: identifiers to substance records
+
+[source,ruby]
+----
+require "asciichem/resolver"
+
+substance = AsciiChem::Resolver.resolve(value: "50-78-2", convention: "cas")
+substance.preferred_name        # => "Aspirin"
+substance.structure.to_smiles   # from the source record
+substance.identifiers.first.provenance.source   # "common_chemistry"
+
+# all shipped sources (PubChem, OPSIN, CAS Common Chemistry) resolve
+# by default; attribution rides every record. Limit the set when a
+# use must stay NC-free:
+AsciiChem::Resolver.resolve(value: "50-78-2", convention: "cas",
+                            sources: [:pubchem, :opsin])
+----
+
+=== Citations: dataset bibitems with provenance
+
+[source,ruby]
+----
+require "asciichem/citation"
+
+molecule = AsciiChem.parse("CC(=O)OC1=CC=CC=C1C(=O)O @cas(\"50-78-2\") @cite(\"pubchem\")").nodes.first
+AsciiChem::Citation.for_molecule(molecule)
+# => [["pubchem", #<Relaton bibitem>]] - one dataset-type bibitem per
+# (substance, source), anchored by InChIKey, with a provenance note
+# (retrieved from, version, attribution).
+----
+
+== Command line
+
+[source,sh]
+----
+asciichem convert -i "H_2O" -t mathml        # also: --from smiles|molfile
+asciichem identity -i aspirin.smiles --from smiles
+asciichem resolve --cas 50-78-2 --source common_chemistry
+asciichem validate -i 'H_2O @cas("50-78-2")'
+asciichem cite --cas 50-78-2 -t model-json
+asciichem lint -i "2H_2 + O_2 -> 2H_2O"
+asciichem roundtrip -i "C_6H_12O_6"
+asciichem parse-cml -i formula.xml
+----
+
 == Conformance
 
 The reference implementation of https://www.asciichem.org[the AsciiChem
