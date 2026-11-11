@@ -74,9 +74,10 @@ module AsciiChem
       end
     end
 
-    # Open, permissive sources register eagerly. CommonChemistry is
-    # CC BY-NC 4.0: it loads (autoload) but never self-registers —
-    # users opt in explicitly via Resolver.register.
+    # Every shipped source self-registers eagerly (autoload fires the
+    # class bodies). CommonChemistry is CC BY-NC 4.0 and default-on
+    # per the maintainer decision of 2026-11-11; callers that need
+    # NC-free resolution limit sources explicitly.
     adapters
     constants.each { |c| const_get(c) unless c == :Conflict }
   end
