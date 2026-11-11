@@ -3,6 +3,15 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.14] - 2026-11-12
+
+### Added
+- The Common Chemistry adapter accepts a user-provided API key:
+  `CommonChemistry.new(api_key: ...)` or the
+  `COMMON_CHEMISTRY_API_KEY` environment variable (sent as the
+  `apikey` query parameter). CAS key-gated the API — without a key
+  live lookups answer 401 and the resolver skips the source.
+
 ## [0.31.13] - 2026-11-11
 
 ### Fixed
