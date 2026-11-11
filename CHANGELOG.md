@@ -3,6 +3,17 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.12] - 2026-11-11
+
+### Changed
+- CAS Common Chemistry resolves by default (maintainer decision:
+  CC BY-NC 4.0 acceptable on by default). The adapter self-registers
+  like the other sources; every result still carries the required
+  attribution. `Citation.for_molecule` accepts a `sources:`
+  allow-list so callers can keep resolution NC-free — the
+  metanorma plugin exposes it as the `asciichem-sources` document
+  attribute.
+
 ## [0.31.11] - 2026-11-10
 
 ### Added
