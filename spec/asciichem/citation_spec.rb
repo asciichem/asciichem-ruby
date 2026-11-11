@@ -142,6 +142,28 @@ RSpec.describe AsciiChem::Citation do
       expect(captured.last).to include('/compound/name/50-78-2/')
     end
 
+    it 'honors the sources allow-list (document-level limiting)' do
+      routed = Struct.new(:pubchem, :common_chemistry, keyword_init: true) do
+        def get(url)
+          url.include?('commonchemistry') ? common_chemistry : pubchem
+        end
+      end.new(
+        pubchem: File.read(File.expand_path('../fixtures/resolver/pubchem/aspirin.json', __dir__)),
+        common_chemistry: File.read(File.expand_path('../fixtures/resolver/common_chemistry/aspirin.json', __dir__))
+      )
+      molecule = AsciiChem.parse('H_2O @cas("50-78-2") @cite("pubchem") @cite("common_chemistry")').nodes.first
+      unrestricted = described_class.for_molecule(molecule, cache: cache, fetch: routed)
+      expect(unrestricted.map(&:first)).to contain_exactly('pubchem', 'common_chemistry')
+
+      limited = described_class.for_molecule(molecule, cache: cache,
+                                                       fetch: routed, sources: ['pubchem'])
+      expect(limited.map(&:first)).to eq(['pubchem'])
+
+      all_excluded = described_class.for_molecule(molecule, cache: cache,
+                                                            fetch: routed, sources: ['opsin'])
+      expect(all_excluded).to eq([])
+    end
+
     it 'returns [] when there are no @cite annotations' do
       molecule = AsciiChem.parse('H_2O @cas("50-78-2")').nodes.first
       expect(described_class.for_molecule(molecule)).to eq([])
