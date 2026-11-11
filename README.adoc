@@ -103,6 +103,11 @@ AsciiChem::Resolver.resolve(value: "50-78-2", convention: "cas",
                             sources: [:pubchem, :opsin])
 ----
 
+CAS key-gated the Common Chemistry API: live lookups there need a
+key (request one at cas.org/services/commonchemistry-api) exported
+as `COMMON_CHEMISTRY_API_KEY`. Without it, that source answers 401
+and is skipped — PubChem and OPSIN keep resolving.
+
 === Citations: dataset bibitems with provenance
 
 [source,ruby]
