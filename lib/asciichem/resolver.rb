@@ -9,10 +9,13 @@ module AsciiChem
   # citation track (TODO.v2 08) emits one bibitem per (substance,
   # source) the user chooses to cite.
   #
-  # Sources are opt-in adapters that self-register (OCP, same pattern
-  # as the linter checks). NC-licensed sources are never registered by
-  # default — Common Chemistry ships only after the maintainer
-  # sign-off recorded in TODO.v2 07.
+  # Sources are adapters that self-register (OCP, same pattern
+  # as the linter checks). All shipped sources are on by default;
+  # every result carries its source's required attribution (Common
+  # Chemistry: CC BY-NC 4.0 — default-on per the maintainer decision
+  # of 2026-11-11). Callers limit the set explicitly:
+  # `Resolver.resolve(sources:)` or the metanorma plugin's
+  # `asciichem-sources` attribute for NC-free documents.
   module Resolver
     autoload :Adapter, "asciichem/resolver/adapter"
     autoload :Cache, "asciichem/resolver/cache"

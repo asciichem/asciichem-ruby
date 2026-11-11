@@ -7,16 +7,15 @@ module AsciiChem
   module Resolver
     # CAS Common Chemistry source adapter (TODO.impl 40; TODO.v2 07).
     #
-    # License posture (maintainer sign-off 2026-09-13): Common
-    # Chemistry data is CC BY-NC 4.0 — this adapter is OPT-IN and never
-    # self-registers; users register it explicitly:
-    #
-    #   AsciiChem::Resolver.register(:common_chemistry,
-    #                                 AsciiChem::Resolver::CommonChemistry)
-    #
-    # Every result carries the required attribution.
+    # License posture (maintainer decision 2026-11-11): Common
+    # Chemistry data is CC BY-NC 4.0 — acceptable to enable by
+    # default; every result carries the required attribution, and the
+    # citation track carries it into rendered documents. Documents
+    # that must stay NC-free limit sources with the
+    # `asciichem-sources` attribute (metanorma-plugin-asciichem) or
+    # `Resolver.resolve(sources:)`.
     class CommonChemistry < Adapter
-      source_name :common_chemistry, register: false
+      source_name :common_chemistry
       supports "cas"
 
       BASE = "https://commonchemistry.cas.org/api/detail"

@@ -16,14 +16,11 @@ RSpec.describe AsciiChem::Resolver::CommonChemistry do
   let(:fetch) { CCFetch.new(fixture) }
   let(:cache) { AsciiChem::Resolver::Cache.new(dir: File.join(Dir.tmpdir, "asciichem-cc-#{rand(1e9)}")) }
 
-  after { AsciiChem::Resolver.adapters.delete("common_chemistry") }
-
-  it "does NOT self-register (CC BY-NC is opt-in)" do
-    expect(AsciiChem::Resolver.adapters).not_to include("common_chemistry")
+  it "self-registers (default-on per the maintainer decision of 2026-11-11)" do
+    expect(AsciiChem::Resolver.adapters).to include("common_chemistry")
   end
 
-  it "registers explicitly and resolves by CAS RN" do
-    AsciiChem::Resolver.register(:common_chemistry, described_class)
+  it "resolves by CAS RN" do
     substance = AsciiChem::Resolver.resolve(
       value: "50-78-2", convention: "cas", sources: [:common_chemistry],
       fetch: fetch, cache: cache)
@@ -33,7 +30,6 @@ RSpec.describe AsciiChem::Resolver::CommonChemistry do
   end
 
   it "carries the CC BY-NC attribution on every identifier" do
-    AsciiChem::Resolver.register(:common_chemistry, described_class)
     substance = described_class.new.resolve(value: "50-78-2", convention: "cas",
                                             fetch: fetch, cache: cache)
     expect(substance.identifiers.first.provenance.attribution)

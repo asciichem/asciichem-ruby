@@ -84,9 +84,15 @@ module AsciiChem
       #
       #   AsciiChem.parse('H_2O @name("water") @cite("pubchem")')
       #   AsciiChem::Citation.for_molecule(formula.nodes.first).map(&:last)
-      def for_molecule(molecule, cache: nil, fetch: nil)
-        sources = citation_sources(molecule)
-        return [] if sources.empty?
+      #
+      # `sources:` limits the citable set (an allow-list): cited
+      # sources outside it are skipped — the document pipeline (the
+      # metanorma plugin's `asciichem-sources` attribute) warns about
+      # the exclusions; the gem stays silent and total.
+      def for_molecule(molecule, cache: nil, fetch: nil, sources: nil)
+        citable = citation_sources(molecule)
+        citable &= Array(sources).map(&:to_s) if sources
+        return [] if citable.empty?
 
         convention, value = lookup_key(molecule)
         unless value
@@ -95,7 +101,7 @@ module AsciiChem
                 '(annotate @cas/@inchikey/@smiles or @name)'
         end
 
-        sources.filter_map do |source|
+        citable.filter_map do |source|
           substance = AsciiChem::Resolver[source].new.resolve(
             value: value, convention: convention, cache: cache, fetch: fetch
           )
