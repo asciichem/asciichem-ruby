@@ -43,16 +43,23 @@ module AsciiChem
         raise Error, "unknown resolver source #{name.inspect} (registered: #{adapters.keys.sort.join(', ')})"
       end
 
-      # Resolves against every opt-in source, returning one Substance
-      # per source that answers (nil entries dropped). Sources answer
-      # in registration order.
+      # Resolves against every registered source (or the selected
+      # subset), returning one Substance per source that answers (nil
+      # entries dropped). Sources answer in registration order. A
+      # source-level failure (HTTP error, rejected request) skips that
+      # source — one dead or key-gated endpoint must not poison the
+      # others; callers see what answered.
       def resolve_all(value:, convention:, sources: nil, fetch: nil, cache: nil, refresh: false)
         selected = sources ? Array(sources).map { |s| self[s] } : adapters.values
         selected.filter_map do |adapter_class|
           adapter = adapter_class.new
           next unless adapter.supports?(convention)
 
-          adapter.resolve(value: value, convention: convention, fetch: fetch, cache: cache, refresh: refresh)
+          begin
+            adapter.resolve(value: value, convention: convention, fetch: fetch, cache: cache, refresh: refresh)
+          rescue AsciiChem::Error
+            nil
+          end
         end
       end
 

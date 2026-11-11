@@ -63,6 +63,26 @@ RSpec.describe AsciiChem::Resolver do
     end
   end
 
+  it "skips a source-level failure instead of poisoning the fan-out" do
+    # A key-gated or down endpoint (HTTP 401/500) answers with an
+    # error; the other sources must still resolve.
+    failing_class = Class.new(AsciiChem::Resolver::Adapter) do
+      source_name :spec_failing
+      supports "name"
+      define_method(:fetch_record) do |**|
+        raise AsciiChem::Error, "HTTP 401: Unauthorized"
+      end
+    end
+    described_class.register(:spec_failing, failing_class)
+    begin
+      substance = described_class.resolve(value: "aspirin", convention: "name",
+                                          fetch: fetch, cache: cache)
+      expect(substance.provenance.source).to eq("pubchem")
+    ensure
+      described_class.adapters.delete("spec_failing")
+    end
+  end
+
   it "raises Conflict when sources disagree on the InChIKey" do
     disagreement = fixture.gsub("BSYNRYMUTXBXSQ-UHFFFAOYSA-N", "WRONGKEY-WRONGWRONG-A")
     described_class.register(:spec_mirror, ResolverSpec.fixture_source(:spec_mirror, disagreement))
