@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "digest"
+require "json"
+require "stringio"
+require "tmpdir"
 require_relative "../support/conformance_report"
 require_relative "../support/conformance_schemas"
 
@@ -229,20 +233,351 @@ RSpec.describe "asciichem-tests conformance corpus" do
     end
   end
 
-  cases.select { |c| c.key?("lint") }.each do |fixture|
-    id = fixture.fetch("id")
-    input = fixture.fetch("input")
-    expected = fixture.fetch("lint")
+  # L4: linter diagnostics — engine-scaled (suite 0.11.0). The identity
+  # cross-check derives the drawn structure's InChI in-process once the
+  # engine seam is configured, so this runner's posture is "inchi" and
+  # it configures the offline stub engine for the family's duration;
+  # the engine:"inchi" cases run everywhere CI runs. Cases marked
+  # engine:"none" encode the no-engine posture: they skip and report —
+  # a missing engine is a posture, not a failure.
+  lint_cases = cases.select { |c| c.key?("lint") }
+  describe "L4 linter diagnostics" do
+    corpus_stub = File.expand_path("../fixtures/inchi/stub-inchi-1-corpus", __dir__)
+    posture = "inchi"
 
-    it "#{id} produces the expected linter diagnostics (L4)" do
-      diagnostics = AsciiChem::Linter.run(AsciiChem.parse(input))
-      expected.each do |want|
-        hit = diagnostics.any? do |d|
-          d.severity == want.fetch("severity").to_sym && d.message.include?(want.fetch("messageIncludes"))
+    around do |example|
+      previous = AsciiChem::Inchi.engine
+      AsciiChem::Inchi.engine = AsciiChem::Inchi::BinaryEngine.new(bin: corpus_stub)
+      example.run
+    ensure
+      AsciiChem::Inchi.engine = previous
+    end
+
+    # The contract's match semantics: every expectation matches at
+    # least one actual diagnostic (severity, message containing
+    # messageIncludes and — when given — the same node label) AND
+    # every actual diagnostic matches at least one expectation.
+    # lint: [] demands a completely clean run.
+    matcher = lambda do |want, diagnostic|
+      diagnostic.severity == want.fetch("severity").to_sym &&
+        diagnostic.message.include?(want.fetch("messageIncludes")) &&
+        (want["node"].nil? || diagnostic.node&.diagnostic_label == want["node"])
+    end
+
+    lint_cases.each do |fixture|
+      id = fixture.fetch("id")
+      marked = fixture["engine"]
+
+      it "#{id} produces the expected linter diagnostics (L4)" do
+        if marked && marked != posture
+          skip "engine posture #{marked.inspect} != this run's #{posture.inspect}; " \
+               "the case is exercised by the matching-posture run"
         end
-        expect(hit).to be(true), "#{id}: no #{want['severity']} diagnostic matching #{want['messageIncludes'].inspect}"
+        pending_list = fixture.fetch("pending", [])
+        skip "pending for this implementation: #{pending_list.join(', ')}" if pending_list.include?("ruby")
+
+        if fixture.fetch("parses")
+          diagnostics = AsciiChem::Linter.run(AsciiChem.parse(fixture.fetch("input")))
+          expected = fixture.fetch("lint")
+          expected.each do |want|
+            hit = diagnostics.any? { |d| matcher.call(want, d) }
+            unless hit
+              actual = diagnostics.map do |d|
+                [d.severity, d.node&.diagnostic_label, d.message[0, 120]].compact.join(" | ")
+              end
+              raise "#{id}: no diagnostic matches #{want.inspect}; actual: #{actual.inspect}"
+            end
+          end
+          diagnostics.each do |diagnostic|
+            hit = expected.any? { |want| matcher.call(want, diagnostic) }
+            unless hit
+              label = diagnostic.node&.diagnostic_label
+              excerpt = diagnostic.message[0, 120].inspect
+              raise "#{id}: unexpected diagnostic (#{diagnostic.severity}, #{label}, #{excerpt})"
+            end
+          end
+        else
+          expect { AsciiChem.parse(fixture.fetch("input")) }.to raise_error(AsciiChem::ParseError)
+        end
       end
-      expect(diagnostics.length).to eq(expected.length), "#{id}: expected exactly #{expected.length} diagnostics, got #{diagnostics.map(&:message).inspect[0, 200]}"
+    end
+
+    it "reports the posture-skipped linter cases" do
+      # The skip is part of the report, never silent: the corpus's
+      # no-engine cases are listed here by id, and the list changes
+      # only when the corpus's posture markers change.
+      corpus_skipped = lint_cases
+                       .select { |f| f["engine"] && f["engine"] != posture }
+                       .map { |f| f["id"] }
+      expect(corpus_skipped).to eq([
+        "lint/inchi-molecule-mismatch",
+        "lint/identity-skip-no-engine",
+        "lint/inchi-unanalysable-no-engine"
+      ])
+    end
+  end
+
+  # Resolver family (suite 0.11.0): the recorded request/response is
+  # replayed through the named source adapter — the adapter must build
+  # exactly request.url for (source, convention, value) and send the
+  # adapter-declared request.headers ("{api-key}" is the caller's key
+  # placeholder). Feeding response.body must yield semantically the
+  # expectation's substance wire record — every identifier and property
+  # carrying its provenance with the pinned retrievedAt — plus
+  # structureParses. The cache markers pin the shared caching contract
+  # (ttlSeconds, keyFormula, servesOffline). A skipped outcome (the
+  # key-absent 401) drops the source without poisoning the others.
+  resolver_cases = cases.select { |c| c.key?("source") && c.key?("request") && c.key?("expectation") }
+  describe "resolver replay" do
+    # The retrieval time the corpus pins so replayed records and the
+    # citation goldens that consume them are stable bytes.
+    pinned_retrieved_at = lambda do |fixture|
+      fixture.dig("expectation", "substance", "identifiers", 0, "provenance", "retrievedAt")
+    end
+    fake_key = "corpus-replay-test-key" # never a real credential
+
+    # Key-hermetic: the corpus's key-absent case demands the no-key
+    # posture, so the family runs with no key whatever the machine
+    # carries in the env or the stored token file (the resolver
+    # specs' direct const swap — no doubles involved).
+    around do |example|
+      key_file = AsciiChem::Resolver::CommonChemistry::KEY_FILE
+      AsciiChem::Resolver::CommonChemistry.send(:remove_const, :KEY_FILE)
+      AsciiChem::Resolver::CommonChemistry.const_set(:KEY_FILE, "/nonexistent")
+      env_key = ENV.delete("COMMON_CHEMISTRY_API_KEY")
+      example.run
+    ensure
+      AsciiChem::Resolver::CommonChemistry.send(:remove_const, :KEY_FILE)
+      AsciiChem::Resolver::CommonChemistry.const_set(:KEY_FILE, key_file)
+      ENV["COMMON_CHEMISTRY_API_KEY"] = env_key if env_key
+    end
+
+    # Answers with the recorded response; captures every request for
+    # the URL/header assertions (a value fake carrying recorded data).
+    replay_fetch_class = Struct.new(:fixture, :configured_key, :calls, keyword_init: true) do
+      def get(url, headers = {})
+        calls << [url, headers]
+        status = fixture.dig("response", "status")
+        body = fixture.dig("response", "body")
+        return nil if status == 404
+        raise AsciiChem::Error, "HTTP #{status}: replay" if status != 200
+
+        body.is_a?(String) ? body : JSON.generate(body)
+      end
+    end
+
+    # Network access from a cache-seeded lookup would be a bug.
+    offline_fetch = Object.new
+    def offline_fetch.get(url, _headers = {})
+      raise AsciiChem::Error, "network must not be touched: #{url}"
+    end
+
+    # Routes by URL to the per-source recorded response (the fan-out's
+    # one transport across the selected sources); captures requests.
+    routing_fetch_class = Struct.new(:routes, :calls, keyword_init: true) do
+      def source_of(url)
+        routes.keys.find { |source| url.include?(source.tr("_", "")) }
+      end
+
+      def get(url, headers = {})
+        calls << [url, headers]
+        response = routes.fetch(source_of(url))
+        status = response.fetch("status")
+        body = response["body"]
+        return nil if status == 404
+        raise AsciiChem::Error, "HTTP #{status}: replay" if status != 200
+
+        body.is_a?(String) ? body : JSON.generate(body)
+      end
+    end
+
+    def adapter_for(fixture, keyed:, fake_key:)
+      if fixture.fetch("source") == "common_chemistry"
+        AsciiChem::Resolver::CommonChemistry.new(api_key: keyed ? fake_key : nil)
+      else
+        AsciiChem::Resolver[fixture.fetch("source")].new
+      end
+    end
+
+    resolver_cases.each do |fixture|
+      id = fixture.fetch("id")
+      it "#{id} replays the recorded resolver exchange" do
+        pending_list = fixture.fetch("pending", [])
+        skip "pending for this implementation: #{pending_list.join(', ')}" if pending_list.include?("ruby")
+
+        expectation = fixture.fetch("expectation")
+        headers = fixture.dig("request", "headers") || {}
+        keyed = headers.value?("{api-key}")
+        cache = AsciiChem::Resolver::Cache.new(dir: File.join(Dir.tmpdir, "asciichem-corpus-resolver-#{rand(1e9)}"))
+        replay = replay_fetch_class.new(fixture: fixture, configured_key: keyed ? fake_key : nil, calls: [])
+
+        if expectation.fetch("outcome") == "skipped"
+          # A source-level failure drops the source without poisoning
+          # the others: the fan-out answers with the other sources
+          # only, through one routed transport carrying each source's
+          # recorded response (the skipped source's 401 posture stays
+          # key-absent; the other source rides its recorded 200 body).
+          answered = resolver_cases.find do |c|
+            c.fetch("source") == "pubchem" && c.dig("expectation", "outcome") != "skipped"
+          end
+          routed = routing_fetch_class.new(
+            routes: {
+              fixture.fetch("source") => fixture.fetch("response"),
+              "pubchem" => answered.fetch("response")
+            },
+            calls: []
+          )
+          results = AsciiChem::Resolver.resolve_all(
+            value: fixture.fetch("value"), convention: fixture.fetch("convention"),
+            sources: %w[common_chemistry pubchem], fetch: routed, cache: cache,
+            now: pinned_retrieved_at.call(answered)
+          )
+          expect(results.map { |s| s.provenance.source }).to eq(%w[pubchem]),
+                "#{id}: the skipped source must drop without poisoning the others"
+          # The request assertions read the skipped source's captured
+          # call (the routed transport carries it).
+          expect(routed.calls.length).to eq(2), "#{id}: exactly one request per selected source"
+          url, sent_headers = routed.calls.find { |(captured, _)| captured.include?("commonchemistry") }
+          expect(url).not_to be_nil, "#{id}: the skipped source must still be tried"
+        else
+          substance = adapter_for(fixture, keyed: keyed, fake_key: fake_key).resolve(
+            value: fixture.fetch("value"), convention: fixture.fetch("convention"),
+            fetch: replay, cache: cache,
+            now: pinned_retrieved_at.call(fixture)
+          )
+          expect(substance).not_to be_nil, "#{id}: the source must answer"
+          # L0: the record validates against the asciichem-model v1
+          # substance-record schema, then compares semantically (key
+          # order cannot fail a case).
+          wire = JSON.parse(substance.to_model_json)
+          errors = ConformanceSchemas.validate(wire)
+          expect(errors).to be_empty, "#{id}: #{errors.join('; ')[0, 200]}"
+          expect(wire).to eq(expectation.fetch("substance")), "#{id}: substance record mismatch"
+          structure_parses = expectation.fetch("structureParses")
+          expect(substance.structure.nil?).to eq(!structure_parses), "#{id}: structureParses"
+          expect(replay.calls.length).to eq(1), "#{id}: exactly one request"
+          url, sent_headers = replay.calls.first
+        end
+
+        # The adapter must build exactly the recorded request.
+        expect(url).to eq(fixture.dig("request", "url")), "#{id}: adapter URL"
+        expected_headers = headers.merge(
+          headers.select { |_, value| value == "{api-key}" }.to_h { |name, _| [name, fake_key] }
+        )
+        expect(sent_headers).to eq(expected_headers), "#{id}: request headers"
+
+        # The cache markers pin the shared caching contract.
+        cache_contract = expectation.fetch("cache", {})
+        expect(AsciiChem::Resolver::Cache::DEFAULT_TTL).to eq(cache_contract.fetch("ttlSeconds")), "#{id}: ttlSeconds"
+        expect(cache.key_for(fixture.fetch("source"), fixture.fetch("convention"), fixture.fetch("value")))
+          .to eq(Digest::SHA256.hexdigest("#{fixture.fetch('source')}:#{fixture.fetch('convention')}:#{fixture.fetch('value')}")),
+               "#{id}: #{cache_contract.fetch('keyFormula')}"
+
+        next unless cache_contract.fetch("servesOffline")
+
+        # A seeded entry answers without re-fetching — and without a
+        # key, for key-gated sources.
+        if expectation.fetch("outcome") == "skipped"
+          seed_cache = AsciiChem::Resolver::Cache.new(
+            dir: File.join(Dir.tmpdir, "asciichem-corpus-resolver-#{rand(1e9)}")
+          )
+          seed_body = resolver_cases
+                      .find { |c| c.fetch("id") == "resolver/common-chemistry-cas-aspirin" }
+                      .dig("response", "body")
+          seed_fixture = { "id" => id, "source" => "common_chemistry",
+                           "response" => { "status" => 200, "body" => seed_body } }
+          AsciiChem::Resolver::CommonChemistry.new(api_key: fake_key).resolve(
+            value: fixture.fetch("value"), convention: fixture.fetch("convention"),
+            fetch: replay_fetch_class.new(fixture: seed_fixture, configured_key: fake_key, calls: []),
+            cache: seed_cache, now: pinned_retrieved_at.call(fixture)
+          )
+          served = AsciiChem::Resolver.resolve_all(
+            value: fixture.fetch("value"), convention: fixture.fetch("convention"),
+            sources: [fixture.fetch("source")], fetch: offline_fetch, cache: seed_cache
+          )
+          expect(served.length).to eq(1), "#{id}: the seeded entry serves offline"
+        else
+          served = adapter_for(fixture, keyed: keyed, fake_key: fake_key).resolve(
+            value: fixture.fetch("value"), convention: fixture.fetch("convention"),
+            fetch: offline_fetch, cache: cache
+          )
+          served_wire = JSON.parse(served.to_model_json)
+          expect(served_wire).to eq(expectation.fetch("substance")), "#{id}: the cached record serves offline"
+        end
+      end
+    end
+  end
+
+  # Citation family (suite 0.11.0): for the fixture's substance record
+  # (the wire form, retrieval time pinned) the citation layer must emit
+  # exactly the bibitem bytes — byte-equal, no trailing newline. The
+  # goldens were captured from this implementation.
+  cases.select { |c| c.key?("substance") && c.key?("bibitem") }.each do |fixture|
+    id = fixture.fetch("id")
+
+    it "#{id} emits the corpus bibitem bytes" do
+      substance = AsciiChem::Resolver::Substance.from_model_json(JSON.generate(fixture.fetch("substance")))
+      if fixture["rejected"]
+        expect { AsciiChem::Citation.bibitem(substance) }
+          .to raise_error(AsciiChem::Error, /no provenance/)
+      else
+        expect(AsciiChem::Citation.to_xml(substance)).to eq(fixture.fetch("bibitem"))
+      end
+    end
+  end
+
+  # CLI family (suite 0.11.0): each case runs `invocation` (the argv
+  # after the program name) against the CLI dispatch and asserts exit
+  # plus the stdout/stderr matchers. stdout matchers are exact (with
+  # "{version}" standing for this implementation's own version),
+  # substring (every entry appears), or semantic JSON (parsed
+  # comparison — key order cannot fail a case). Error text rides
+  # stderr. Invoked in-process: no shell, real exit codes via the
+  # raised SystemExit.
+  cli_cases = cases.select { |c| c.key?("invocation") }
+  describe "CLI contract" do
+    def run_cli(argv)
+      out = StringIO.new
+      err = StringIO.new
+      original_stdout, original_stderr = $stdout, $stderr
+      $stdout, $stderr = out, err
+      status = 0
+      begin
+        AsciiChem::Cli.start(Array(argv))
+      rescue SystemExit => e
+        status = e.status
+      ensure
+        $stdout, $stderr = original_stdout, original_stderr
+      end
+      [status, out.string, err.string]
+    end
+
+    cli_cases.each do |fixture|
+      id = fixture.fetch("id")
+
+      it "#{id} runs the CLI contract invocation" do
+        pending_list = fixture.fetch("pending", [])
+        skip "pending for this implementation: #{pending_list.join(', ')}" if pending_list.include?("ruby")
+
+        status, stdout, stderr = run_cli(fixture.fetch("invocation"))
+        detail = "exit #{status} (stdout: #{stdout.inspect[0, 120]}, stderr: #{stderr.inspect[0, 120]})"
+        expect(status).to eq(fixture.fetch("exit")), "#{id}: #{detail}"
+
+        if fixture.key?("stdout")
+          expected = fixture.fetch("stdout").gsub("{version}", AsciiChem::VERSION)
+          expect(stdout).to eq(expected), "#{id}: stdout #{stdout.inspect[0, 200]}"
+        elsif fixture.key?("stdoutIncludes")
+          fixture.fetch("stdoutIncludes").each do |fragment|
+            expect(stdout).to include(fragment), "#{id}: stdout #{stdout.inspect[0, 200]}"
+          end
+        elsif fixture.key?("stdoutJson")
+          expect(JSON.parse(stdout)).to eq(fixture.fetch("stdoutJson")), "#{id}: stdout JSON #{stdout.inspect[0, 200]}"
+        end
+
+        fixture.fetch("stderrIncludes", []).each do |fragment|
+          expect(stderr).to include(fragment), "#{id}: stderr #{stderr.inspect[0, 200]}"
+        end
+      end
     end
   end
 end

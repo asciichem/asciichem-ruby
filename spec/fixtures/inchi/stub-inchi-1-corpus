@@ -1,0 +1,32 @@
+#!/bin/sh
+# Deterministic stand-in for the IUPAC `inchi-1` binary, carrying the
+# corpus run's with-engine posture (the conformance runner's
+# engine:"inchi" linter cases derive identity in-process through this
+# binary; CI has no real inchi-1). Same FILE contract as the specs'
+# stub-inchi-1: `inchi-1 input.mol output.txt [flags]`.
+#
+# Keyed on the counts line AND the atom block's element multiset, so
+# shapes that share counts (ethanol and water are both 3 atoms /
+# 2 bonds) stay distinct:
+#   3 atoms / 2 bonds, elements {H, H, O} -> water
+#     (values verified against PubChem CID 357)
+#   anything else -> engine failure (exit 1); the identity
+#     cross-check reports the failure as a warning, never a raise.
+input=$1
+output=$2
+counts=$(sed -n '4p' "$input")
+atoms=$(printf '%s' "$counts" | cut -c1-3 | tr -d ' ')
+bonds=$(printf '%s' "$counts" | cut -c4-6 | tr -d ' ')
+last_atom=$((4 + atoms))
+elements=$(sed -n "5,${last_atom}p" "$input" | cut -c32-34 | tr -d ' ' | sort | tr -d '\n')
+
+if [ "$atoms" = "3" ] && [ "$bonds" = "2" ] && [ "$elements" = "HHO" ]; then
+  {
+    printf 'InChI=1S/H2O/h1H2\n'
+    printf 'InChIKey=XLYOFNOQVPJJNP-UHFFFAOYSA-N\n'
+  } > "$output"
+  exit 0
+fi
+
+echo "Error: stub-inchi-1-corpus does not know this structure" >&2
+exit 1
