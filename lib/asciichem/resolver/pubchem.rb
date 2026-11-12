@@ -26,14 +26,14 @@ module AsciiChem
                       MolecularWeight IUPACName InChI InChIKey].freeze
       private_constant :BASE, :PROPERTIES
 
-      def fetch_record(value:, convention:, fetch:)
+      def fetch_record(value:, convention:, fetch:, now: nil)
         body = fetch.get(url_for(value, convention))
         return nil unless body
 
         props = JSON.parse(body).dig("PropertyTable", "Properties", 0)
         return nil unless props
 
-        substance_from(props)
+        substance_from(props, now)
       rescue JSON::ParserError => e
         raise Error, "pubchem returned malformed JSON: #{e.message}"
       end
@@ -53,8 +53,8 @@ module AsciiChem
         "#{BASE}/#{namespace}/#{CGI.escape(value.to_s)}/property/#{PROPERTIES.join(',')}/JSON"
       end
 
-      def substance_from(props)
-        provenance = default_provenance
+      def substance_from(props, now)
+        provenance = default_provenance(now: now)
         identifiers = []
         identifiers << Identifier.new(value: props["CID"].to_s, convention: "pubchem-cid", provenance: provenance) if props["CID"]
         add_identifier(identifiers, props, "InChIKey", "inchikey", provenance)

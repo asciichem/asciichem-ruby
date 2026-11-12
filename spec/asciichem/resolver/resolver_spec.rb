@@ -21,7 +21,7 @@ module ResolverSpec
     Class.new(AsciiChem::Resolver::Adapter) do
       source_name name
       supports "name"
-      define_method(:fetch_record) do |value:, convention:, fetch:|
+      define_method(:fetch_record) do |value:, convention:, fetch:, now: nil|
         props = JSON.parse(body).dig("PropertyTable", "Properties", 0)
         next nil unless props
 

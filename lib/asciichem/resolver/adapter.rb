@@ -41,7 +41,11 @@ module AsciiChem
 
       # Cache-aware resolution. `fetch` must answer #get(url) -> body
       # String (NetFetch by default; specs inject recorded responses).
-      def resolve(value:, convention:, fetch: nil, cache: nil, refresh: false)
+      # `now` pins the retrieval clock (an ISO-8601 UTC string) for
+      # recorded-fixture runs — the shared corpus pins `retrievedAt`
+      # so replayed records compare byte-stably; nil means the wall
+      # clock.
+      def resolve(value:, convention:, fetch: nil, cache: nil, refresh: false, now: nil)
         cache ||= Cache.default
         fetch ||= NetFetch.new
         key = cache.key_for(self.class.source_name, convention, value)
@@ -51,22 +55,22 @@ module AsciiChem
           return cached if cached
         end
 
-        substance = fetch_record(value: value, convention: convention, fetch: fetch)
-          .tap { |s| s&.identifiers&.each { |i| i.provenance ||= default_provenance } }
+        substance = fetch_record(value: value, convention: convention, fetch: fetch, now: now)
+          .tap { |s| s&.identifiers&.each { |i| i.provenance ||= default_provenance(now) } }
         cache.write(key, substance) if substance
         substance
       end
 
       # Not-found is nil, not an error — sources legitimately answer
       # "unknown substance" during multi-source resolution.
-      def fetch_record(**)
+      def fetch_record(value:, convention:, fetch:, now: nil)
         raise NotImplementedError
       end
 
-      def default_provenance
+      def default_provenance(now: nil)
         Provenance.new(
           source: self.class.source_name,
-          retrieved_at: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+          retrieved_at: now || Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
           attribution: attribution
         )
       end

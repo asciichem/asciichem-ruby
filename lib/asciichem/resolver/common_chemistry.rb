@@ -43,7 +43,7 @@ module AsciiChem
         @api_key = api_key
       end
 
-      def fetch_record(value:, convention:, fetch:)
+      def fetch_record(value:, convention:, fetch:, now: nil)
         headers = {
           "Accept" => "application/json",
           "x-origin" => ORIGIN
@@ -55,7 +55,7 @@ module AsciiChem
         data = JSON.parse(body)
         return nil if data.empty?
 
-        substance_from(data)
+        substance_from(data, now)
       rescue JSON::ParserError => e
         raise Error, "common_chemistry returned malformed JSON: #{e.message}"
       end
@@ -71,8 +71,8 @@ module AsciiChem
           (File.read(KEY_FILE).strip if File.readable?(KEY_FILE))
       end
 
-      def substance_from(data)
-        provenance = default_provenance
+      def substance_from(data, now)
+        provenance = default_provenance(now: now)
         identifiers = [Identifier.new(value: data["rn"], convention: "cas",
                                       provenance: provenance)]
         add_identifier(identifiers, data, "inchikey", "inchikey", provenance)
