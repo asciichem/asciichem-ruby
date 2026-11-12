@@ -78,18 +78,19 @@ module AsciiChem
 
     # Minimal stdlib HTTP transport. No runtime gem dependencies.
     class NetFetch
-      def get(url, limit = 3)
+      def get(url, headers = {}, limit = 3)
         raise Error, "too many redirects" if limit.zero?
 
         uri = URI(url)
+        merged = { "User-Agent" => "asciichem-resolver" }.merge(headers)
         response = Net::HTTP.start(uri.host, uri.port, use_ssl: true,
                                   open_timeout: 5, read_timeout: 10) do |http|
-          http.request(Net::HTTP::Get.new(uri.request_uri, "User-Agent" => "asciichem-resolver"))
+          http.request(Net::HTTP::Get.new(uri.request_uri, merged))
         end
 
         case response
         when Net::HTTPSuccess then response.body
-        when Net::HTTPRedirection then get(URI.join(uri, response["location"]).to_s, limit - 1)
+        when Net::HTTPRedirection then get(URI.join(uri, response["location"]).to_s, headers, limit - 1)
         when Net::HTTPNotFound then nil
         else
           raise Error, "HTTP #{response.code}: #{response.message}"

@@ -16,30 +16,40 @@ module AsciiChem
     # `Resolver.resolve(sources:)`.
     #
     # API access: CAS key-gated the API (401 without a key; request
-    # one at cas.org/services/commonchemistry-api — the exact contract
-    # arrives with the access email). The adapter sends the key as the
-    # `apikey` query parameter; set it per instance (`api_key:`) or
-    # through COMMON_CHEMISTRY_API_KEY, which the resolver's own
-    # instantiation picks up. Without a key, live lookups answer 401
-    # and the resolver skips this source (the other sources still
-    # resolve; seeded caches keep working).
+    # one at cas.org/services/commonchemistry-api). The access email
+    # defines the contract: GET /direct-api/detail with the token as
+    # the X-API-KEY header plus x-origin and accept headers. The key
+    # comes per instance (`api_key:`), from
+    # COMMON_CHEMISTRY_API_KEY, or from
+    # ~/.config/cas-common-chemistry-api.key (the token's stored
+    # location). Tokens are personal and expire after 12 months
+    # (CAS emails a renewal notice). Without a key, live lookups
+    # answer 401 and the resolver skips this source; seeded caches
+    # keep working.
     class CommonChemistry < Adapter
       source_name :common_chemistry
       supports "cas"
 
-      BASE = "https://commonchemistry.cas.org/api/detail"
+      BASE = "https://commonchemistry.cas.org/direct-api/detail"
+      ORIGIN = "https://commonchemistry.cas.org/api-overview"
+      KEY_FILE = File.expand_path("~/.config/cas-common-chemistry-api.key")
 
       attr_reader :api_key
 
-      def initialize(api_key: ENV.fetch("COMMON_CHEMISTRY_API_KEY", nil))
+      # Explicit nil means no key; the env/file lookup runs only when
+      # the argument is omitted.
+      def initialize(api_key: default_api_key)
         super()
         @api_key = api_key
       end
 
       def fetch_record(value:, convention:, fetch:)
-        url = "#{BASE}?cas_rn=#{CGI.escape(value.to_s)}"
-        url = "#{url}&apikey=#{CGI.escape(api_key)}" if api_key
-        body = fetch.get(url)
+        headers = {
+          "Accept" => "application/json",
+          "x-origin" => ORIGIN
+        }
+        headers["X-API-KEY"] = api_key if api_key
+        body = fetch.get("#{BASE}?cas_rn=#{CGI.escape(value.to_s)}", headers)
         return nil unless body
 
         data = JSON.parse(body)
@@ -55,6 +65,11 @@ module AsciiChem
       end
 
       private
+
+      def default_api_key
+        ENV.fetch("COMMON_CHEMISTRY_API_KEY", nil) ||
+          (File.read(KEY_FILE).strip if File.readable?(KEY_FILE))
+      end
 
       def substance_from(data)
         provenance = default_provenance

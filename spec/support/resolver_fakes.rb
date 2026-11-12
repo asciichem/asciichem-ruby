@@ -3,7 +3,7 @@
 # Shared resolver test fakes. The house rule against doubles applies
 # to mocks, not value fakes carrying recorded data.
 RecordedFetch = Struct.new(:body) do
-  def get(_url)
+  def get(_url, _headers = {})
     body
   end
 end

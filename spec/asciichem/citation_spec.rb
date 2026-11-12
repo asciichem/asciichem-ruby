@@ -35,7 +35,7 @@ RSpec.describe AsciiChem::Citation do
   it 'cites Common Chemistry with its own profile and attribution' do
     cc_fixture = File.read(File.expand_path('../fixtures/resolver/common_chemistry/aspirin.json', __dir__))
     cc_fetch = Struct.new(:body).new(cc_fixture)
-    def cc_fetch.get(_url) = body
+    def cc_fetch.get(_url, _headers = {}) = body
     substance = AsciiChem::Resolver::CommonChemistry.new.resolve(
       value: '50-78-2', convention: 'cas', fetch: cc_fetch,
       cache: AsciiChem::Resolver::Cache.new(dir: "/tmp/asciichem-cite-cc-#{rand(1e9)}")
@@ -57,7 +57,7 @@ RSpec.describe AsciiChem::Citation do
   it 'emits the CC BY-NC attribution for Common Chemistry results' do
     cc_fixture = File.read(File.expand_path('../fixtures/resolver/common_chemistry/aspirin.json', __dir__))
     cc_fetch = Struct.new(:body).new(cc_fixture)
-    def cc_fetch.get(_url) = body
+    def cc_fetch.get(_url, _headers = {}) = body
     substance = AsciiChem::Resolver::CommonChemistry.new.resolve(
       value: '50-78-2', convention: 'cas', fetch: cc_fetch,
       cache: AsciiChem::Resolver::Cache.new(dir: "/tmp/asciichem-cite-cc-note-#{rand(1e9)}")
@@ -132,7 +132,7 @@ RSpec.describe AsciiChem::Citation do
     it 'prefers registry identifiers over names for lookup' do
       captured = []
       fetcher = Struct.new(:captured) do
-        def get(url)
+        def get(url, headers = {})
           captured << url
           nil
         end
@@ -144,7 +144,7 @@ RSpec.describe AsciiChem::Citation do
 
     it 'honors the sources allow-list (document-level limiting)' do
       routed = Struct.new(:pubchem, :common_chemistry, keyword_init: true) do
-        def get(url)
+        def get(url, headers = {})
           url.include?('commonchemistry') ? common_chemistry : pubchem
         end
       end.new(
