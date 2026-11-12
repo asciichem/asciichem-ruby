@@ -21,7 +21,7 @@ module AsciiChem
     method_option :format, aliases: '-t', type: :string, default: 'mathml',
                            desc: 'Output format'
     method_option :engine, type: :string, default: 'parslet',
-                           desc: 'Parsing engine: parslet (default) | parsanol (opt-in, needs the parsanol gem)'
+                           desc: 'Parsing engine: parsanol (default, the PARG core) | parslet (pure-Ruby opt-out)'
     def convert
       raise AsciiChem::ParseError, 'provide -i INPUT or -f FILE' unless options['input'] || options['file']
 
