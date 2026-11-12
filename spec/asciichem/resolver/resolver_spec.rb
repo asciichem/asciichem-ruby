@@ -6,14 +6,14 @@ require "tmpdir"
 
 module ResolverSpec
   Fetch = Struct.new(:body) do
-    def get(_url)
+    def get(_url, _headers = {})
       body
     end
   end
 
   # Network access from an offline lookup would be a bug.
   OfflineFetch = Struct.new(nil) do
-    def get(url) = raise("network must not be touched: #{url}")
+    def get(url, _headers = {}) = raise("network must not be touched: #{url}")
   end
 
   # Builds a one-off fixture-backed source registered under `name`.

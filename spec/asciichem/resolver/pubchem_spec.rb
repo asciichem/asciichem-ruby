@@ -88,7 +88,7 @@ end
 
 # Captures requested URLs; returns no body (not-found).
 CaptureFetch = Struct.new(:captured) do
-  def get(url)
+  def get(url, headers = {})
     captured << url
     nil
   end

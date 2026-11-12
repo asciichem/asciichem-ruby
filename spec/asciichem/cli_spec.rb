@@ -244,7 +244,7 @@ RSpec.describe AsciiChem::Cli do
       cache = AsciiChem::Resolver::Cache.new(dir: File.join(Dir.tmpdir, "asciichem-cli-#{rand(1e9)}"))
       fixture = File.read(File.expand_path('fixtures/resolver/pubchem/aspirin.json', File.dirname(__dir__)))
       fetcher = Struct.new(:body) do
-        def get(_url) = body
+        def get(_url, _headers = {}) = body
       end.new(fixture)
       AsciiChem::Resolver[:pubchem].new.resolve(value: 'aspirin', convention: 'name',
                                                 fetch: fetcher, cache: cache)
@@ -267,7 +267,7 @@ RSpec.describe AsciiChem::Cli do
       fixture = File.read(File.expand_path('fixtures/resolver/pubchem/aspirin.json',
                                            File.dirname(__dir__)))
       fetcher = Struct.new(:body) do
-        def get(_url) = body
+        def get(_url, _headers = {}) = body
       end.new(fixture)
       AsciiChem::Resolver[:pubchem].new.resolve(value: 'aspirin', convention: 'name',
                                                 fetch: fetcher, cache: cache)
