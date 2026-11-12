@@ -3,6 +3,19 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.15] - 2026-11-12
+
+### Fixed
+- Common Chemistry speaks its real key contract (CAS's access
+  email): `GET /direct-api/detail` with the token as the
+  `X-API-KEY` header plus `x-origin` and `accept` headers — not
+  the `apikey` query parameter 0.31.14 guessed. The key resolves
+  from `COMMON_CHEMISTRY_API_KEY` or the token's stored location
+  (`~/.config/cas-common-chemistry-api.key`); explicit nil means
+  no key. Verified live: formaldehyde resolves from production.
+- The fetch contract grows `get(url, headers = {})`; redirects
+  keep the headers.
+
 ## [0.31.14] - 2026-11-12
 
 ### Added
