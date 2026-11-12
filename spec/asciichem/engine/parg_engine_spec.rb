@@ -10,14 +10,12 @@ RSpec.describe AsciiChem::Engine::PargEngine do
   end
 
   around do |example|
-    AsciiChem::Engine.use(:parg)
     example.run
   ensure
-    AsciiChem::Engine.use(:parslet)
   end
 
   it 'is registered under :parg' do
-    expect(AsciiChem::Engine.use(:parg)).to eq(described_class)
+    expect(AsciiChem::Engine::PargEngine).to eq(described_class)
   end
 
   it 'vendors an artifact matching the pinned grammar version' do

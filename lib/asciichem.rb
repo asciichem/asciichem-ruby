@@ -39,7 +39,6 @@ module AsciiChem
   autoload :Rxn, "asciichem/rxn"
   autoload :Smiles, "asciichem/smiles"
   autoload :Structure, "asciichem/structure"
-  autoload :Transform, "asciichem/transform"
   autoload :TransformRules, "asciichem/transform_rules"
   autoload :VERSION, "asciichem/version"
   autoload :Wire, "asciichem/wire"

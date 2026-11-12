@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe AsciiChem::Transform::CascadeBuilder do
+RSpec.describe AsciiChem::Engine::PargEngine::Transform::CascadeBuilder do
   # The grammar wraps each cascade leg in a single :segment capture
   # (arrow + products) so every engine arrays the repeat — parsanol
   # merges and OVERWRITES bare repeated sibling captures, silently

@@ -41,7 +41,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "mml", "~> 2.3"
   spec.add_dependency "moxml", "~> 0.6.1"
   spec.add_dependency "parsanol", "~> 1.3", ">= 1.3.107"
-  spec.add_dependency "parslet", "~> 2.0"
   spec.add_dependency "relaton-bib", "~> 2.1"
   spec.add_dependency "plurimath", "~> 0.11"
   spec.add_dependency "thor", "~> 1.3"

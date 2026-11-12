@@ -2,7 +2,7 @@
 
 module AsciiChem
   # The transform's rules, backend-neutral: included by Transform
-  # (parslet) and by Engine::ParsanolEngine::Transform when that
+  # and by the PARG engine's Transform (the one engine,
   # opt-in engine is active. String class_eval so the nested builder
   # classes land as constants of the including class, unchanged.
   module TransformRules
