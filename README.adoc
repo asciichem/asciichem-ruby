@@ -104,8 +104,10 @@ AsciiChem::Resolver.resolve(value: "50-78-2", convention: "cas",
 ----
 
 CAS key-gated the Common Chemistry API: live lookups there need a
-key (request one at cas.org/services/commonchemistry-api) exported
-as `COMMON_CHEMISTRY_API_KEY`. Without it, that source answers 401
+personal token (request one at cas.org/services/commonchemistry-api,
+valid 12 months). Export it as `COMMON_CHEMISTRY_API_KEY` or store
+it at `~/.config/cas-common-chemistry-api.key` — the adapter sends
+it as the `X-API-KEY` header. Without a key, that source answers 401
 and is skipped — PubChem and OPSIN keep resolving.
 
 === Citations: dataset bibitems with provenance
