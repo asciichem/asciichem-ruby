@@ -3,7 +3,7 @@
 module AsciiChem
   # The grammar's rules, backend-neutral: included by Grammar
   # (parslet, the reference engine) and by
-  # Engine::ParsanolEngine::Grammar (Rust core) when that opt-in
+  # the PARG engine (the one engine, per TODO.v2/17 slice 9)
   # engine is active. The DSL (str, match, any, .repeat, .maybe,
   # .absent?, >>, .as) is identical across backends.
   module GrammarRules
@@ -164,7 +164,7 @@ module AsciiChem
         rule(:reaction_cascade) do
           # The repeat is wrapped in a single :segment capture so every
           # engine arrays it (parsanol merges — and overwrites — bare
-          # repeated sibling captures; see Engine::ParsanolEngine).
+          # repeated sibling captures; see the PARG engine).
           (reaction.as(:first) >>
             (arrow.as(:arrow) >> spaces? >> terms.as(:products)).repeat(1).as(:segments)).as(:cascade)
         end

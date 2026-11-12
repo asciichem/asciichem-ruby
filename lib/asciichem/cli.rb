@@ -20,18 +20,12 @@ module AsciiChem
                          desc: 'Input grammar: asciichem|smiles|molfile'
     method_option :format, aliases: '-t', type: :string, default: 'mathml',
                            desc: 'Output format'
-    method_option :engine, type: :string, default: 'parslet',
-                           desc: 'Parsing engine: parsanol (default, the PARG core) | parslet (pure-Ruby opt-out)'
     def convert
       raise AsciiChem::ParseError, 'provide -i INPUT or -f FILE' unless options['input'] || options['file']
 
-      select_engine(options[:engine])
       source = read_source
       formula = ingest(source, options[:from])
       puts render(formula, options[:format])
-    rescue AsciiChem::Engine::Error => e
-      warn "Engine error: #{e.message}"
-      exit 6
     rescue AsciiChem::ParseError => e
       warn "Parse error: #{e.message}"
       exit 1
@@ -205,15 +199,6 @@ module AsciiChem
     end
 
     private
-
-    # --engine feeds the Engine selector (0.29.0+); :parsanol is an
-    # opt-in soft dependency, :parslet stays the default.
-    def select_engine(name)
-      return if name.to_s == 'parslet' && AsciiChem::Engine.current == AsciiChem::Engine::ParsletEngine
-
-      require 'asciichem/engine'
-      AsciiChem::Engine.use(name.to_s)
-    end
 
     def read_source
       return File.read(options[:file]) if options[:file]

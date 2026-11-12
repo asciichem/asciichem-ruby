@@ -8,12 +8,12 @@ module AsciiChem
       @text = text.to_s
     end
 
-    # Grammar and Transform instances are stateless and expensive to
-    # construct; each engine memoizes them at the class level so
-    # repeated parses avoid the overhead (benchmark: ~15% throughput
-    # improvement).
+    # The parse goes through the PARG engine (the leptris-family
+    # discipline applies to parsing too: ONE engine, the PARG
+    # artifact). Its grammar/transform instances are memoized at the
+    # class level.
     def parse
-      engine = AsciiChem::Engine.current
+      engine = AsciiChem::Engine::PargEngine
       tree = engine.grammar_instance.parse(text)
       engine.transform_instance.apply(tree)
     rescue engine.parse_failed => e

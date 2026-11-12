@@ -63,37 +63,6 @@ RSpec.describe AsciiChem::Cli do
         end
     end
 
-    it 'converts through the default engine when --engine is parslet' do
-      out = run('convert', '-i', 'H_2O', '-t', 'text', '--engine', 'parslet')
-      expect(out.strip).to eq('H_2O')
-    end
-
-    it 'exits 6 with install guidance for --engine parsanol without the gem' do
-      next if parsanol_loadable?
-
-      expect { described_class.start(['convert', '-i', 'H_2O', '--engine', 'parsanol']) }
-        .to raise_error(SystemExit) do |e|
-          expect(e.status).to eq(6)
-        end
-    end
-
-    it 'converts through the parsanol engine when available' do
-      skip 'parsanol gem not installed' unless parsanol_loadable?
-
-      out = run('convert', '-i', '2H_2 + O_2 -> 2H_2O', '-t', 'text', '--engine', 'parsanol')
-      expect(out.strip).to eq('2H_2 + O_2 -> 2H_2O')
-    ensure
-      # --engine mutates the global selector; never leak it into the
-      # rest of the suite.
-      AsciiChem::Engine.use(:parslet)
-    end
-
-    it 'exits 6 for an unknown engine name' do
-      expect { described_class.start(['convert', '-i', 'H_2O', '--engine', 'rpmpeg']) }
-        .to raise_error(SystemExit) do |e|
-          expect(e.status).to eq(6)
-        end
-    end
   end
 
   describe 'roundtrip' do
