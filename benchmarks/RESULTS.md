@@ -42,6 +42,32 @@ than 2x.
 | electron config | _tbd_ | _tbd_ | _tbd_ |
 | bonds (H-O-H=O#H) | _tbd_ | _tbd_ | _tbd_ |
 
+## Cross-runtime parse comparison (2026-11-12)
+
+The shared workload (the ten inputs the TS bench and the rs bench
+pin — see `benchmarks/README.md`), per parse input, on the
+maintainer's machine:
+
+| Runtime | Engine | per parse |
+|---|---|---|
+| TypeScript (peggy) | peggy-generated JS | **~32 µs** |
+| Python (rd) | rd grammar port | ~672 µs |
+| Ruby (parslet) | parslet | ~2,960 µs |
+| Rust (parsanol) | parsanol portable parser | ~200 µs |
+
+Recorded via `npm run bench` (asciichem-ts), `python3
+benchmarks/engines.py` (asciichem-py), `bundle exec ruby
+benchmarks/engines.rb` (the gem), and `cargo bench -- --quick`
+(asciichem-rs, criterion, shared workload — see the crate's
+`benches/parse.rs`).
+
+Two Rust facts from the same pass: the deep-stack parse thread is
+spawned once and reused, and inputs ≤ 16 KiB parse inline (PEG
+depth is bounded by input length) — both landed in
+asciichem-rs#24. The remaining Rust-vs-peggy gap is parsanol's
+evaluation loop (setup 12 µs, eval ~37 µs for tiny inputs); the
+optimization lever lives in the parsanol repo.
+
 ## When to investigate
 
 - Any input that drops below 100 ips on parse.
