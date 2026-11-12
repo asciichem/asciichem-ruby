@@ -3,6 +3,23 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.31.17] - 2026-11-13
+
+### Added
+- The resolver clock seam: `resolve_all` and every adapter accept a
+  `now:` ISO-8601 UTC timestamp (nil = the wall clock) that pins
+  `retrievedAt` — recorded-fixture runs and the citation goldens that
+  consume them compare byte-stably. Mirrors the asciichem-py seam of
+  the same name.
+
+### Changed
+- The conformance runner gates the corpus 0.11.0 parity families
+  (linter-expectations with engine posture + node matching, resolver
+  replay, citation byte-goldens, the 22 CLI contracts); the CI
+  corpus pin moves v0.8.0 → v0.11.0. Claims matrix: linter 27 run +
+  3 posture skips, resolver 6/6, citation 4/4 byte-equal, CLI 22/22
+  (asciichem-ruby#159).
+
 ## [0.31.16] - 2026-11-12
 
 ### Changed
