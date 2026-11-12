@@ -48,15 +48,16 @@ module AsciiChem
       # entries dropped). Sources answer in registration order. A
       # source-level failure (HTTP error, rejected request) skips that
       # source — one dead or key-gated endpoint must not poison the
-      # others; callers see what answered.
-      def resolve_all(value:, convention:, sources: nil, fetch: nil, cache: nil, refresh: false)
+      # others; callers see what answered. `now` pins the retrieval
+      # clock for recorded-fixture runs (the adapters' seam).
+      def resolve_all(value:, convention:, sources: nil, fetch: nil, cache: nil, refresh: false, now: nil)
         selected = sources ? Array(sources).map { |s| self[s] } : adapters.values
         selected.filter_map do |adapter_class|
           adapter = adapter_class.new
           next unless adapter.supports?(convention)
 
           begin
-            adapter.resolve(value: value, convention: convention, fetch: fetch, cache: cache, refresh: refresh)
+            adapter.resolve(value: value, convention: convention, fetch: fetch, cache: cache, refresh: refresh, now: now)
           rescue AsciiChem::Error
             nil
           end

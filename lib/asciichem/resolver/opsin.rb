@@ -27,11 +27,11 @@ module AsciiChem
       BASE = 'https://opsin.ch.cam.ac.uk/opsin'
       private_constant :BASE
 
-      def fetch_record(value:, convention: nil, fetch:)
+      def fetch_record(value:, convention: nil, fetch:, now: nil)
         body = fetch.get("#{BASE}/#{CGI.escape(value.to_s)}.smiles")
         return nil unless body
 
-        substance_from(body.strip)
+        substance_from(body.strip, now)
       rescue StandardError => e
         raise Error, "opsin request failed: #{e.message}"
       end
@@ -42,10 +42,10 @@ module AsciiChem
 
       private
 
-      def substance_from(smiles)
+      def substance_from(smiles, now)
         return nil if smiles.empty?
 
-        provenance = default_provenance
+        provenance = default_provenance(now: now)
         Substance.new(
           preferred_name: nil,
           identifiers: [Identifier.new(value: smiles, convention: 'canonical-smiles',
