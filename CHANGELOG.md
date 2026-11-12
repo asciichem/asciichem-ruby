@@ -6,13 +6,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 ## [0.31.16] - 2026-11-12
 
 ### Changed
-- The default parse engine is **parsanol** (the PARG-language
-  directive): the same rules over Parsanol's Rust-backed
-  parslet-compat layer, ~3x parslet speed, the shared corpus
-  byte-for-byte. :parslet remains as the pure-Ruby opt-out
-  (ASCIICHEM_ENGINE=parslet); when the parsanol gem is unavailable
-  the engine warns once and falls back to :parslet. The gemspec
-  carries parsanol (~> 1.3) as a dependency.
+- **The legacy parse engines are deleted.** The PARG artifact engine
+  is the one engine: `AsciiChem.parse` goes straight through the
+  checksummed asciichem PARG artifact (asciichem-parg) — the same
+  artifact the Rust crate embeds. Removed: the parslet Parser, the
+  parslet Transform wrapper, ParsletEngine, ParsanolEngine, the
+  Engine selector + the ASCIICHEM_ENGINE seam, the `--engine` CLI
+  flag, and the parslet gem dependency. The shared rule definitions
+  the PARG transform consumes stay. 376 lines removed; suite 2327/0.
+- The gemspec carries parsanol (~> 1.3) — the PARG runtime.
 
 ## [0.31.15] - 2026-11-12
 
