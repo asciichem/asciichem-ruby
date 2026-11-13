@@ -20,7 +20,9 @@ module AsciiChem
       class << self
         def from_asciichem(formula)
           ensure_schema_registered!
-          translation = AsciiChem::ModelAdapter.to_canonical_with_mapping(formula)
+          translation = AsciiChem::ModelAdapter.to_canonical_with_mapping(
+            formula, skip_classes: TEXT_CHANNEL
+          )
           xml = translation.document.to_xml
           xml = inject_atom_extensions(xml, translation.atom_mapping)
           xml = ConditionsExtensions.inject(xml, formula)
@@ -29,13 +31,20 @@ module AsciiChem
           inject_opaque(xml, formula)
         end
 
-        # Constructs that now have native CML wire representation
-        # (chemicalml 0.3.0+). For each, suppress the aci: text carrier
-        # on emit — the native wire carries the data. aci: fallback
-        # still works on parse for backwards-compat with old files.
-        NATIVELY_WIRED = [
+        # Constructs whose representation is the aci: top-level text
+        # channel — the canonical text render inside
+        # `<aci:<element_name> position="N">`, re-parsed on read (the
+        # existing channels' exact contract). Their native wire
+        # emission is suppressed (`skip_classes:` on the adapter), so
+        # each emits ONE representation and the three-way round trip
+        # holds. Native wire remains readable on parse for
+        # backwards-compat with older files (FromCanonical).
+        TEXT_CHANNEL = [
           AsciiChem::Model::Crystal,
-          AsciiChem::Model::Spectrum
+          AsciiChem::Model::Spectrum,
+          AsciiChem::Model::ZMatrix,
+          AsciiChem::Model::Calculation,
+          AsciiChem::Model::Mechanism
         ].freeze
 
         def to_asciichem(xml)
@@ -86,7 +95,7 @@ module AsciiChem
         end
 
         def inject_top_level(xml, formula)
-          top_level = Extensions::TopLevel.collect(formula, skip_classes: NATIVELY_WIRED)
+          top_level = Extensions::TopLevel.collect(formula)
           Extensions::TopLevel.inject(xml, top_level)
         end
 

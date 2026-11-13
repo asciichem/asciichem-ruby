@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "chemicalml"
+require 'chemicalml'
 
 module AsciiChem
   module ModelAdapter
@@ -23,11 +23,17 @@ module AsciiChem
     # - `ElectronConfiguration`, `EmbeddedMath`, `Text` -> skipped
     #   (no canonical representation yet; a future extension can carry
     #   them as namespaced metadata).
+    #
+    # Constructs passed via `skip_classes:` are skipped on the native
+    # side too: the caller owns their representation elsewhere (the CML
+    # pipeline carries the aci: text channel for them) and a native
+    # wire duplicate would break the single-representation round trip.
     class ToCanonical
       attr_reader :atom_mapping, :groups
 
-      def initialize(formula)
+      def initialize(formula, skip_classes: [])
         @formula = formula
+        @skip_classes = skip_classes.to_set
         @ids = IdRegistry.new
         @atom_mapping = {}
         # Map of canonical molecule ID -> array of GroupRecord.
@@ -43,6 +49,8 @@ module AsciiChem
         reactions = []
         reaction_lists = []
         @formula.nodes.each do |node|
+          next if @skip_classes.include?(node.class)
+
           case node
           when AsciiChem::Model::Molecule
             molecules << molecule_to_canonical(node)
@@ -131,7 +139,7 @@ module AsciiChem
       end
 
       def spectrum_label(spectrum)
-        spectrum.type ? "spectrum:#{spectrum.type}" : "spectrum"
+        spectrum.type ? "spectrum:#{spectrum.type}" : 'spectrum'
       end
 
       def build_spectrum_child(spectrum)
@@ -345,7 +353,7 @@ module AsciiChem
         return nil unless match
 
         n = match[:n].empty? ? 1 : match[:n].to_i
-        match[:sign] == "+" ? n : -n
+        match[:sign] == '+' ? n : -n
       end
 
       # -- Reactions --------------------------------------------------
@@ -456,7 +464,7 @@ module AsciiChem
         # into canonical atom IDs. Skips pairs that already have a
         # positional bond between them (degenerate case like `C1-C1`).
         def emit_ring_bonds(molecule)
-          existing_pair_keys = @bonds.map { |b| pair_key(b.atom_refs2.to_s.split) }.to_set
+          existing_pair_keys = @bonds.to_set { |b| pair_key(b.atom_refs2.to_s.split) }
           AsciiChem::RingBonds.each_in(molecule) do |ring_bond|
             from_id = @atom_id_by_object_id[ring_bond.from_atom.object_id]
             to_id = @atom_id_by_object_id[ring_bond.to_atom.object_id]
@@ -468,7 +476,7 @@ module AsciiChem
             @bonds << Chemicalml::Cml::Bond.new(
               id: @ids.next(:bond),
               atom_refs2: "#{from_id} #{to_id}",
-              order: "S"
+              order: 'S'
             )
             existing_pair_keys << key
           end
@@ -477,7 +485,7 @@ module AsciiChem
         # Order-independent key for a pair of atom IDs, so a-b and b-a
         # compare equal.
         def pair_key(refs)
-          refs.sort.join(":")
+          refs.sort.join(':')
         end
 
         private
@@ -538,7 +546,7 @@ module AsciiChem
           @bonds << Chemicalml::Cml::Bond.new(
             id: @ids.next(:bond),
             atom_refs2: "#{@last_atom_id} #{next_atom_id}",
-            order: AsciiChem::Model::Bond::CML_ORDER_CODES.fetch(@pending_bond_kind, "S"),
+            order: AsciiChem::Model::Bond::CML_ORDER_CODES.fetch(@pending_bond_kind, 'S'),
             bond_stereo: bond_stereo_for(@pending_bond_kind)
           )
         end

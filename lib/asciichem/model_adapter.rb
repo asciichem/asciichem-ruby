@@ -21,8 +21,8 @@ module AsciiChem
   # mapping rules; the parsers, formatters, and wire classes stay
   # independent.
   module ModelAdapter
-    autoload :ToCanonical, "asciichem/model_adapter/to_canonical"
-    autoload :FromCanonical, "asciichem/model_adapter/from_canonical"
+    autoload :ToCanonical, 'asciichem/model_adapter/to_canonical'
+    autoload :FromCanonical, 'asciichem/model_adapter/from_canonical'
 
     # Result of a translation that also exposes the per-atom mapping
     # (canonical_atom_id => AsciiChem::Model::Atom) and the per-molecule
@@ -31,16 +31,19 @@ module AsciiChem
     # canonical pipeline (e.g. the CML extension namespace).
     Translation = Struct.new(:document, :atom_mapping, :groups, keyword_init: true)
 
-    def self.to_canonical(formula)
-      ToCanonical.new(formula).build
+    def self.to_canonical(formula, skip_classes: [])
+      ToCanonical.new(formula, skip_classes: skip_classes).build
     end
 
     # Returns the canonical document plus the per-atom mapping and
     # per-molecule group structure. Use this when you need to know
     # which canonical atom corresponds to which AsciiChem::Model::Atom
     # or which atoms were originally grouped (e.g. for extension data).
-    def self.to_canonical_with_mapping(formula)
-      builder = ToCanonical.new(formula)
+    # `skip_classes:` suppresses native wire emission for the given
+    # model classes (the caller carries them elsewhere — e.g. the CML
+    # pipeline's aci: text channel).
+    def self.to_canonical_with_mapping(formula, skip_classes: [])
+      builder = ToCanonical.new(formula, skip_classes: skip_classes)
       document = builder.build
       Translation.new(
         document: document,

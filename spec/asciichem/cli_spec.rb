@@ -62,7 +62,6 @@ RSpec.describe AsciiChem::Cli do
           expect(e.status).to eq(2)
         end
     end
-
   end
 
   describe 'roundtrip' do
@@ -125,10 +124,10 @@ RSpec.describe AsciiChem::Cli do
     it 'round-trips a Crystal through CML via the CLI' do
       out = run('convert', '-i', 'crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0)}', '-t', 'cml')
       expect(out).to include('<cml')
-      # chemicalml 0.3.0+: Crystal uses native <crystal> wire inside
-      # a <molecule>, not the aci: text carrier.
-      expect(out).to include('<crystal')
-      expect(out).to include('spaceGroup="Fm-3m"')
+      # ruby#167: Crystal rides the single aci: text channel (the
+      # canonical text render), not a native wire duplicate.
+      expect(out).to include('<aci:crystal position="0">')
+      expect(out).to include('crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0)}</aci:crystal>')
     end
   end
 
@@ -174,7 +173,7 @@ RSpec.describe AsciiChem::Cli do
       file = Tempfile.new(['ethanol', '.mol'])
       file.write(
         ['ethanol', '  AsciiChem', '',
-         format('%3d%3d  0  0  0  0  0  0  0  0999 V2000', 3, 2),
+         '  3  2  0  0  0  0  0  0  0  0999 V2000',
          atom.call(-0.25, 0.375, 'C'), atom.call(0.4645, -0.0375, 'C'),
          atom.call(1.179, 0.375, 'O'),
          bond.call(1, 2), bond.call(2, 3), 'M  END'].join("\n") << "\n"
