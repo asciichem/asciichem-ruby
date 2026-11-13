@@ -3,6 +3,16 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.0.0] - 2026-11-13
+
+### Changed
+- **The gem renumbers onto the 1.0.0 engine.** The version scheme is
+  `{engine-semver}.{runtime-increment}`: the asciichem-rs engine is
+  1.0.0 and the gem's increment resets at the new engine major
+  (maintainer's call). The 0.31.x line was the pre-Rust gem line;
+  every future gem release derives from the engine semver. Was
+  0.31.17.
+
 ## [0.31.17] - 2026-11-13
 
 ### Added
