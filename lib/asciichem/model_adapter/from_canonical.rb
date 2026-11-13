@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "chemicalml"
+require 'chemicalml'
 
 module AsciiChem
   module ModelAdapter
@@ -103,8 +103,11 @@ module AsciiChem
 
       def build_spectrum_params(spectrum_wire)
         params = {}
-        params[:type] = spectrum_wire.format if spectrum_wire.format
-        params[:solvent] = spectrum_wire.condition if spectrum_wire.condition
+        # String keys: the model's params contract (the grammar parse
+        # and the aci: text-channel read both produce string keys; the
+        # native-wire read must match, not symbolize).
+        params['type'] = spectrum_wire.format if spectrum_wire.format
+        params['solvent'] = spectrum_wire.condition if spectrum_wire.condition
         params
       end
 
@@ -365,7 +368,7 @@ module AsciiChem
         end
 
         def subscript_from_count(count)
-          return nil if count.nil? || count.to_s == "1"
+          return nil if count.nil? || count.to_s == '1'
 
           count.to_s
         end
