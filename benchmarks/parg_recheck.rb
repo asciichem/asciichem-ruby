@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # PARG gate + benchmark: AsciiChem::Engine.use(:parg) parses through
-# the compiled PARG artifact vendored from asciichem-parg, adapted to
+# the compiled PARG artifact vendored from asciichem-grammar, adapted to
 # the shared TransformRules. (1) gates on the shared corpus, forked
 # per case so a native crash aborts the child — reported, not fatal;
 # (2) gates on capture completeness (a grammar edit leaving a
