@@ -15,7 +15,7 @@ end
 module AsciiChem
   module Engine
     # The PARG engine: parses through the compiled AsciiChem PARG
-    # artifact (grammar/asciichem.parg in asciichem-parg, vendored at
+    # artifact (grammar/asciichem.parg in asciichem-grammar, vendored at
     # lib/asciichem/engine/parg/asciichem.json) and adapts its parse
     # tree to the DSL shapes TransformRules consumes. The shared
     # conformance corpus passes model-identically (227/227) against
@@ -171,7 +171,7 @@ module AsciiChem
           raise NotAvailableError,
                 "vendored PARG artifact version #{version.inspect} does not match " \
                 "the engine's pinned grammar #{PARG_GRAMMAR_VERSION.inspect} — " \
-                're-vendor from asciichem-parg'
+                're-vendor from asciichem-grammar'
         end
       end
     end

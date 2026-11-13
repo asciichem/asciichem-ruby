@@ -5,7 +5,7 @@ module AsciiChem
   # slice 9; the maintainer's PARG-only directive). The legacy
   # parslet and DSL-parsanol engines are deleted — the checksummed
   # AsciiChem PARG artifact (vendored at engine/parg/asciichem.json,
-  # sourced from asciichem-parg) is the one grammar, and
+  # sourced from asciichem-grammar) is the one grammar, and
   # PargEngine adapts its tree to the DSL shapes TransformRules
   # consumes.
   module Engine
