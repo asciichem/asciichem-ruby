@@ -80,4 +80,62 @@ RSpec.describe AsciiChem::WireAdapter do
       expect { described_class.from_model_json('{"element":"C"}') }.to raise_error(KeyError, /type discriminator/)
     end
   end
+
+  describe 'crystal cast' do
+    it 'carries the cell params as numbers on the wire' do
+      node = JSON.parse(AsciiChem.parse('crystal[NaCl](a=5.64,alpha=90,sg=Fm-3m)').to_model_json)
+                 .dig('nodes', 0)
+      expect(node['type']).to eq('crystal')
+      expect(node['a']).to eq(5.64)
+      expect(node['alpha']).to eq(90.0)
+      expect(node['spacegroup']).to eq('Fm-3m')
+    end
+
+    it 'rejects a non-numeric cell param loudly (never a silent null)' do
+      parsed = AsciiChem.parse('crystal(a=soft)')
+      expect { parsed.to_model_json }
+        .to raise_error(AsciiChem::ParseError, /crystal cell param "soft" is not a number/)
+    end
+
+    it 'round-trips cell params through the reference Display shape' do
+      source = 'crystal[NaCl](a=5.64,b=2,alpha=90,sg=Fm-3m)'
+      restored = described_class.from_model_json(AsciiChem.parse(source).to_model_json)
+      expect(restored.to_text).to eq(source)
+    end
+
+    it 'spells small magnitudes out like the reference Display (never exponents)' do
+      restored = described_class.from_model_json(
+        '{"type":"formula","nodes":[{"type":"crystal","a":0.00001}]}'
+      )
+      expect(restored.to_text).to eq('crystal(a=0.00001)')
+    end
+
+    it 'round-trips with the spec loss of fractional coordinates' do
+      # The v1 atom schema carries no coordinates; the wire round trip
+      # loses the @f annotations (the reference's documented gap) while
+      # the cell parameters and space group survive.
+      source = 'crystal[NaCl](a=5.64,sg=Fm-3m){Na@f(0,0,0)}'
+      restored = described_class.from_model_json(AsciiChem.parse(source).to_model_json)
+      expect(restored.to_text).to eq('crystal[NaCl](a=5.64,sg=Fm-3m){Na}')
+    end
+
+    it 'round-trips the NaCl cell to the RS/PY-identical wire and text' do
+      source = 'crystal[NaCl](a=5.64,b=5.64,c=5.64,alpha=90,beta=90,gamma=90,' \
+               'sg=Fm-3m){Na@f(0,0,0) Cl@f(0.5,0.5,0.5)}'
+      json = AsciiChem.parse(source).to_model_json
+      expect(JSON.parse(json)).to eq(
+        'type' => 'formula',
+        'nodes' => [{
+          'type' => 'crystal', 'name' => 'NaCl',
+          'a' => 5.64, 'b' => 5.64, 'c' => 5.64,
+          'alpha' => 90.0, 'beta' => 90.0, 'gamma' => 90.0,
+          'spacegroup' => 'Fm-3m',
+          'atoms' => [{ 'type' => 'atom', 'element' => 'Na' },
+                      { 'type' => 'atom', 'element' => 'Cl' }]
+        }]
+      )
+      expect(described_class.from_model_json(json).to_text)
+        .to eq('crystal[NaCl](a=5.64,b=5.64,c=5.64,alpha=90,beta=90,gamma=90,sg=Fm-3m){Na Cl}')
+    end
+  end
 end

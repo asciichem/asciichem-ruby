@@ -10,18 +10,20 @@ module AsciiChem
   #
   # Emission (to_wire/to_model_json) covers every wire type.
   # Ingestion (from_wire/from_model_json) covers the lossless core
-  # set plus mechanism: formula, atom, molecule, group, bond,
-  # identifier, name, reaction (+conditions), reaction-cascade,
+  # set plus mechanism and crystal: formula, atom, molecule, group,
+  # bond, identifier, name, reaction (+conditions), reaction-cascade,
   # electron-configuration, embedded-math, text, mechanism (steps as
   # canonical reaction text, flows, spectators; cascade steps have no
-  # wire form). Spectrum, crystal, zmatrix and calculation remain
+  # wire form), crystal (cell params cast numbers ⇄ authored strings;
+  # the atoms' fractional coordinates are model-only render data and
+  # a spec'd wire loss). Spectrum, zmatrix and calculation remain
   # emission-only until their round-trip acceptance lands in the
   # corpus.
   module WireAdapter
     CORE_INGEST_TYPES = %w[
       formula atom molecule group bond identifier name reaction
       reaction-cascade electron-configuration embedded-math text
-      mechanism
+      mechanism crystal
     ].freeze
 
     class << self
@@ -303,14 +305,24 @@ module AsciiChem
         )
       end
 
+      # The model keeps the authored strings; the wire carries the v1
+      # schema's numbers. lutaml's `:float` cast silently coerces junk
+      # to 0.0, so the cast is explicit: a non-numeric capture is a
+      # malformed record, not a silent null (the reference's cast).
       def crystal_to_wire(node)
         AsciiChem::Wire::Crystal.new(
-          type: 'crystal',
-          name: node.name, a: node.a, b: node.b, c: node.c,
-          alpha: node.alpha, beta: node.beta, gamma: node.gamma,
-          spacegroup: node.spacegroup,
-          atoms: node.atoms.map { |atom| atom_to_wire(atom) }
+          type: 'crystal', name: node.name, spacegroup: node.spacegroup,
+          atoms: node.atoms.map { |atom| atom_to_wire(atom) },
+          **node.class::CELL_PARAMS.to_h { |key| [key, cell_number(node.public_send(key))] }.compact
         )
+      end
+
+      def cell_number(text)
+        return nil if text.nil?
+
+        Float(text)
+      rescue ArgumentError
+        raise AsciiChem::ParseError, "crystal cell param #{text.inspect} is not a number"
       end
 
       def zmatrix_to_wire(node)
@@ -425,6 +437,34 @@ module AsciiChem
             AsciiChem::Model::Mechanism::Flow.new(source: flow.source, target: flow.target)
           end
         )
+      end
+
+      def crystal_from_wire(wire)
+        params = AsciiChem::Model::Crystal::CELL_PARAMS.to_h do |key|
+          [key, number_text(wire.public_send(key))]
+        end.compact
+        AsciiChem::Model::Crystal.new(
+          name: wire.name, spacegroup: wire.spacegroup,
+          atoms: Array(wire.atoms).map { |atom| atom_from_wire(atom) },
+          **params
+        )
+      end
+
+      # The wire's numbers cast back to the model's authored-string
+      # form through the reference's f64 Display spelling: integral
+      # values drop the decimal (90 renders "90", 5.64 "5.64"), and
+      # scientific notation never appears (Ruby's Float#to_s switches
+      # to exponents; the reference spells them out).
+      def number_text(value)
+        return nil if value.nil?
+
+        float = Float(value)
+        return float.to_i.to_s if (float % 1).zero?
+
+        text = float.to_s
+        return text unless text.match?(/e/i)
+
+        format('%.20f', float).sub(/0+\z/, '').sub(/\.\z/, '')
       end
 
       def electron_configuration_from_wire(wire)

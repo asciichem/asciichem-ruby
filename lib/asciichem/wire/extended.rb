@@ -4,8 +4,8 @@ module AsciiChem
   module Wire
     # Beyond-formulas wire classes: mechanism, spectrum, crystal,
     # zmatrix, calculation. Emission covers the full v1 schemas;
-    # ingestion (from_wire) is currently implemented for the core
-    # chemistry set only — see WireAdapter.
+    # ingestion (from_wire) covers the core chemistry set plus
+    # mechanism and crystal — see WireAdapter.
     class MechanismFlow < Lutaml::Model::Serializable
       attribute :source, :string
       attribute :target, :string
