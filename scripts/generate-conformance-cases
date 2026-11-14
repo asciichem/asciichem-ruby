@@ -52,6 +52,20 @@ count.times do
   cases << { "wire" => JSON.parse(wire.to_json), "text" => text }
 end
 
+# The crystal wire cast's corpus case (asciichem-ruby#170): the cell
+# constants ride the wire as numbers and cast back through the
+# reference's Display spelling. The case text is the wire fixed point —
+# fractional coordinates are model-only render data (the v1 atom schema
+# carries no coordinate field), so the text carries no @f annotations;
+# the @f-bearing round trip is the spec'd loss each implementation pins
+# in its own suite.
+crystal_text = 'crystal[NaCl](a=5.64,b=5.64,c=5.64,alpha=90,beta=90,gamma=90,sg=Fm-3m){Na Cl}'
+crystal_wire = AsciiChem::WireAdapter.to_wire(AsciiChem.parse(crystal_text))
+restored = AsciiChem::WireAdapter.from_model_json(crystal_wire.to_json)
+raise "crystal case is not a wire fixed point: #{crystal_text.inspect}" if restored.to_text != crystal_text
+
+cases << { 'wire' => JSON.parse(crystal_wire.to_json), 'text' => crystal_text }
+
 FileUtils.mkdir_p(File.dirname(out_path))
 File.write(out_path, JSON.pretty_generate({ "seed" => seed, "cases" => cases }) + "\n")
 puts "wrote #{cases.length} cases to #{out_path}"
