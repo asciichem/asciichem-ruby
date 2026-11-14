@@ -47,7 +47,7 @@ RSpec.describe AsciiChem::Linter::IdentifierFormatCheck do
   end
 
   it "skips conventions without an offline validator" do
-    expect(identifier_diagnostics('C @iupac("methane")')).to be_empty
+    expect(identifier_diagnostics('C @chebi("CHEBI:16183")')).to be_empty
   end
 
   it "checks every identifier on a molecule with chained annotations" do
