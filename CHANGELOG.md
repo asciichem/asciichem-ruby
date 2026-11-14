@@ -3,6 +3,17 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.1.0.0] - 2026-11-15
+
+### Changed
+- **The gem rides the 1.1.0 engine.** The scheme is
+  `{engine-semver}.{runtime-increment}`: the asciichem-rs engine's
+  1.1.0 release carries the mechanisms step graph, the five CML
+  `aci:` channels + reaction conditions, the html/latex formatters,
+  the crystal node, and grammar v0.5.0 — all gated in the engine's
+  corpus run and consumed by this gem through the shared PARG
+  artifact and the wire form. The gem's own surface is unchanged.
+
 ## [1.0.0.0] - 2026-11-13
 
 ### Changed
