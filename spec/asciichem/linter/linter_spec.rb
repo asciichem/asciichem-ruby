@@ -51,6 +51,24 @@ RSpec.describe AsciiChem::Linter do
       expect(lint("Ca(OH)_2 + 2HCl -> CaCl_2 + 2H_2O")
               .select { |d| d.severity == :error }).to be_empty
     end
+
+    it "counts braced subscripts" do
+      expect(lint("2H_{2} + O_2 -> 2H_2O")).to be_empty
+      expect(lint("H_{12} -> 6H_2")).to be_empty
+    end
+
+    it "flags imbalance through braced subscripts" do
+      expect(lint("H_{2}O -> H_2O_2").first.details).to eq("O" => [1, 2])
+    end
+
+    it "applies the coefficient of a molecule nested in a group" do
+      expect(lint("Cu(2H_2O) -> Cu + 2H_2O")).to be_empty
+      expect(lint("Cu(2H_2O) -> Cu + H_2O").first.details).to eq("H" => [4, 2], "O" => [2, 1])
+    end
+
+    it "skips reactions with variable subscripts" do
+      expect(lint("H_{x} -> H_2")).to be_empty
+    end
   end
 
   describe "ValenceCheck" do

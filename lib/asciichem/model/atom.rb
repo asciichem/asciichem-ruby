@@ -99,6 +99,15 @@ module AsciiChem
           x_fract: x_fract, y_fract: y_fract, z_fract: z_fract }
       end
 
+      # Whole-number count the subscript denotes, with or without
+      # braces: 1 when absent, nil for `{x}`, `{0.95}`, `{1-x}`.
+      def subscript_count
+        return 1 if subscript.nil?
+
+        digits = subscript.to_s.delete_prefix('{').delete_suffix('}')
+        digits.to_i if digits.match?(/\A\d+\z/)
+      end
+
       def diagnostic_label
         "Atom(#{element})"
       end

@@ -39,6 +39,26 @@ RSpec.describe AsciiChem::Model::Atom do
     end
   end
 
+  describe "#subscript_count" do
+    it "is 1 when there is no subscript" do
+      expect(described_class.new(element: "H").subscript_count).to eq(1)
+    end
+
+    it "reads a bare digit subscript" do
+      expect(described_class.new(element: "H", subscript: "12").subscript_count).to eq(12)
+    end
+
+    it "reads a braced digit subscript" do
+      expect(described_class.new(element: "H", subscript: "{12}").subscript_count).to eq(12)
+    end
+
+    it "is nil for a variable or fractional subscript" do
+      %w[{x} {2x} {0.95} {1-x}].each do |sub|
+        expect(described_class.new(element: "Fe", subscript: sub).subscript_count).to be_nil
+      end
+    end
+  end
+
   describe "visitor dispatch" do
     let(:visitor) do
       Struct.new(:visited, keyword_init: true).new(visited: nil).tap do |s|

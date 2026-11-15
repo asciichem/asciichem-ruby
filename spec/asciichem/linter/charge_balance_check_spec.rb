@@ -43,6 +43,10 @@ RSpec.describe AsciiChem::Linter::ChargeBalanceCheck do
     expect(diags.first.message).to match(/reactants \+1 vs products 0/)
   end
 
+  it "applies the coefficient of a molecule nested in a group" do
+    expect(errors_for("Ca(2Cl^-) -> Ca + 2Cl^-")).to be_empty
+  end
+
   it "auto-registers as :charge_balance" do
     expect(AsciiChem::Linter::Registry.names).to include(:charge_balance)
   end

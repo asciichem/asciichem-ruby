@@ -56,15 +56,11 @@ module AsciiChem
 
       # Charge on a single molecule (with coefficient applied).
       def molecule_charge(molecule)
-        coefficient = molecule.coefficient&.to_i
-        coeff = coefficient && coefficient.positive? ? coefficient : 1
-        inner = enumerate_charge(molecule)
-        return nil if inner.nil?
-
-        coeff * inner
+        enumerate_charge(molecule)
       end
 
-      # Recursively sum atom charges, applying group multiplicities.
+      # Recursively sum atom charges, applying group multiplicities
+      # and molecule coefficients.
       def enumerate_charge(node)
         case node
         when AsciiChem::Model::Atom
@@ -77,7 +73,10 @@ module AsciiChem
 
           inner * multiplier
         when AsciiChem::Model::Molecule
-          sum_nodes_charge(node.nodes)
+          inner = sum_nodes_charge(node.nodes)
+          return nil if inner.nil?
+
+          inner * node.stoichiometric_coefficient
         else
           0
         end

@@ -43,7 +43,7 @@ module AsciiChem
       def count_side(molecules)
         counts = Hash.new(0)
         molecules.each do |molecule|
-          mol_counts = count_molecule(molecule)
+          mol_counts = enumerate(molecule, 1)
           return nil if mol_counts.nil?
 
           mol_counts.each { |element, n| counts[element] += n }
@@ -51,23 +51,18 @@ module AsciiChem
         counts
       end
 
-      def count_molecule(molecule)
-        raw = enumerate(molecule, 1)
-        return nil if raw.nil?
-
-        coefficient = molecule.stoichiometric_coefficient
-        raw.transform_values { |v| v * coefficient }
-      end
-
-      # Recursive enumeration with a current multiplier.
+      # Recursive enumeration with a current multiplier. A subscript
+      # that isn't a whole number (`Fe_{x}O`) makes the molecule
+      # unenumerable.
       def enumerate(node, multiplier)
         case node
         when AsciiChem::Model::Atom
-          sub = (node.subscript || "1").to_i
-          sub = 1 if sub.zero?
-          { node.element => sub * multiplier }
+          sub = node.subscript_count
+          return nil if sub.nil?
+
+          { node.element => (sub.zero? ? 1 : sub) * multiplier }
         when AsciiChem::Model::Molecule
-          enumerate_many(node.nodes, multiplier)
+          enumerate_many(node.nodes, multiplier * node.stoichiometric_coefficient)
         when AsciiChem::Model::Group
           mult = (node.multiplicity || "1").to_i
           mult = 1 if mult.zero?

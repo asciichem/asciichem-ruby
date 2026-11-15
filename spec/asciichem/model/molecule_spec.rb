@@ -25,4 +25,13 @@ RSpec.describe AsciiChem::Model::Molecule do
       expect(a).to eq(b)
     end
   end
+
+  describe "#element_counts" do
+    it "counts braced subscripts" do
+      molecule = AsciiChem.parse("H_{2}O").nodes.first
+      expect(molecule.element_counts).to eq("H" => 2, "O" => 1)
+      expect(molecule.atom_count).to eq(3)
+      expect(molecule.hill_formula).to eq("H2O")
+    end
+  end
 end
