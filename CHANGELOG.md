@@ -3,6 +3,32 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.1.0.2] - 2026-11-15
+
+### Fixed
+- **Balance and charge-balance count braced subscripts and nested
+  coefficients.** `H_{2}` counted as 1 atom (subscripts were read
+  with `to_i`, which stops at the brace), so `2H_{2} + O_2 -> 2H_2O`
+  was reported unbalanced and `H_{2}O` produced the Hill formula
+  `HO`. New `Atom#subscript_count` strips the braces and returns nil
+  for non-integer subscripts (`{x}`, `{0.95}`) — reactions with a nil
+  count are skipped by the balance checks rather than flagged.
+  Both checks also dropped the coefficient of a molecule inside a
+  group (`Cu(2H_2O) -> Cu + 2H_2O`); the coefficient now applies at
+  each level.
+
+## [1.1.0.1] - 2026-11-15
+
+### Added
+- **The RInChI reaction-identity transport.** `AsciiChem::Rinchi`
+  gains the chemomer engine surface mirroring `asciichem::rinchi`:
+  `derive_from_rxnfile` / `derive_from_rdfile` produce the five
+  engine-verbatim identity lines, `decode` recovers the reaction's
+  components and direction flag from a RInChI string. Opt-in through
+  `Rinchi::NativeEngine` (the chemomer cdylib via `CHEMOMER_LIB`),
+  same posture as the identity derivation's native engine. The
+  conformance corpus's 36-case `rinchi` family gates both postures.
+
 ## [1.1.0.0] - 2026-11-15
 
 ### Changed
