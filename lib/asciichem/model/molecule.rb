@@ -144,9 +144,7 @@ module AsciiChem
       def tally_element(node, tally, multiplier)
         case node
         when AsciiChem::Model::Atom
-          sub = node.subscript&.to_i
-          count = (sub && sub.positive? ? sub : 1) * multiplier
-          tally[node.element] += count
+          tally[node.element] += subscript_count(node) * multiplier
         when AsciiChem::Model::Group
           group_mult = node.multiplicity&.to_i
           inner_mult = group_mult && group_mult.positive? ? group_mult : 1
@@ -182,8 +180,8 @@ module AsciiChem
       end
 
       def subscript_count(atom)
-        sub = atom.subscript&.to_i
-        sub && sub.positive? ? sub : 1
+        sub = atom.subscript_count
+        sub&.positive? ? sub : 1
       end
 
       def group_count(group)
