@@ -3,6 +3,22 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.1.0.3] - 2026-11-17
+
+### Changed
+- **The parg engine opts into the pending diagnostics policy.** The
+  parse seam passes `diagnostics_policy: :pending` (parsanol 1.5.3.1,
+  the rs#498 v2 surface: note-ordered inline labels with parse-end
+  materialization — observable-identical to the legacy surface by
+  contract). The full 2,469-example suite is byte-exact with the
+  policy on and every `AsciiChem::Error` message spec unchanged; the
+  parse bench records wall-clock parity (±5% across the case set —
+  the policy's allocation win lives in the engine's Rust-side
+  mallocs, which the Ruby-side decode/adapter layer dominates at
+  this pipeline's scale). The gemspec floor moves to
+  `parsanol >= 1.5.3.1`, the first release carrying the
+  `PARG::Artifact#parse` policy passthrough (parsanol-ruby#527).
+
 ## [1.1.0.2] - 2026-11-15
 
 ### Fixed
