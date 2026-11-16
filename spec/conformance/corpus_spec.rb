@@ -102,6 +102,29 @@ RSpec.describe 'asciichem-tests conformance corpus' do
     end
   end
 
+  # The smiles family's recorded identity column (asciichem-tests#29):
+  # the engine derives exactly the recorded InChI. Engine-gated — the
+  # chemomer NativeEngine is the identity posture (CHEMOMER_LIB), and
+  # a missing engine is a posture, not a failure. The recorded
+  # intersection excludes the cases the molfile transport cannot
+  # express (asciichem-ruby#181), so the pipe agrees on every
+  # recorded case by construction.
+  cases.select { |c| c.key?('inchi') && c.key?('smiles') }.each do |fixture|
+    id = fixture.fetch('id')
+    smiles = fixture.fetch('smiles')
+
+    it "#{id} derives the recorded InChI from SMILES" do
+      engine = begin
+        AsciiChem::Inchi::NativeEngine.new
+      rescue AsciiChem::Error
+        skip 'no identity engine (set CHEMOMER_LIB to the built cdylib)'
+      end
+      molecule = AsciiChem.parse_smiles(smiles).nodes.first
+      identity = AsciiChem::Inchi.identity_for(molecule, engine: engine)
+      expect(identity.inchi).to eq(fixture.fetch('inchi'))
+    end
+  end
+
   # Perception conformance (TODO.v2/13 item 2): implicit hydrogens and
   # aromatic rings are shared semantics — every implementation must
   # derive the same values (nil = perception declines, never invents).
