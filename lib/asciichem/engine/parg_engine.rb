@@ -7,7 +7,8 @@ begin
   require 'parsanol/native/dynamic'
 rescue LoadError => e
   raise AsciiChem::Engine::NotAvailableError,
-        'the parg engine requires the parsanol gem (>= 1.3.94 for PARG) — ' \
+        'the parg engine requires the parsanol gem (>= 1.5.3.1 for PARG ' \
+        'and the pending diagnostics policy) — ' \
         'add gem "parsanol" to your Gemfile ' \
         "(#{e.message})"
 end
@@ -46,7 +47,13 @@ module AsciiChem
       class Grammar
         def parse(text)
           source = text.strip
-          raw = PargEngine.artifact.parse('formula', source)
+          # The pending diagnostics policy (parsanol 1.5.3.1, rs#498 v2):
+          # note-ordered inline labels with parse-end materialization —
+          # observable-identical to the legacy surface by contract, the
+          # successful-parse allocation drops. The failure paths raise
+          # the same ParseFailed with the same char position.
+          raw = PargEngine.artifact.parse('formula', source,
+                                          diagnostics_policy: :pending)
           unless TreeAdapter.consumed_length(raw) >= source.length
             raise ::Parsanol::ParseFailed,
                   "Failed to match sequence at char #{TreeAdapter.consumed_length(raw)}: " \
