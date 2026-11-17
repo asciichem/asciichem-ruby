@@ -6,9 +6,11 @@ gemspec
 
 group :development do
   gem "parsanol", "~> 1.5.0"
-  # Capped off 2.5.0: it calls regexp_parser's `implements`, which
-  # regexp_parser 2.13.2 removed (the suite fails to load).
-  gem "json_schemer", "~> 2.4.0"
+  # regexp_parser 2.13.2 (published today) removed `implements`,
+  # which json_schemer's ecma_regexp still calls — every spec fails
+  # to load. Capped under the removal until json_schemer adapts (the
+  # lockfile is ignored here, so this constraint is the only control).
+  gem "regexp_parser", "~> 2.12.0"
   gem "benchmark", "~> 0.4"
   gem "benchmark-ips", "~> 2.14", require: false
   gem "rake", "~> 13.2"
