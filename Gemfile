@@ -6,7 +6,9 @@ gemspec
 
 group :development do
   gem "parsanol", "~> 1.5.0"
-  gem "json_schemer", "~> 2.4"
+  # Capped off 2.5.0: it calls regexp_parser's `implements`, which
+  # regexp_parser 2.13.2 removed (the suite fails to load).
+  gem "json_schemer", "~> 2.4.0"
   gem "benchmark", "~> 0.4"
   gem "benchmark-ips", "~> 2.14", require: false
   gem "rake", "~> 13.2"
