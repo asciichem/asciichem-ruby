@@ -3,6 +3,19 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.4.0] - 2026-11-17
+
+### Changed
+- **The gem re-syncs onto the engine line.** The scheme is
+  `{engine-semver}.{runtime-increment}` — the first three segments
+  track the asciichem-rs engine the gem rides. The 1.1.0.x line had
+  drifted (the engine moved to 1.2.x without the gem following); this
+  release re-anchors: asciichem-rs **1.2.4** → gem **1.2.4.0**, the
+  same content 1.1.0.5 shipped (the standalone structure reference,
+  grammar v0.6.0, the corpus v0.13.0 pin). Going forward every engine
+  release carries the runtimes on its own semver — the chemomer
+  bindings' pattern (1.1.5.0 riding engine 1.1.5).
+
 ## [1.1.0.5] - 2026-11-17
 
 ### Added
