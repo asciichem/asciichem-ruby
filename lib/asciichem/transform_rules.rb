@@ -115,6 +115,32 @@ module AsciiChem
         AnnotationApplicator.new(mol, Array(anns)).apply
         mol
       end
+
+      # -- the standalone structure reference -----------------------------
+      #
+      # `@smiles("...")` standing alone is an ingest edge (the same
+      # posture as the CLI's input modes): the annotation carries the
+      # structure in, the model is the molecule this runtime's own
+      # SMILES reader produces. The attached form
+      # (`molecule @smiles(...)`) never reaches this rule — there the
+      # value rides AnnotationApplicator as the identifier annotation
+      # it has always been.
+      rule(structure_reference: subtree(:ref)) do
+        type = ref[:ref_type].to_s
+        value = TextNormaliser.strip_quotes(ref[:ref_value].to_s)
+        unless type == 'smiles'
+          raise ParseError,
+                "the structure reference carries no #{type} source yet " \
+                '(v1 carries smiles)'
+        end
+        formula = AsciiChem::Smiles.parse(value)
+        if formula.nodes.length != 1
+          raise ParseError,
+                'the structure reference carries one connected structure ' \
+                '(write dot-disconnected components as separate references)'
+        end
+        formula.nodes.first
+      end
   
       # -- groups ----------------------------------------------------------
   
