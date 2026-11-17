@@ -33,7 +33,7 @@ module AsciiChem
       # model → molfile → chemomer → Identity. The molfile emission is
       # the pipe, exactly as in the BinaryEngine.
       def identity(molecule)
-        molfile = AsciiChem::Molfile.write(molecule, layout: false)
+        molfile = AsciiChem::Molfile.write(molecule)
         inchi = call(molfile, :chemomer_from_molfile)
         inchikey = call(molfile, :chemomer_inchikey)
         Identity.new(inchi: inchi, inchikey: inchikey)
