@@ -138,6 +138,34 @@ RSpec.describe AsciiChem::Molfile do
       expect { described_class.write(AsciiChem.parse("H_2O").nodes.first) }
         .to raise_error(AsciiChem::ParseError, /not a structure/i)
     end
+
+    it "materializes aromatic bracket hydrogens as explicit H atoms" do
+      # The V2000 H-count column is oracle-ignored and the valence
+      # derivation does not hand aromatic atoms their H, so a pyrrole's
+      # [nH] must cross as a real H atom (asciichem-ruby#181) — the
+      # same posture as [2H].
+      pyrrole = AsciiChem.parse_smiles("c1cc[nH]c1").nodes.first
+      written = described_class.write(pyrrole)
+      counts = written.lines[3]
+      expect(counts).to eq("#{counts_line(6, 6)}\n")
+      hydrogen_lines = written.lines[4, 6].select { |line| line[31, 3].strip == "H" }
+      expect(hydrogen_lines.length).to eq(1)
+      n_line = written.lines[4, 6].find { |line| line[31, 3].strip == "N" }
+      expect(n_line).not_to be_nil
+      expect(written).to include(bond_line(4, 6, 1))
+    end
+
+    it "leaves non-aromatic hydrogens on the H-count column" do
+      # Recorded fixtures pin the alanine bytes: the stereocenter's H
+      # derives by valence in every engine, so no explicit atom is
+      # added for it.
+      alanine = AsciiChem.parse_smiles("N[C@@H](C)C(=O)O").nodes.first
+      written = described_class.write(alanine)
+      counts = written.lines[3]
+      expect(counts).to eq("#{counts_line(6, 5)}\n")
+      expect(written.lines[4, 6].map { |line| line[31, 3].strip })
+        .to eq(%w[N C C C O O])
+    end
   end
 end
 
