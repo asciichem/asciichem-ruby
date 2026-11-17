@@ -32,9 +32,11 @@ module AsciiChem
 
       def write
         @atoms, @edges = Structure::Graph.build!(@molecule)
+        raise ParseError, "molecule has no bonds — a formula is not a structure" if @edges.empty? && @atoms.length > 1
+
+        materialize_aromatic_hydrogens
         atoms = @atoms
         edges = @edges
-        raise ParseError, "molecule has no bonds — a formula is not a structure" if edges.empty? && atoms.length > 1
 
         lines = []
         lines << @name.to_s
@@ -101,9 +103,54 @@ module AsciiChem
         atom.hydrogens.nil? ? 0 : atom.hydrogens + 1
       end
 
+      # The H atom records materialized for aromatic carriers (see
+      # materialize_aromatic_hydrogens); the writer's atom-line and
+      # property-pair reads need only these fields.
+      HydrogenAtom = Struct.new(:element, :z2, :chirality, :hydrogens,
+                                :charge, :isotope, keyword_init: true)
+
+      # Aromatic carriers lose their bracket H in the identity pipe:
+      # the V2000 H-count column is oracle-ignored (the release engine
+      # never reads it — the hcount-ignored oracle recording), and the
+      # valence derivation does not hand aromatic atoms their H (Hückel
+      # perception reads aromatic N as pyridine-type by default), so a
+      # pyrrole's [nH] reads one hydrogen short (asciichem-ruby#181).
+      # The explicit H atom is the one transport that survives — the
+      # same posture as [2H], which is a real atom. Non-aromatic
+      # carriers are untouched: their H derive by valence everywhere,
+      # and materializing those would churn the recorded corpus
+      # molfiles (the alanine stereocenters) whose bytes the fixtures
+      # pin.
+      def materialize_aromatic_hydrogens
+        @h_carriers = {}
+        extra_atoms = []
+        extra_edges = []
+        @atoms.each_with_index do |atom, index|
+          next unless atom.aromatic && atom.hydrogens.to_i.positive?
+
+          atom.hydrogens.times do |nth|
+            target = @atoms.length + extra_atoms.length
+            @h_carriers[target] = [index, nth]
+            extra_atoms << HydrogenAtom.new(element: 'H', z2: nil,
+                                            chirality: nil, hydrogens: nil)
+            extra_edges << Structure::Graph::Edge.new(from: index, to: target,
+                                                      kind: :single)
+          end
+        end
+        @atoms += extra_atoms
+        @edges += extra_edges
+      end
+
       # Authored coordinates win; otherwise positions from the
       # deterministic 2D layout (same walk order as the graph).
+      # Materialized H atoms sit offset from their carrier (stacked
+      # when several), since no layout position exists for them.
       def coordinates(atom, index, _atoms)
+        if (carrier = @h_carriers[index])
+          x, y = coordinates(@atoms[carrier[0]], carrier[0], _atoms)
+          return [x + 0.75, y + 0.75 * carrier[1]]
+        end
+
         return [0.0, 0.0] unless @layout
 
         @layout_positions ||= AsciiChem::Layout.layout(@molecule).atoms
