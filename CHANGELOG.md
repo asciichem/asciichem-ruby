@@ -3,6 +3,25 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.1.0.5] - 2026-11-17
+
+### Added
+- **The standalone structure reference** (grammar v0.6.0,
+  asciichem-rs#45): `@smiles("...")` standing alone is an ingest
+  edge — the annotation carries the structure in, the model is the
+  molecule this runtime's own SMILES reader produces; it renders,
+  cites, and derives identity like any other structure. The attached
+  form (`molecule @smiles("...")`) is unchanged: there the value
+  stays the identifier annotation. The reference syntax itself is an
+  ingest boundary (the canonical text of `@smiles("CCO")` is the
+  expanded `C-C-O`, the molfile-ingest posture); other sources and
+  dot-disconnected components reject with guidance.
+
+### Changed
+- The conformance corpus pin moves v0.12.0 → v0.13.0: the
+  structure-reference family (6 cases + 3 rejects) with the recorded
+  text and identity columns; the runner's text-parity gate rides.
+
 ## [1.1.0.4] - 2026-11-17
 
 ### Fixed
