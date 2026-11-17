@@ -15,6 +15,7 @@ module AsciiChem
   #   and render through every existing formatter.
   module Structure
     autoload :Graph, "asciichem/structure/graph"
+    autoload :Kekule, "asciichem/structure/kekule"
     autoload :Linearizer, "asciichem/structure/linearizer"
   end
 end

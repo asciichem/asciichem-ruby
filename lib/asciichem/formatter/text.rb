@@ -24,7 +24,9 @@ module AsciiChem
       def visit_molecule(molecule)
         prefix = molecule.coefficient.nil? || molecule.coefficient.empty? ? "" : molecule.coefficient.to_s
         stereo = molecule.stereo ? "(#{molecule.stereo_letter})-" : ""
+        previous, @kekule = @kekule, Structure::Kekule.bond_kinds(molecule)
         body = molecule.nodes.map { |n| render_node(n) }.join
+        @kekule = previous
         annotations = molecule_annotations(molecule)
         "#{stereo}#{prefix}#{body}#{annotations}"
       end
@@ -89,7 +91,12 @@ module AsciiChem
         # same model).
         return { up: '/', down: '\\' }.fetch(bond.direction) if bond.direction
 
-        bond.ascii
+        # Aromatic bonds render as their Kekulé projection when the
+        # ring admits one (Structure::Kekule); odd rings keep the
+        # aromatic glyph (the spec'd text loss, #188).
+        return bond.ascii unless @kekule&.key?(bond)
+
+        AsciiChem::Model::Bond::KINDS.fetch(@kekule[bond]).fetch(:ascii)
       end
 
       def visit_reaction(reaction)
