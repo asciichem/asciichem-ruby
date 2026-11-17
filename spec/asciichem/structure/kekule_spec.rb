@@ -17,7 +17,7 @@ RSpec.describe AsciiChem::Structure::Kekule do
 
       chain_kinds = edges.select { |edge| edge.bond }
                          .map { |edge| kinds[edge.bond] }
-      expect(chain_kinds).to eq(%i[single double single double single])
+      expect(chain_kinds).to eq(%i[double single double single double])
       expect(edges.count { |edge| edge.kind == :aromatic }).to eq(6)
     end
 
@@ -58,14 +58,20 @@ RSpec.describe AsciiChem::Structure::Kekule do
     it "renders benzene as re-parseable Kekulé text" do
       text = AsciiChem.parse_smiles("c1ccccc1").to_text
 
-      expect(text).to eq("C1-C=C-C=C-C1")
+      expect(text).to eq("C1=C-C=C-C=C1")
+      reparsed = AsciiChem.parse(text).nodes.first
+      bonds = reparsed.nodes.grep(AsciiChem::Model::Bond)
+      expect(bonds.count { |bond| bond.kind == :double }).to eq(3)
       expect(AsciiChem.parse(text).to_text).to eq(text)
     end
 
     it "renders pyridine as re-parseable Kekulé text" do
       text = AsciiChem.parse_smiles("c1ccncc1").to_text
 
-      expect(text).to eq("C1-C=C-N=C-C1")
+      expect(text).to eq("C1=C-C=N-C=C1")
+      reparsed = AsciiChem.parse(text).nodes.first
+      bonds = reparsed.nodes.grep(AsciiChem::Model::Bond)
+      expect(bonds.count { |bond| bond.kind == :double }).to eq(3)
       expect(AsciiChem.parse(text).to_text).to eq(text)
     end
 

@@ -75,7 +75,11 @@ module AsciiChem
       end
 
       # Indices of a perfect matching over the component's atoms (each
-      # atom incident to exactly one chosen edge), or nil.
+      # atom incident to exactly one chosen edge), or nil. Closure
+      # edges are never chosen: ring-closure digits are single by
+      # grammar, so a matching that doubles one would silently lose
+      # that bond's order in the text. Include before skip — the
+      # deterministic order all runtimes mirror.
       def matching(component)
         atom_set = component.flat_map { |edge| [edge.from, edge.to] }.uniq
         counts = Hash.new(0)
@@ -91,7 +95,8 @@ module AsciiChem
           return
         end
         edge = component[index]
-        unless counts[edge.from] == 1 || counts[edge.to] == 1
+        chain = (edge.from - edge.to).abs == 1
+        if chain && counts[edge.from] != 1 && counts[edge.to] != 1
           counts[edge.from] += 1
           counts[edge.to] += 1
           chosen << index
