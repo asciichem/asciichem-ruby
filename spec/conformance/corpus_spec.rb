@@ -102,6 +102,18 @@ RSpec.describe 'asciichem-tests conformance corpus' do
     end
   end
 
+  # The structure-reference family's recorded text column
+  # (asciichem-tests#31): where the canonical text was recorded, every
+  # runtime must produce exactly that string (the cross-runtime text
+  # parity of the ingest edge).
+  cases.select { |c| c.key?('input') && c.key?('text') }.each do |fixture|
+    id = fixture.fetch('id')
+
+    it "#{id} canonical text matches the recording" do
+      expect(AsciiChem.parse(fixture.fetch('input')).to_text).to eq(fixture.fetch('text'))
+    end
+  end
+
   # The smiles family's recorded identity column (asciichem-tests#29):
   # the engine derives exactly the recorded InChI. Engine-gated — the
   # chemomer NativeEngine is the identity posture (CHEMOMER_LIB), and
