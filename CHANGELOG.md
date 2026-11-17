@@ -3,6 +3,26 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.1.0.4] - 2026-11-17
+
+### Fixed
+- **Aromatic bracket hydrogens survive the identity pipe.** The V2000
+  H-count column is oracle-ignored and the valence derivation does
+  not hand aromatic atoms their H, so a pyrrole's `[nH]` read one
+  hydrogen short through the molfile transport (#181 — found by the
+  corpus identity recording's three-leg disagreement). The molfile
+  writer now materializes aromatic carriers' bracket H as explicit H
+  atoms (the `[2H]` posture); non-aromatic carriers are untouched —
+  their H derive by valence everywhere and the recorded corpus
+  molfiles pin their bytes. The engine legs agree on pyrrole:
+  `C4H5N` through both the direct SMILES read and the pipe.
+
+### Changed
+- The conformance corpus pin moves v0.11.0 → v0.12.0: the smiles
+  identity intersection grows to 28 (aromatic-nh via this release's
+  transport fix; ferric-plusplus-alt via chemomer 1.1.5's
+  repeated-sign charge spelling).
+
 ## [1.1.0.3] - 2026-11-17
 
 ### Changed
