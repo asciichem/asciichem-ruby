@@ -70,6 +70,7 @@ module AsciiChem
       rule(hash: simple(:_h))      { Model::Bond.new(kind: :hash) }
       rule(dative: simple(:_d))    { Model::Bond.new(kind: :dative) }
       rule(wavy: simple(:_wv))     { Model::Bond.new(kind: :wavy) }
+      rule(aromatic: simple(:_a))  { Model::Bond.new(kind: :aromatic) }
       rule(double: simple(:_d2))   { Model::Bond.new(kind: :double) }
       rule(single: simple(:_s))    { Model::Bond.new(kind: :single) }
   
