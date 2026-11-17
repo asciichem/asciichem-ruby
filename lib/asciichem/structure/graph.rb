@@ -6,7 +6,10 @@ module AsciiChem
     # atoms become edges (pending-bond semantics, same as the Layout
     # walker); ring-closure digits become edges via AsciiChem::RingBonds.
     module Graph
-      Edge = Struct.new(:from, :to, :kind, :direction, keyword_init: true)
+      # `bond` is the source Model::Bond token (nil for ring-closure
+      # edges — digits carry no kind), so projections can map an
+      # assignment back to the node that renders it.
+      Edge = Struct.new(:from, :to, :kind, :direction, :bond, keyword_init: true)
 
       class << self
         # Returns [atoms, edges] where atoms is the atom array in walk
@@ -64,7 +67,8 @@ module AsciiChem
                 atoms << node
                 if pending
                   edges << Edge.new(from: last, to: index, kind: pending.kind,
-                                    direction: pending.direction) if last
+                                    direction: pending.direction,
+                                    bond: pending) if last
                 elsif last
                   adjacency_pairs << [last, index]
                 end
