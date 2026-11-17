@@ -44,9 +44,12 @@ module AsciiChem
         lines << ""
         lines << format("%3d%3d  0  0  0  0  0  0  0  0999 V2000", atoms.length, edges.length)
 
-        layout = nil
+        coords = atoms.each_index.map do |index|
+          coordinates(atoms[index], index, atoms)
+        end
+        lay_out_ez(edges, coords)
         atoms.each_with_index do |atom, index|
-          x, y = coordinates(atom, index, atoms)
+          x, y = coords[index]
           lines << format("%10.4f%10.4f%10.4f %-3s 0  0%3d%3d  0  0  0  0  0  0  0  0  0",
                           x, y, atom.z2 || 0.0, atom.element,
                           CHIRALITY_PARITY.fetch(atom.chirality, 0),
@@ -74,6 +77,63 @@ module AsciiChem
       end
 
       private
+
+      # Directional bonds draw the E/Z layer: a direction rides a
+      # single bond adjacent to a double bond, and the substituent's
+      # SIDE of that double bond is the drawn information. The layout's
+      # arbitrary placement carries no side semantics, so each
+      # directional substituent is mirrored across the double-bond
+      # axis until its side sign matches the drawn rule (the chemomer
+      # synthesis's oracle-verified convention: `/` puts the
+      # substituent opposite the axis direction in string order, `\`
+      # puts it alongside). `C/C=C/C` draws trans, `C/C=C\C` cis.
+      def lay_out_ez(edges, coords)
+        edges.each do |edge|
+          next unless edge.direction
+
+          resolved = double_bond_axis(edges, edge)
+          next unless resolved
+
+          axis, p_index, u_index = resolved
+          q_index = axis.from == p_index ? axis.to : axis.from
+
+          # Place the substituent perpendicular to the double-bond
+          # axis, on the drawn side, anchored at its bond partner. The
+          # side reads against the STRING-ORDERED axis (a→b, the
+          # chemomer lift's invariant — `/` draws the substituent
+          # above when it follows the axis in string order, below when
+          # it precedes; `\` mirrors), so `C/C=C/C` draws trans and
+          # `C/C=C\C` cis regardless of which end the axis runs from.
+          # The layout's own placement carries no side semantics
+          # (elkrb draws chains collinear), so the stereobond's
+          # neighbourhood is synthesized outright.
+          a_index, b_index = [p_index, q_index].minmax
+          ax, ay = coords[a_index]
+          bx, by = coords[b_index]
+          px, py = coords[p_index]
+          dx, dy = bx - ax, by - ay
+          length = Math.sqrt(dx * dx + dy * dy)
+          nx, ny = -dy / length, dx / length
+          side = (edge.direction == :up ? 1 : -1) * (u_index > a_index ? 1 : -1)
+          coords[u_index] = [px + nx * length * side, py + ny * length * side]
+        end
+      end
+
+      # The double-bond axis a directional bond borders: which end of
+      # the single bond touches a kind-2 bond's atom, with that
+      # endpoint, the substituent (the other end), and the double-bond
+      # edge whose other endpoint completes the axis.
+      def double_bond_axis(edges, single)
+        touches = lambda do |atom, other|
+          edge = edges.find do |candidate|
+            candidate.kind == :double &&
+              ((candidate.from == atom && candidate.to != other) ||
+               (candidate.to == atom && candidate.from != other))
+          end
+          edge ? [edge, atom, single.from == atom ? single.to : single.from] : nil
+        end
+        touches.call(single.from, single.to) || touches.call(single.to, single.from)
+      end
 
       # One wedge per chiral atom, on its first bond, oriented
       # centre → neighbour: TH1 rises (stereo 1), TH2 falls (6).
