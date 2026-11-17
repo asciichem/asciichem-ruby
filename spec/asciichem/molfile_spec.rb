@@ -254,4 +254,48 @@ RSpec.describe 'Structure::Graph.build! (structure writers)' do
     expect(atoms.length).to eq(3)
     expect(edges).to be_empty
   end
+
+  describe "directional-bond layout (the E/Z writer layer)" do
+    def written(smiles)
+      AsciiChem::Molfile.write(AsciiChem.parse_smiles(smiles).nodes.first)
+    end
+
+    def side_of_axis(molfile, axis_from, axis_to, substituent)
+      lines = molfile.lines
+      ax = lines[axis_from + 4][0, 10].to_f
+      ay = lines[axis_from + 4][10, 10].to_f
+      bx = lines[axis_to + 4][0, 10].to_f
+      by = lines[axis_to + 4][10, 10].to_f
+      ux = lines[substituent + 4][0, 10].to_f
+      uy = lines[substituent + 4][10, 10].to_f
+      (bx - ax) * (uy - ay) - (by - ay) * (ux - ax)
+    end
+
+    it "draws C/C=C/C trans: the substituents on opposite sides" do
+      molfile = written("C/C=C/C")
+      expect(side_of_axis(molfile, 1, 2, 0) * side_of_axis(molfile, 1, 2, 3)).to be_negative
+    end
+
+    it "draws C/C=C\\C cis: the substituents on the same side" do
+      molfile = written("C/C=C\\C")
+      expect(side_of_axis(molfile, 1, 2, 0) * side_of_axis(molfile, 1, 2, 3)).to be_positive
+    end
+
+    it "draws F/C=C/F trans and F/C=C\\F cis" do
+      trans = written("F/C=C/F")
+      expect(side_of_axis(trans, 1, 2, 0) * side_of_axis(trans, 1, 2, 3)).to be_negative
+      cis = written("F/C=C\\F")
+      expect(side_of_axis(cis, 1, 2, 0) * side_of_axis(cis, 1, 2, 3)).to be_positive
+    end
+
+    it "draws a conjugated diene on both axes" do
+      molfile = written("C/C=C/C=C/C")
+      expect(side_of_axis(molfile, 1, 2, 0) * side_of_axis(molfile, 1, 2, 3)).to be_negative
+      expect(side_of_axis(molfile, 3, 4, 2) * side_of_axis(molfile, 3, 4, 5)).to be_negative
+    end
+
+    it "leaves models without directional bonds untouched" do
+      expect(written("CCO")).to include(" 1  2  1  0")
+    end
+  end
 end
