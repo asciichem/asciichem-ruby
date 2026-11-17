@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module AsciiChem
-  VERSION = "1.1.0.5"
+  VERSION = "1.2.4.0"
 end
