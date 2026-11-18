@@ -1,0 +1,10 @@
+# 10 — Molecule with the state mark (grammar v0.7.0)
+
+# `AgCl v`: the precipitate mark, typeset as the down arrow.
+type: molecule
+nodes:
+  - type: atom
+    element: Ag
+  - type: atom
+    element: Cl
+state: precipitate

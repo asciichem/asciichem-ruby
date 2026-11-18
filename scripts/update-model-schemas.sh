@@ -4,7 +4,7 @@
 # released tag — vendored schemas stay hermetic, never floating.
 set -euo pipefail
 
-tag="${1:-v0.6.0}"
+tag="${1:-v0.7.0}"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
