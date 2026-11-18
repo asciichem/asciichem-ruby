@@ -207,7 +207,18 @@ module AsciiChem
           when AsciiChem::Model::Bond
             @pending_bond = node
           when AsciiChem::Model::Group, AsciiChem::Model::Molecule
+            # A group whose FIRST node is a bond is a BRANCH group: the
+            # leading bond attaches the branch to the atom before the
+            # group, and the continuation resumes from that root —
+            # `C(-O)=O` reads C-O and C=O, never O=O.
+            branch_root = nil
+            if node.is_a?(AsciiChem::Model::Group) && @last_atom_id
+              first = node.nodes.first
+              first = first.nodes.first while first.is_a?(AsciiChem::Model::Molecule)
+              branch_root = @last_atom_id if first.is_a?(AsciiChem::Model::Bond)
+            end
             walk_nodes(node.nodes)
+            @last_atom_id = branch_root if branch_root
           end
         end
       end

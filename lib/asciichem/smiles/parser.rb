@@ -50,12 +50,13 @@ module AsciiChem
 
         edges = []
         @adjacency.each_with_index do |neighbors, index|
-          neighbors.each do |to, kind|
+          neighbors.each do |to, (kind, ring)|
             next unless to > index
 
             edges << Structure::Graph::Edge.new(
               from: index, to: to, kind: kind,
-              direction: @edge_directions[[index, to]]
+              direction: @edge_directions[[index, to]],
+              ring: ring
             )
           end
         end
@@ -122,7 +123,7 @@ module AsciiChem
             raise ParseError,
                   "bonded ring closures (#{kind}) are not representable in the model's ring-closure form"
           end
-          add_edge(opener, @parent, kind)
+          add_edge(opener, @parent, kind, ring: true)
         else
           @open_rings[digit] = @parent
         end
@@ -142,10 +143,10 @@ module AsciiChem
         @pending_direction = nil
       end
 
-      def add_edge(from, to, explicit)
+      def add_edge(from, to, explicit, ring: false)
         kind = explicit || default_kind(from, to)
-        @adjacency[from][to] = kind
-        @adjacency[to][from] = kind
+        @adjacency[from][to] = [kind, ring]
+        @adjacency[to][from] = [kind, ring]
       end
 
       def default_kind(from, to)
