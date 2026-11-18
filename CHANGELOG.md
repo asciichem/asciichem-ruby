@@ -3,6 +3,23 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.8.0] - 2026-11-19
+
+### Added
+- **The molecule-level state mark** (asciichem-ruby#199, grammar
+  v0.7.0): the mhchem phase glyph. `AgCl v` is the precipitate mark
+  (typeset ↓), `AgCl ^` the gas mark (↑). Whitespace-separated and
+  lowercase-only — never colliding with a vanadium atom, and the
+  tight `^` forms keep their binding (`AgCl^14C`, `Ca^2+`; `Ca ^2+`
+  rejects at parse). Renderers: text preserves the authored glyph
+  (the round-trip contract), MathML typesets ↓/↑, HTML the entities,
+  LaTeX `\downarrow`/`\uparrow` (mhchem's own form), linear SVG the
+  unicode arrow. CML carries the state through the `aci:state`
+  side-channel (three-way round-trip holds). **Documented loss:** the
+  v1 wire schema has no molecule-state field yet — the wire JSON
+  round-trip drops it until the schema grows the field (spec'd in
+  `state_marks_spec.rb`). Rides the grammar-v0.7.0 artifact.
+
 ## [1.2.4.0] - 2026-11-17
 
 ### Changed

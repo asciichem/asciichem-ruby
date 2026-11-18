@@ -28,7 +28,14 @@ module AsciiChem
         body = molecule.nodes.map { |n| render_node(n) }.join
         @kekule = previous
         annotations = molecule_annotations(molecule)
-        "#{stereo}#{prefix}#{body}#{annotations}"
+        "#{stereo}#{prefix}#{body}#{state_mark(molecule)}#{annotations}"
+      end
+
+      # The authored phase mark, whitespace-separated: `AgCl v` /
+      # `AgCl ^`. The round-trip contract renders the glyph the
+      # grammar reads, never the typeset arrow.
+      def state_mark(molecule)
+        molecule.state ? " #{Model::Molecule::GLYPHS.fetch(molecule.state)}" : ""
       end
 
       def molecule_annotations(molecule)

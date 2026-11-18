@@ -45,7 +45,14 @@ module AsciiChem
         end
         mrow.add_child(mn(molecule.coefficient)) if molecule.coefficient
         molecule.nodes.each { |n| mrow.add_child(render_node(n)) }
+        mrow.add_child(state_mark(molecule)) if molecule.state
         mrow
+      end
+
+      # The mhchem phase arrow after the formula: precipitate ↓ (the
+      # solid falling out), gas ↑.
+      def state_mark(molecule)
+        mo(molecule.state == :precipitate ? "↓" : "↑")
       end
 
       def visit_atom(atom)

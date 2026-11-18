@@ -17,7 +17,12 @@ module AsciiChem
         prefix = molecule.coefficient.nil? || molecule.coefficient.to_s.empty? ? "" : "#{escape(molecule.coefficient)}"
         stereo = molecule.stereo ? "(#{escape(molecule.stereo_letter)})-" : ""
         body = molecule.nodes.map { |n| render_node(n) }.join
-        "#{stereo}#{prefix}#{body}"
+        "#{stereo}#{prefix}#{body}#{state_mark(molecule)}"
+      end
+
+      # The phase arrow as its HTML entity: &darr; / &uarr;.
+      def state_mark(molecule)
+        molecule.state ? (molecule.state == :precipitate ? "&darr;" : "&uarr;") : ""
       end
 
       def visit_atom(atom)

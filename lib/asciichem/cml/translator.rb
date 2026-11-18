@@ -28,8 +28,7 @@ module AsciiChem
           xml = ConditionsExtensions.inject(xml, formula)
           xml = MetadataExtensions.inject(xml, formula)
           xml = inject_molecule_extensions(xml, formula, translation)
-          inject_opaque(xml, formula)
-        end
+          inject_opaque(xml, formula)        end
 
         # Constructs whose representation is the aci: top-level text
         # channel — the canonical text render inside
@@ -66,6 +65,7 @@ module AsciiChem
             top_level: Extensions.extract_top_level(cleaned_xml),
             atom_extensions: Extensions.extract(cleaned_xml),
             group_extensions: GroupExtensions.extract(cleaned_xml),
+            state_extensions: StateExtensions.extract(cleaned_xml),
             metadata: MetadataExtensions.extract(cleaned_xml),
             conditions: ConditionsExtensions.extract(cleaned_xml)
           }
@@ -74,6 +74,7 @@ module AsciiChem
         def restore_all(formula, wire_doc, extracted)
           Extensions.restore(formula, wire_doc, extracted[:atom_extensions])
           GroupExtensions.restore(formula, wire_doc, extracted[:group_extensions])
+          StateExtensions.restore(formula, extracted[:state_extensions])
           ConditionsExtensions.restore(formula, extracted[:conditions])
           MetadataExtensions.restore(formula, extracted[:metadata])
           Extensions.restore_top_level(formula, extracted[:top_level])
@@ -87,6 +88,7 @@ module AsciiChem
 
         def inject_molecule_extensions(xml, formula, translation)
           xml = inject_groups(xml, translation)
+          xml = StateExtensions.inject(xml, StateExtensions.collect(formula))
           inject_top_level(xml, formula)
         end
 
