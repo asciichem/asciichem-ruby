@@ -506,6 +506,16 @@ module AsciiChem
         end
 
         def enter_group(group, multiplier)
+          # A group whose FIRST node is a bond is a BRANCH group: the
+          # leading bond attaches the branch to the atom before the
+          # group, and the continuation resumes from that root —
+          # `C(-O)=O` reads C-O and C=O, never O=O.
+          branch_root = nil
+          if @last_atom_id
+            first = group.nodes.first
+            first = first.nodes.first while first.is_a?(AsciiChem::Model::Molecule)
+            branch_root = @last_atom_id if first.is_a?(AsciiChem::Model::Bond)
+          end
           record = GroupRecord.new(
             id: @ids.next(:group),
             multiplicity: group.multiplicity,
@@ -516,6 +526,7 @@ module AsciiChem
           @group_stack.push(record)
           walk_nodes(group.nodes, multiplier: combine(multiplier, group.multiplicity))
           @group_stack.pop
+          @last_atom_id = branch_root if branch_root
         end
 
         def emit_atom(atom, multiplier)

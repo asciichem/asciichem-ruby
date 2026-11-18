@@ -9,7 +9,7 @@ module AsciiChem
       # `bond` is the source Model::Bond token (nil for ring-closure
       # edges — digits carry no kind), so projections can map an
       # assignment back to the node that renders it.
-      Edge = Struct.new(:from, :to, :kind, :direction, :bond, keyword_init: true)
+      Edge = Struct.new(:from, :to, :kind, :direction, :bond, :ring, keyword_init: true)
 
       class << self
         # Returns [atoms, edges] where atoms is the atom array in walk
@@ -77,7 +77,20 @@ module AsciiChem
               when AsciiChem::Model::Bond
                 pending = node
               when AsciiChem::Model::Group, AsciiChem::Model::Molecule
+                # A group whose FIRST node is a bond is a BRANCH group:
+                # the leading bond attaches the branch to the atom
+                # before the group (the branch root), not to whatever
+                # atom the flat stream last visited — `C(-O)=O` reads
+                # C-O and C=O, never O=O. After the group the
+                # continuation resumes from the root.
+                branch_root = nil
+                if node.is_a?(AsciiChem::Model::Group) && last
+                  first = node.nodes.first
+                  first = first.nodes.first while first.is_a?(AsciiChem::Model::Molecule)
+                  branch_root = last if first.is_a?(AsciiChem::Model::Bond)
+                end
                 walk.call(node.nodes)
+                last = branch_root if branch_root
               end
             end
           end
