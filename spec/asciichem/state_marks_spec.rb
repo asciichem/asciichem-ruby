@@ -148,17 +148,22 @@ RSpec.describe "the molecule-level state mark" do
     end
   end
 
-  describe "the wire form (documented loss)" do
-    # The v1 wire schema has no molecule-state field yet — the state
-    # rides the aci: side-channel for CML and is DROPPED from the
-    # model JSON until the schema grows the field (the deliberate
-    # scope of #199). This spec pins the loss so it is never silent:
-    # when the schema grows, this expectation flips.
-    it "drops the state through the wire round-trip" do
+  describe "the wire form" do
+    # Model v0.7.0 grew the field (the "until the wire schema grows
+    # the field" clause): the state rides the model JSON as the
+    # semantic string and round-trips losslessly.
+    it "preserves the state through the wire round-trip" do
       formula = AsciiChem.parse("AgCl v")
       back = AsciiChem.from_model_json(formula.to_model_json)
-      expect(back.nodes.first.state).to be_nil
-      expect(back.to_text).to eq("AgCl")
+      expect(back.nodes.first.state).to eq(:precipitate)
+      expect(back.to_text).to eq("AgCl v")
+    end
+
+    it "preserves the gas state through the wire round-trip" do
+      formula = AsciiChem.parse("AgCl ^")
+      back = AsciiChem.from_model_json(formula.to_model_json)
+      expect(back.nodes.first.state).to eq(:gas)
+      expect(back.to_text).to eq("AgCl ^")
     end
   end
 end
