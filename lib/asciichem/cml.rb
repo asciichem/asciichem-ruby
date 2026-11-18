@@ -39,6 +39,7 @@ module AsciiChem
     autoload :GroupExtensions, "asciichem/cml/group_extensions"
     autoload :MetadataExtensions, "asciichem/cml/metadata_extensions"
     autoload :OpaqueExtensions, "asciichem/cml/opaque_extensions"
+    autoload :StateExtensions, "asciichem/cml/state_extensions"
     autoload :Translator, "asciichem/cml/translator"
 
     # Serialise an AsciiChem::Model::Formula to CML XML.

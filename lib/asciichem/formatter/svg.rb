@@ -26,7 +26,12 @@ module AsciiChem
         prefix = molecule.coefficient.nil? || molecule.coefficient.to_s.empty? ? "" : molecule.coefficient.to_s
         stereo = molecule.stereo ? "(#{molecule.stereo_letter})-" : ""
         body = molecule.nodes.map { |n| render_node(n) }.join
-        "#{stereo}#{prefix}#{body}"
+        "#{stereo}#{prefix}#{body}#{state_mark(molecule)}"
+      end
+
+      # The unicode arrow, same glyph MathML typesets.
+      def state_mark(molecule)
+        molecule.state ? (molecule.state == :precipitate ? "↓" : "↑") : ""
       end
 
       def visit_atom(atom)

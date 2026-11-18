@@ -22,11 +22,17 @@ module AsciiChem
         prefix = blank?(molecule.coefficient) ? "" : molecule.coefficient.to_s
         stereo = molecule.stereo ? "(#{molecule.stereo_letter})-" : ""
         body = molecule.nodes.map { |n| render_node(n) }.join
+        state = state_mark(molecule)
         if @inside_ce
-          "#{stereo}#{prefix}#{body}"
+          "#{stereo}#{prefix}#{body}#{state}"
         else
-          "\\ce{#{stereo}#{prefix}#{body}}"
+          "\\ce{#{stereo}#{prefix}#{body}#{state}}"
         end
+      end
+
+      # mhchem's own output form for the phase mark.
+      def state_mark(molecule)
+        molecule.state ? (molecule.state == :precipitate ? "\\downarrow" : "\\uparrow") : ""
       end
 
       def visit_atom(atom)

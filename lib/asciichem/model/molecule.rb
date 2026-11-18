@@ -36,15 +36,30 @@ module AsciiChem
         alpha: "alpha", beta: "beta"
       }.freeze
 
-      attr_accessor :coefficient, :nodes, :stereo, :names, :identifiers,
+      # The molecule-level state mark (mhchem phase glyphs, grammar
+      # v0.7.0): `AgCl v` precipitates (typeset ↓), `AgCl ^` is gas
+      # (↑). The model carries the SEMANTIC state; the renderers map
+      # back through GLYPHS so text round-trips to the authored mark.
+      STATES = {
+        "v" => :precipitate,
+        "^" => :gas
+      }.freeze
+
+      GLYPHS = {
+        precipitate: "v",
+        gas: "^"
+      }.freeze
+
+      attr_accessor :coefficient, :nodes, :stereo, :state, :names, :identifiers,
                     :title, :formulas, :properties, :labels, :metadata
 
-      def initialize(nodes:, coefficient: nil, stereo: nil,
+      def initialize(nodes:, coefficient: nil, stereo: nil, state: nil,
                      names: [], identifiers: [], title: nil,
                      formulas: [], properties: [], labels: [], metadata: [])
         @nodes = nodes
         @coefficient = coefficient
         @stereo = stereo
+        @state = state
         @names = names
         @identifiers = identifiers
         @title = title
@@ -56,9 +71,9 @@ module AsciiChem
 
       def value_attributes
         { nodes: nodes, coefficient: coefficient, stereo: stereo,
-          names: names, identifiers: identifiers, title: title,
-          formulas: formulas, properties: properties, labels: labels,
-          metadata: metadata }
+          state: state, names: names, identifiers: identifiers,
+          title: title, formulas: formulas, properties: properties,
+          labels: labels, metadata: metadata }
       end
 
       def children

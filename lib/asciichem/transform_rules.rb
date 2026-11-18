@@ -102,6 +102,42 @@ module AsciiChem
       rule(units: subtree(:units)) do
         Model::Molecule.new(nodes: Array(units))
       end
+
+      # The molecule-level state mark (grammar v0.7.0): `AgCl v`
+      # precipitates, `AgCl ^` is gas. The registry maps the authored
+      # glyph to the semantic state the model carries.
+      rule(stereo: simple(:letter),
+           coefficient: subtree(:coef),
+           units: subtree(:units),
+           state: simple(:state)) do
+        Model::Molecule.new(
+          coefficient: CoefficientNormaliser.new(coef).to_s,
+          nodes: Array(units),
+          stereo: StereoNormaliser.normalise(letter),
+          state: Model::Molecule::STATES.fetch(state)
+        )
+      end
+
+      rule(stereo: simple(:letter), units: subtree(:units), state: simple(:state)) do
+        Model::Molecule.new(
+          nodes: Array(units),
+          stereo: StereoNormaliser.normalise(letter),
+          state: Model::Molecule::STATES.fetch(state)
+        )
+      end
+
+      rule(coefficient: subtree(:coef), units: subtree(:units), state: simple(:state)) do
+        Model::Molecule.new(
+          coefficient: CoefficientNormaliser.new(coef).to_s,
+          nodes: Array(units),
+          state: Model::Molecule::STATES.fetch(state)
+        )
+      end
+
+      rule(units: subtree(:units), state: simple(:state)) do
+        Model::Molecule.new(nodes: Array(units),
+                            state: Model::Molecule::STATES.fetch(state))
+      end
   
       # -- annotated molecules -------------------------------------------
       #
