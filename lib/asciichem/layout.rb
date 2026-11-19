@@ -25,6 +25,8 @@ module AsciiChem
     ATOM_HEIGHT = 30.0
     PADDING     = 20.0
 
+    autoload :DepictionPlacer, 'asciichem/layout/depiction_placer'
+
     PositionedAtom = Struct.new(:id, :element, :x, :y, :charge, :isotope,
                                 :multiplicity, keyword_init: true)
     PositionedBond = Struct.new(:id, :kind, :from_id, :to_id, keyword_init: true)
@@ -90,10 +92,26 @@ module AsciiChem
       # round-tripping through CML.
       return pre_positioned_result(walk) if all_positioned?(walk)
 
+      return depiction_result(walk) if algorithm == 'depiction'
+
       graph = GraphBuilder.new(walk).build
       laid_out = Elkrb.layout(graph, algorithm: algorithm)
       ResultExtractor.new(laid_out, walk).extract
     end
+
+    # Map the depiction placer's positions onto a Layout::Result.
+    def self.depiction_result(walk)
+      placed = DepictionPlacer.place(walk)
+      return empty_result unless placed
+
+      by_id = walk.atoms.to_h { |a| [a.id, a] }
+      result_from_walk(walk) do |wa|
+        point = placed.fetch(wa.id)
+        source = by_id.fetch(wa.id)
+        [point.x, point.y, source]
+      end
+    end
+    private_class_method :depiction_result
 
     def self.all_positioned?(walk)
       walk.atoms.any? && walk.atoms.all? { |a| a.x2 && a.y2 }
@@ -103,15 +121,25 @@ module AsciiChem
     # Build a Layout::Result directly from WalkAtoms that already
     # carry x2/y2 coordinates. No elkrb involved.
     def self.pre_positioned_result(walk)
+      result_from_walk(walk) do |wa|
+        [wa.x2.to_f, wa.y2.to_f, wa]
+      end
+    end
+    private_class_method :pre_positioned_result
+
+    # Shared walk→Result mapping for the elkrb-free paths: the block
+    # returns [x, y, atom_source] per walk atom.
+    def self.result_from_walk(walk)
       atoms = walk.atoms.map do |wa|
+        x, y, source = yield(wa)
         PositionedAtom.new(
           id: wa.id,
-          element: wa.element,
-          x: wa.x2.to_f,
-          y: wa.y2.to_f,
-          charge: wa.charge,
-          isotope: wa.isotope,
-          multiplicity: wa.multiplicity
+          element: source.element,
+          x: x,
+          y: y,
+          charge: source.charge,
+          isotope: source.isotope,
+          multiplicity: source.multiplicity
         )
       end
       bonds = walk.bonds.map do |wb|
@@ -124,7 +152,7 @@ module AsciiChem
                  width: max_x + PADDING,
                  height: max_y + PADDING)
     end
-    private_class_method :pre_positioned_result
+    private_class_method :result_from_walk
 
     # Walks an AsciiChem::Model::Molecule in source order, assigning
     # deterministic IDs and emitting atoms + bonds. Pure; no elkrb
@@ -190,6 +218,7 @@ module AsciiChem
         @atoms << WalkAtom.new(
           id: id,
           element: atom.element,
+          ring_closures: atom.ring_closures,
           charge: atom.charge,
           isotope: atom.isotope,
           multiplicity: atom.subscript,
@@ -215,7 +244,8 @@ module AsciiChem
     # Neutral walker output. Decouples the walker from both elkrb and
     # the canonical model — the same walk could feed any future
     # graph-based renderer.
-    WalkAtom = Struct.new(:id, :element, :charge, :isotope, :multiplicity, :x2, :y2, keyword_init: true)
+    WalkAtom = Struct.new(:id, :element, :charge, :isotope, :multiplicity, :x2, :y2,
+                          :ring_closures, keyword_init: true)
     WalkBond = Struct.new(:id, :kind, :from_id, :to_id, keyword_init: true)
     WalkResult = Struct.new(:atoms, :bonds, keyword_init: true)
     private_constant :WalkAtom, :WalkBond, :WalkResult
