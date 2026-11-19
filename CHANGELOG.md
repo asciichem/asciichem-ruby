@@ -3,6 +3,22 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.9.0] - 2026-11-19
+
+### Added
+- **The atomic-number isotope prefix** (asciichem-ruby#201, grammar
+  v0.8.0): mhchem's left-subscript isotope component. `^227_90Th`
+  carries isotope 227 AND atomic number 90. Non-breaking by
+  construction — the atomic number only arrives attached to a
+  `^`-mass prefix (the standalone `_90Th` keeps its legacy isotope
+  reading; after the element `_digits` stays a subscript). MathML
+  emits the prescript pair (Z under A), LaTeX mhchem's combined
+  form, HTML the subscript, text the authored `_90`. **The payoff:**
+  the linter's isotope check now errors when a stated atomic number
+  contradicts the element's real Z. The wire grew `atomicNumber`
+  (model v0.8.0 in the same train); CML carries it via
+  `aci:atomicNumber`. Rides the grammar-v0.8.0 artifact.
+
 ## [1.2.8.0] - 2026-11-19
 
 ### Added

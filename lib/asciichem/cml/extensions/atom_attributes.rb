@@ -17,6 +17,7 @@ module AsciiChem
         # wire attribute name (without prefix). Each entry produces a
         # corresponding `aci:<wire_name>` attribute in the CML output.
         FIELDS = {
+          atomic_number: 'atomicNumber',
           oxidation_state: 'oxidationState',
           lone_pairs: 'lonePairs',
           radical_electrons: 'radicalElectrons',

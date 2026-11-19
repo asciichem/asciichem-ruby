@@ -28,6 +28,7 @@ module AsciiChem
       def visit_atom(atom)
         parts = []
         parts << "<sup>#{escape(atom.isotope)}</sup>" if atom.isotope
+        parts << "<sub>#{escape(atom.atomic_number)}</sub>" if atom.atomic_number
         parts << escape(atom.element)
         parts << "<sub>#{escape(atom.subscript)}</sub>" if atom.subscript
         parts << "<sup>#{escape(atom.superscript)}</sup>" if atom.superscript

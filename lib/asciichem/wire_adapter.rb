@@ -111,7 +111,9 @@ module AsciiChem
         AsciiChem::Wire::Atom.new(
           type: 'atom',
           element: atom.element,
-          isotope: digits_or_nil(atom.isotope), charge: str_or_nil(atom.charge),
+          isotope: digits_or_nil(atom.isotope),
+          atomic_number: digits_or_nil(atom.atomic_number),
+          charge: str_or_nil(atom.charge),
           subscript: digits_or_nil(atom.subscript),
           oxidation_state: str_or_nil(atom.oxidation_state),
           lone_pairs: int_or_nil(atom.lone_pairs),
@@ -359,7 +361,8 @@ module AsciiChem
 
       def atom_from_wire(wire)
         AsciiChem::Model::Atom.new(
-          element: wire.element, isotope: wire.isotope, subscript: wire.subscript,
+          element: wire.element, isotope: wire.isotope,
+          atomic_number: wire.atomic_number, subscript: wire.subscript,
           charge: wire.charge, oxidation_state: wire.oxidation_state,
           lone_pairs: wire.lone_pairs, radical_electrons: wire.radical_electrons,
           ring_closures: wire.ring_closures,

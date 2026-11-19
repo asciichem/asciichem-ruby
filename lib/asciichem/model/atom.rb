@@ -31,8 +31,8 @@ module AsciiChem
         end
       end
 
-      attr_accessor :element, :isotope, :subscript, :superscript,
-                    :charge, :oxidation_state,
+      attr_accessor :element, :isotope, :atomic_number, :subscript,
+                    :superscript, :charge, :oxidation_state,
                     :lone_pairs, :radical_electrons,
                     :ring_closures, :aromatic, :hydrogens,
                     :x2, :y2, :z2, :atom_parity, :chirality,
@@ -55,7 +55,8 @@ module AsciiChem
         Point3.new(x: x_fract, y: y_fract, z: z_fract)
       end
 
-      def initialize(element:, isotope: nil, subscript: nil,
+      def initialize(element:, isotope: nil, atomic_number: nil,
+                     subscript: nil,
                      superscript: nil, charge: nil, oxidation_state: nil,
                      lone_pairs: nil, radical_electrons: nil,
                      ring_closures: nil, aromatic: nil, hydrogens: nil,
@@ -65,6 +66,7 @@ module AsciiChem
                      x_fract: nil, y_fract: nil, z_fract: nil)
         @element = element
         @isotope = isotope
+        @atomic_number = atomic_number
         @subscript = subscript
         @superscript = superscript
         @charge = charge
@@ -87,7 +89,8 @@ module AsciiChem
       end
 
       def value_attributes
-        { element: element, isotope: isotope, subscript: subscript,
+        { element: element, isotope: isotope, atomic_number: atomic_number,
+          subscript: subscript,
           superscript: superscript, charge: charge,
           oxidation_state: oxidation_state,
           lone_pairs: lone_pairs, radical_electrons: radical_electrons,

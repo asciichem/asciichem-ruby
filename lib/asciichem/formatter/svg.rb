@@ -37,6 +37,7 @@ module AsciiChem
       def visit_atom(atom)
         parts = []
         parts << "^#{atom.isotope}" if atom.isotope
+        parts << "_#{atom.atomic_number}" if atom.atomic_number
         parts << atom.element
         parts << "_#{atom.subscript}" if atom.subscript
         if atom.charge

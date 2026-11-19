@@ -35,12 +35,23 @@ module AsciiChem
         end
 
         mass = atom.isotope.to_i
-        return if mass >= z
+        if mass < z
+          diagnostics << error(
+            "Isotope mass #{mass} is less than atomic number #{z} for #{atom.element}",
+            node: atom
+          )
+        end
 
-        diagnostics << error(
-          "Isotope mass #{mass} is less than atomic number #{z} for #{atom.element}",
-          node: atom
-        )
+        # The stated atomic number (^227_90Th's _90) must equal the
+        # element's real Z — the payoff of carrying both numbers.
+        stated = atom.atomic_number&.to_i
+        if stated && stated != z
+          diagnostics << error(
+            "Stated atomic number #{stated} does not match #{atom.element}'s " \
+            "atomic number #{z}",
+            node: atom
+          )
+        end
       end
     end
   end

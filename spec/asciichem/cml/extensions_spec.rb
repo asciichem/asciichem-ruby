@@ -152,7 +152,8 @@ RSpec.describe AsciiChem::Cml::Extensions do
 
     it "covers all aci: extension fields" do
       expect(fields.keys)
-        .to contain_exactly(:oxidation_state, :lone_pairs, :radical_electrons, :ring_closures, :atom_parity)
+        .to contain_exactly(:atomic_number, :oxidation_state, :lone_pairs,
+                            :radical_electrons, :ring_closures, :atom_parity)
     end
 
     it "maps each Ruby attribute to a distinct wire name" do
