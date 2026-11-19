@@ -41,6 +41,21 @@ Metrics/ModuleLength:
   Exclude:
     - "lib/asciichem/cml/extensions.rb"
     - "lib/asciichem/cml/group_extensions.rb"
+    - "lib/asciichem/layout/depiction_placer.rb"
+
+# The depiction placer is one cohesive geometry algorithm (ring
+# polygons, fused-ring fitting, zigzag growth); its trigonometric
+# placement methods are dense by nature and splitting them across
+# helpers would obscure the geometry.
+Metrics/AbcSize:
+  Exclude:
+    - "lib/asciichem/layout/depiction_placer.rb"
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - "lib/asciichem/layout/depiction_placer.rb"
+Metrics/PerceivedComplexity:
+  Exclude:
+    - "lib/asciichem/layout/depiction_placer.rb"
 
 # Short names for chemistry primitives (`el` for element, `iso`
 # for isotope) match the grammar's term set.

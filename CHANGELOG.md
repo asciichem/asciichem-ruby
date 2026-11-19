@@ -3,6 +3,20 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.11.0] - 2026-11-19
+
+### Added
+- **The depiction placer** (asciichem.github.io#125 step one): a
+  chemistry-shaped deterministic 2D layout, available as
+  `Layout.layout(molecule, algorithm: "depiction")`. Rings place as
+  regular polygons; fused rings fit rigidly to their shared atoms
+  (the first ring keeps its geometry); spiro centres orient the new
+  ring away from the placed region; chains grow as ±60° zigzags with
+  collision-avoiding substituent placement. Every bond renders at
+  exactly the standard bond length and the output is deterministic
+  across runs. The default structural-SVG algorithm is unchanged in
+  this release — the placer is opt-in.
+
 ## [1.2.10.0] - 2026-11-19
 
 ### Added
