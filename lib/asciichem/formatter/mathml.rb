@@ -87,7 +87,10 @@ module AsciiChem
         multi.add_child(el("none"))
         multi.add_child(el("none"))
         multi.add_child(@doc.create_element("mprescripts"))
-        multi.add_child(el("none"))
+        # The prescript pair is (left-subscript, left-superscript):
+        # the atomic number sits under the mass number — mhchem's
+        # ^{227}_{90}Th reading.
+        multi.add_child(atom.atomic_number ? mn(atom.atomic_number) : el("none"))
         multi.add_child(mn(atom.isotope))
         multi
       end

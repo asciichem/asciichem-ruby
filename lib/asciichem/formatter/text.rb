@@ -54,6 +54,7 @@ module AsciiChem
         parts = []
         parts << (":" * atom.lone_pairs) if atom.lone_pairs
         parts << "^#{atom.isotope}"        if atom.isotope
+        parts << "_#{atom.atomic_number}"  if atom.atomic_number
         parts << atom.element
         parts << "_#{atom.subscript}"      if atom.subscript
         parts << "^#{atom.superscript}"    if atom.superscript

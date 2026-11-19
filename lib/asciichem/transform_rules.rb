@@ -687,6 +687,7 @@ module AsciiChem
           new(
             hash[:element],
             isotope: hash[:isotope],
+            atomic_number: hash[:atomic_number],
             subscript: hash[:subscript],
             superscript: hash[:superscript],
             lone_pairs: lewis_count(hash[:lone_pairs]),
@@ -731,7 +732,8 @@ module AsciiChem
         end
         private_class_method :ring_closures_string
   
-        def initialize(element, isotope: nil, subscript: nil, superscript: nil,
+        def initialize(element, isotope: nil, atomic_number: nil,
+                       subscript: nil, superscript: nil,
                        lone_pairs: nil, radical_electrons: nil,
                        ring_closures: nil, chirality: nil,
                        x2: nil, y2: nil, z2: nil, atom_parity: nil,
@@ -739,6 +741,7 @@ module AsciiChem
                        x_fract: nil, y_fract: nil, z_fract: nil)
           @element = element
           @isotope = isotope
+          @atomic_number = atomic_number
           @subscript = subscript
           @superscript = superscript
           @lone_pairs = lone_pairs
@@ -762,6 +765,7 @@ module AsciiChem
           Model::Atom.new(
             element: @element.to_s,
             isotope: strip_marker(@isotope),
+            atomic_number: strip_marker(@atomic_number),
             subscript: strip_marker(@subscript, '_'),
             superscript: raw_superscript(charge, oxidation),
             charge: charge,

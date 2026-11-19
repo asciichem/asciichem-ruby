@@ -10,6 +10,7 @@ module AsciiChem
 
       attribute :element, :string
       attribute :isotope, :string
+      attribute :atomic_number, :string
       attribute :charge, :string
       attribute :subscript, :string
       attribute :oxidation_state, :string
@@ -22,6 +23,7 @@ module AsciiChem
       json do
         map "element", to: :element
         map "isotope", to: :isotope
+        map "atomicNumber", to: :atomic_number
         map "charge", to: :charge
         map "subscript", to: :subscript
         map "oxidationState", to: :oxidation_state
