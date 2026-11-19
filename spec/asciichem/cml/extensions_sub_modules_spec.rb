@@ -107,10 +107,11 @@ RSpec.describe AsciiChem::Cml::Extensions::TopLevel do
   end
 
   describe "HANDLERS registry" do
-    it "covers all eight construct classes" do
+    it "covers all nine construct classes" do
       classes = described_class::HANDLERS.map(&:node_class)
-      expect(classes.length).to eq(8)
-      expect(classes).to include(AsciiChem::Model::Crystal,
+      expect(classes.length).to eq(9)
+      expect(classes).to include(AsciiChem::Model::Adduct,
+                                 AsciiChem::Model::Crystal,
                                  AsciiChem::Model::Mechanism)
     end
   end

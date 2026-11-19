@@ -321,6 +321,19 @@ module AsciiChem
         mrow
       end
 
+      def visit_adduct(adduct)
+        mrow = el("mrow")
+        adduct.components.each_with_index do |component, index|
+          if index.positive?
+            dot = el("mo")
+            dot.add_child(@doc.create_text("·"))
+            mrow.add_child(dot)
+          end
+          mrow.add_child(render_node(component))
+        end
+        mrow
+      end
+
       def visit_mechanism(mech)
         mrow = el("mrow")
         mrow.add_child(mi("mechanism"))

@@ -23,7 +23,7 @@ module AsciiChem
     CORE_INGEST_TYPES = %w[
       formula atom molecule group bond identifier name reaction
       reaction-cascade electron-configuration embedded-math text
-      mechanism crystal
+      mechanism crystal adduct
     ].freeze
 
     class << self
@@ -52,6 +52,7 @@ module AsciiChem
         when AsciiChem::Model::EmbeddedMath then math_to_wire(node)
         when AsciiChem::Model::Text then text_to_wire(node)
         when AsciiChem::Model::Mechanism then mechanism_to_wire(node)
+        when AsciiChem::Model::Adduct then adduct_to_wire(node)
         when AsciiChem::Model::Spectrum then spectrum_to_wire(node)
         when AsciiChem::Model::Crystal then crystal_to_wire(node)
         when AsciiChem::Model::ZMatrix then zmatrix_to_wire(node)
@@ -90,6 +91,8 @@ module AsciiChem
           wire.products = hash.fetch('products', []).map { |child| wire_tree_from_hash(child) }
         when 'reaction-cascade'
           wire.steps = hash.fetch('steps', []).map { |child| wire_tree_from_hash(child) }
+        when 'adduct'
+          wire.components = hash.fetch('components', []).map { |child| wire_tree_from_hash(child) }
         when 'mechanism'
           wire.steps = hash.fetch('steps', []).map do |step_hash|
             step = AsciiChem::Wire::MechanismStep.from_json(JSON.generate(step_hash))
@@ -281,6 +284,19 @@ module AsciiChem
       # grammar parses it here. A cascade step has no wire form —
       # MechanismStep.reaction is typed Reaction — and says so instead
       # of silently flattening the chain.
+      def adduct_to_wire(node)
+        AsciiChem::Wire::Adduct.new(
+          type: 'adduct',
+          components: node.components.map { |c| molecule_to_wire(c) }
+        )
+      end
+
+      def adduct_from_wire(wire)
+        AsciiChem::Model::Adduct.new(
+          components: Array(wire.components).map { |c| molecule_from_wire(c) }
+        )
+      end
+
       def mechanism_reaction_to_wire(text)
         node = AsciiChem.parse(text).nodes.first
         case node

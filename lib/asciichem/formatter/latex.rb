@@ -183,6 +183,10 @@ module AsciiChem
         parts.join
       end
 
+      def visit_adduct(adduct)
+        adduct.components.map { |c| render_node(c) }.join("\\cdot ")
+      end
+
       def visit_mechanism(mech)
         parts = ["\\text{mechanism}"]
         return parts.join if mech.steps.empty? && mech.spectators.empty?

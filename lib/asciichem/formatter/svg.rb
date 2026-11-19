@@ -129,6 +129,10 @@ module AsciiChem
         AsciiChem::Formatter.render(:text, zm)
       end
 
+      def visit_adduct(adduct)
+        adduct.components.map { |c| render_node(c) }.join(" · ")
+      end
+
       def visit_mechanism(mech)
         AsciiChem::Formatter.render(:text, mech)
       end

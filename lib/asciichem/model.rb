@@ -16,6 +16,7 @@ module AsciiChem
     autoload :Group, "asciichem/model/group"
     autoload :Identifier, "asciichem/model/identifier"
     autoload :Mechanism, "asciichem/model/mechanism"
+    autoload :Adduct, "asciichem/model/adduct"
     autoload :Molecule, "asciichem/model/molecule"
     autoload :Name, "asciichem/model/name"
     autoload :Node, "asciichem/model/node"

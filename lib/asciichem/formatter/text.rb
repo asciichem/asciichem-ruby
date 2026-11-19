@@ -211,7 +211,11 @@ module AsciiChem
         parts.join
       end
 
-      def visit_mechanism(mech)
+      def visit_adduct(adduct)
+    adduct.components.map { |c| render_node(c) }.join(" . ")
+  end
+
+  def visit_mechanism(mech)
         parts = ["mechanism"]
         unless mech.steps.empty? && mech.spectators.empty?
           lines = mech.steps.map { |s| "#{s.label}: #{mechanism_step_text(s)}" }

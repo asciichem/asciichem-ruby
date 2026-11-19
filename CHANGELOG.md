@@ -3,6 +3,22 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.10.0] - 2026-11-19
+
+### Added
+- **The adduct** (asciichem-ruby#202, grammar v0.9.0): mhchem's
+  middle-dot connective at the formula level. `CuSO4 . 5H2O` parses
+  as one n-ary `Adduct` node (the components map one-to-one onto the
+  InChI multi-component layers; each coefficient carries its
+  multiplicity). The ASCII spelling is the period with whitespace on
+  both sides; the literal `·` is the mhchem alias; the UNspaced
+  period stays radical-suffix territory — all three readings resolve
+  by construction. Renderers: canonical text ` . `, MathML `·`,
+  HTML `&middot;`, LaTeX `\cdot`, linear SVG `·`. Wire: the
+  `adduct` node (model v0.9.0, in-train). CML: the aci: text
+  channel (`<aci:adduct>`), re-parsed on read. Rides the
+  grammar-v0.9.0 artifact.
+
 ## [1.2.9.0] - 2026-11-19
 
 ### Added

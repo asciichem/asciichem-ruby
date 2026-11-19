@@ -37,6 +37,16 @@ module AsciiChem
       end
     end
 
+    class Adduct < Base
+      wire_type "adduct"
+
+      attribute :components, Molecule, collection: true
+      json do
+        map "type", to: :type
+        map "components", to: :components
+      end
+    end
+
     class SpectrumPeak < Lutaml::Model::Serializable
       attribute :position, :string
       attribute :intensity, :string

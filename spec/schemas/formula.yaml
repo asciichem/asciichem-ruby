@@ -155,5 +155,14 @@ properties:
                                   then:
                                     "$ref": zmatrix.yaml
                                   else:
-                                    "$ref": calculation.yaml
+                                    if:
+                                      properties:
+                                        type:
+                                          const: adduct
+                                      required:
+                                      - type
+                                    then:
+                                      "$ref": adduct.yaml
+                                    else:
+                                        "$ref": calculation.yaml
 additionalProperties: false

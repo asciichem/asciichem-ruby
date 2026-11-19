@@ -57,6 +57,10 @@ module AsciiChem
 
         HANDLERS = [
           Handler.text_round_trip(
+            node_class: AsciiChem::Model::Adduct,
+            element_name: 'adduct'
+          ),
+          Handler.text_round_trip(
             node_class: AsciiChem::Model::ElectronConfiguration,
             element_name: 'electronConfiguration'
           ),
