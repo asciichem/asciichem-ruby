@@ -40,6 +40,7 @@ module AsciiChem
         @parent = nil
         @pending_kind = nil
         @pending_direction = nil
+        @pending_shape = nil
 
         chain
 
@@ -50,13 +51,13 @@ module AsciiChem
 
         edges = []
         @adjacency.each_with_index do |neighbors, index|
-          neighbors.each do |to, (kind, ring)|
+          neighbors.each do |to, (kind, ring, shape)|
             next unless to > index
 
             edges << Structure::Graph::Edge.new(
               from: index, to: to, kind: kind,
               direction: @edge_directions[[index, to]],
-              ring: ring
+              ring: ring, shape: shape
             )
           end
         end
@@ -100,11 +101,16 @@ module AsciiChem
         saved_direction = @pending_direction
         @pending_kind = kind
         @pending_direction = direction
+        # The branch's FIRST edge is branch-shaped; the tree's inner
+        # chain stays chain-shaped (the linearizer groups only the
+        # branch edge's subtree).
+        @pending_shape = :branch
         chain
         expect(')')
         @parent = saved_parent
         @pending_kind = saved_pending
         @pending_direction = saved_direction
+        @pending_shape = nil
       end
 
       def ringbond(kind, direction = nil)
@@ -135,18 +141,19 @@ module AsciiChem
         @atoms << atom
         @adjacency[index] = {}
         if @parent
-          add_edge(@parent, index, @pending_kind)
+          add_edge(@parent, index, @pending_kind, shape: @pending_shape || :chain)
           @edge_directions[[@parent, index].minmax] = @pending_direction if @pending_direction
         end
         @parent = index
         @pending_kind = nil
         @pending_direction = nil
+        @pending_shape = nil
       end
 
-      def add_edge(from, to, explicit, ring: false)
+      def add_edge(from, to, explicit, ring: false, shape: :chain)
         kind = explicit || default_kind(from, to)
-        @adjacency[from][to] = [kind, ring]
-        @adjacency[to][from] = [kind, ring]
+        @adjacency[from][to] = [kind, ring, shape]
+        @adjacency[to][from] = [kind, ring, shape]
       end
 
       def default_kind(from, to)

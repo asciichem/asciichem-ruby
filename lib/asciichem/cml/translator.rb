@@ -51,12 +51,24 @@ module AsciiChem
           ensure_schema_registered!
           extracted = extract_all(xml)
           wire_doc = Chemicalml::Cml::Document.from_xml(extracted[:cleaned_xml])
-          formula = AsciiChem::ModelAdapter.from_canonical(wire_doc)
+          formula = AsciiChem::ModelAdapter.from_canonical(
+            wire_doc,
+            ring_closures_by_atom: ring_closures_from(extracted)
+          )
           restore_all(formula, wire_doc, extracted)
           formula
         end
 
         private
+
+        # The atom ids whose aci:ringClosures carry a digit string —
+        # the rebuilder's ring-bond transport signal.
+        def ring_closures_from(extracted)
+          extracted[:atom_extensions].each_with_object({}) do |(atom_id, entry), memo|
+            digits = entry[:ring_closures]
+            memo[atom_id] = digits if digits
+          end
+        end
 
         def extract_all(xml)
           opaque_list, cleaned_xml = OpaqueExtensions.extract(xml)
