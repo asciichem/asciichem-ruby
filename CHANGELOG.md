@@ -3,15 +3,15 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [1.2.12.0] - 2026-11-19
+## [1.2.13.0] - 2026-11-20
 
 ### Fixed
 - **The stereo parity loop closes** (asciichem-ruby#200, the #188
-  branch projection): the SMILES reader marks every edge's shape at
-  the parse site and the linearizer partitions by the mark — branch
-  subtrees emit as parenthesised groups at their root (the aspirin
-  ester wires correctly), atoms keep creation order, and shape-less
-  producers (molfile, CML) ride the flat rule. With the
+  branch projection, PR #208): the SMILES reader marks every edge's
+  shape at the parse site and the linearizer partitions by the mark —
+  branch subtrees emit as parenthesised groups at their root (the
+  aspirin ester wires correctly), atoms keep creation order, and
+  shape-less producers (molfile, CML) ride the flat rule. With the
   branch-grouped model the writer's parity inversion becomes the
   identity, so the verbatim TH1/TH2 store closes
   parse → write → parse with no compensation pass. The CML restore
@@ -20,7 +20,16 @@ This project follows [Semantic Versioning](https://semver.org/).
   checkpoint failures closed: the store contract, alanine/cyclic
   round-trip stability, enantiomer distinctness, the molfile parity
   field, the group attachment bond, the aspirin/para-quinone
-  perception rows, and the PubChem resolver chirality.
+  perception rows, and the PubChem resolver chirality. (The 1.2.12.0
+  release carried this entry but shipped BEFORE the fix's merge —
+  that gem is a version ride only; this release carries the code.)
+
+## [1.2.12.0] - 2026-11-19
+
+### Notes
+- Version ride released ahead of its described fix (#208 merged
+  after this gem shipped); the substance of the entry lives in
+  1.2.13.0.
 
 ## [1.2.11.0] - 2026-11-19
 
