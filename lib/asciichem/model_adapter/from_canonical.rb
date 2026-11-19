@@ -29,8 +29,17 @@ module AsciiChem
     # math) round-trip when they ride in the canonical Atom's
     # lone_pairs / radical_electrons fields.
     class FromCanonical
-      def initialize(document)
+      # `ring_closures_by_atom` maps canonical atom id → digit string
+      # (from the aci:ringClosures extension). The rebuilder uses it
+      # to tell digit-paired ring bonds from positional continuation
+      # bonds — a bond between atoms sharing a digit is ring
+      # transport; every other wire bond renders as a token, even
+      # when its endpoints are non-adjacent in the atom array (the
+      # branch-projection shape puts continuation bonds across group
+      # gaps).
+      def initialize(document, ring_closures_by_atom: {})
         @document = document
+        @ring_closures_by_atom = ring_closures_by_atom
       end
 
       def build
@@ -167,7 +176,8 @@ module AsciiChem
       end
 
       def molecule_from_canonical(molecule)
-        builder = MoleculeRebuilder.new(molecule)
+        builder = MoleculeRebuilder.new(molecule,
+                                        ring_closures_by_atom: @ring_closures_by_atom)
         AsciiChem::Model::Molecule.new(
           nodes: builder.nodes,
           coefficient: molecule.count,
@@ -307,8 +317,9 @@ module AsciiChem
       class MoleculeRebuilder
         attr_reader :nodes
 
-        def initialize(molecule)
+        def initialize(molecule, ring_closures_by_atom: {})
           @molecule = molecule
+          @ring_closures_by_atom = ring_closures_by_atom
           @position_by_atom_id = {}
           wire_atoms(molecule).each_with_index do |atom, idx|
             @position_by_atom_id[atom.id] = idx
@@ -402,10 +413,20 @@ module AsciiChem
         # adjacent — its endpoints span a gap. Such bonds are
         # represented by ring_closures digits, not positional markers.
         def ring_bond?(bond)
-          positions = bond.atom_refs2.to_s.split.map { |id| @position_by_atom_id[id] }.compact
-          return false if positions.length < 2
+          ids = bond.atom_refs2.to_s.split
+          return false unless ids.length == 2
 
-          positions.max - positions.min > 1
+          # Digit pairing is the ring-transport signal (aci:ringClosures
+          # on both endpoints, restored onto the atoms later). Every
+          # other bond renders positionally — including continuation
+          # bonds whose endpoints sit across a group gap in the
+          # branch-projection shape. An extension-less wire's closing
+          # bonds land positionally too; the linear bind consumes the
+          # redundant token, so the behaviour matches the old
+          # gap-heuristic without its false positives.
+          first = @ring_closures_by_atom[ids[0]].to_s.chars
+          second = @ring_closures_by_atom[ids[1]].to_s.chars
+          !(first & second).empty?
         end
 
         def first_position(bond)

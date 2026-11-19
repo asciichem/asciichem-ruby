@@ -53,58 +53,20 @@ module AsciiChem
           result << atom
           @branch_at[index].each { |branch| result << branch_group(branch) }
         end
-        compensate_chirality(result)
         result
       end
 
       private
-
-      # The branch-first emission permutes each chiral atom's ligand
-      # order (branch trees read before continuations), and the SMILES
-      # parity mark is defined over that order — flip the mark when
-      # the reorder is an odd permutation, so the model carries the
-      # SAME enantiomer it parsed.
-      def compensate_chirality(nodes)
-        position = {}
-        walk = lambda do |list|
-          list.each do |node|
-            case node
-            when AsciiChem::Model::Atom
-              position[node.object_id] = position.length
-            when AsciiChem::Model::Group, AsciiChem::Model::Molecule
-              walk.call(node.nodes)
-            end
-          end
-        end
-        walk.call(nodes)
-
-        neighbours = Hash.new { |hash, key| hash[key] = [] }
-        @edges.each do |edge|
-          neighbours[edge.from] << edge.to
-          neighbours[edge.to] << edge.from
-        end
-        @atoms.each_with_index do |atom, index|
-          next unless %w[TH1 TH2].include?(atom.chirality)
-
-          old_order = neighbours[index].sort
-          new_order = old_order.sort_by { |ligand| position[@atoms[ligand].object_id] }
-          inversions = 0
-          old_order.each_with_index do |value, i|
-            ((i + 1)...old_order.length).each do |j|
-              inversions += 1 if new_order.index(value) > new_order.index(old_order[j])
-            end
-          end
-          next if inversions.even?
-
-          atom.chirality = atom.chirality == 'TH1' ? 'TH2' : 'TH1'
-        end
-      end
 
       # Partition the edges by the parser's own shape marks — tokens
       # and digits first (so the chain map is complete), then the
       # branch trees. A branch edge inside another branch's tree emits
       # as a NESTED group (the tree emission walks it through
       # @children); only top-level branches render at the flat stream.
+      # Producers without shape marks (molfile, CML) ride the flat
+      # rule: consecutive indices are chain tokens, every other
+      # non-ring edge a digit pair — the pre-branch-projection shape
+      # those producers were recorded against.
       def partition_edges
         branch_edges = []
         @edges.each do |edge|
@@ -113,19 +75,16 @@ module AsciiChem
             digit = allocate_digit(first, last)
             @digits_for[first] += digit
             @digits_for[last] += digit
-          elsif edge.to - edge.from == 1
+          elsif edge.shape == :branch
+            branch_edges << edge
+          elsif edge.shape == :chain || (edge.shape.nil? && (edge.to - edge.from).abs == 1)
             @token_before[edge.to] = edge
             @children[edge.from] << edge
-          elsif @atoms[edge.from].aromatic && @atoms[edge.to].aromatic
-            # A span-jump inside an aromatic ring system (the
-            # continuation after a branch) stays on its digit pair:
-            # grouping it would split the ring's aromatic component
-            # and the Kekulé projection would lose the ring.
-            digit = allocate_digit(edge.from, edge.to)
-            @digits_for[edge.from] += digit
-            @digits_for[edge.to] += digit
           else
-            branch_edges << edge
+            first, last = [edge.from, edge.to].minmax
+            digit = allocate_digit(first, last)
+            @digits_for[first] += digit
+            @digits_for[last] += digit
           end
         end
         branch_edges.each do |edge|

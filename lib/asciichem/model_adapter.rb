@@ -52,8 +52,8 @@ module AsciiChem
       )
     end
 
-    def self.from_canonical(document)
-      FromCanonical.new(document).build
+    def self.from_canonical(document, ring_closures_by_atom: {})
+      FromCanonical.new(document, ring_closures_by_atom: ring_closures_by_atom).build
     end
   end
 end

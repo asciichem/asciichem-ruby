@@ -8,8 +8,11 @@ module AsciiChem
     module Graph
       # `bond` is the source Model::Bond token (nil for ring-closure
       # edges — digits carry no kind), so projections can map an
-      # assignment back to the node that renders it.
-      Edge = Struct.new(:from, :to, :kind, :direction, :bond, :ring, keyword_init: true)
+      # assignment back to the node that renders it. `shape` is the
+      # SMILES reader's structural mark (:chain/:branch/:ring) — nil
+      # for edges derived from an already-linearized model.
+      Edge = Struct.new(:from, :to, :kind, :direction, :bond, :ring, :shape,
+                        keyword_init: true)
 
       class << self
         # Returns [atoms, edges] where atoms is the atom array in walk
