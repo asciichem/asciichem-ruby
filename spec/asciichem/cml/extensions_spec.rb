@@ -172,6 +172,7 @@ RSpec.describe AsciiChem::Cml::Extensions do
     it "covers all top-level constructs including beyond-formulas" do
       classes = handlers.map(&:node_class)
       expect(classes).to contain_exactly(
+        AsciiChem::Model::Adduct,
         AsciiChem::Model::ElectronConfiguration,
         AsciiChem::Model::EmbeddedMath,
         AsciiChem::Model::Text,

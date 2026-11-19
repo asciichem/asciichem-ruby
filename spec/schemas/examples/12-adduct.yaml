@@ -1,0 +1,24 @@
+# 12 - The adduct (grammar v0.9.0)
+
+# CuSO4 . 5H2O: the sulfate with a 5-multiplicity water adduct.
+# N-ary components; each component's coefficient carries its
+# multiplicity.
+type: adduct
+components:
+  - type: molecule
+    nodes:
+      - type: atom
+        element: Cu
+      - type: atom
+        element: S
+      - type: atom
+        element: O
+        subscript: "4"
+  - type: molecule
+    coefficient: "5"
+    nodes:
+      - type: atom
+        element: H
+        subscript: "2"
+      - type: atom
+        element: O

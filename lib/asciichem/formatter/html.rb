@@ -170,6 +170,10 @@ module AsciiChem
         parts.join
       end
 
+      def visit_adduct(adduct)
+        adduct.components.map { |c| render_node(c) }.join("&middot;")
+      end
+
       def visit_mechanism(mech)
         parts = [%(<span class="asciichem-mechanism">)]
         return parts.join + '</span>' if mech.steps.empty? && mech.spectators.empty?

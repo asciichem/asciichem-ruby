@@ -20,6 +20,13 @@ properties:
     type: string
     pattern: "^\\d+$"
     description: Isotope mass number bound to this atom ("14" in ^14C).
+  atomicNumber:
+    type: string
+    pattern: "^\\d+$"
+    description: Atomic number bound to this atom ("90" in ^227_90Th) -
+      mhchem's left-subscript isotope component. The linter
+      cross-checks it against the element's real Z. Additive per the
+      v1 additive rule.
   charge:
     type: string
     description: Charge annotation (e.g. "2+", "-").

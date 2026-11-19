@@ -1,0 +1,8 @@
+# 11 - Atom with the atomic-number prefix (grammar v0.8.0)
+
+# ^227_90Th: thorium, mass number 227, atomic number 90 - mhchem's
+# left-subscript isotope component.
+type: atom
+element: Th
+isotope: "227"
+atomicNumber: "90"

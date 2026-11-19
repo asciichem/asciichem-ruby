@@ -139,6 +139,19 @@ module AsciiChem
                             state: Model::Molecule::STATES.fetch(state))
       end
   
+      # -- adducts ---------------------------------------------------------
+
+      # The middle-dot connective (grammar v0.9.0): the adduct wrapper
+      # carries the lead molecule plus each dot-separated component;
+      # the components' molecules arrive built (parslet bottom-up),
+      # their dot capture is semantics-free.
+      rule(molecule: simple(:mol), components: subtree(:comps)) do
+        # The adduct wrapper pops in the tree adapter (WRAPPERS); the
+        # lead molecule arrives built, the components' molecules too.
+        parts = [mol] + Array(comps).map { |c| c.is_a?(Hash) ? c[:molecule] : c }
+        Model::Adduct.new(components: parts)
+      end
+
       # -- annotated molecules -------------------------------------------
       #
       # An annotated molecule wraps a built Model::Molecule with

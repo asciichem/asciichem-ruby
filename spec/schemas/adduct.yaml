@@ -1,0 +1,21 @@
+%YAML 1.2
+---
+$id: "https://github.com/asciichem/asciichem-model/v1/adduct"
+title: AsciiChem Adduct node
+description: |
+  The middle-dot connective between molecules at the formula level
+  (mhchem's A·B — CuSO4 . 5H2O hydrates). N-ary: the components map
+  one-to-one onto the InChI multi-component layers; each component's
+  coefficient carries its multiplicity.
+type: object
+required: [type, components]
+properties:
+  type:
+    const: adduct
+  components:
+    type: array
+    description: The dot-separated molecules, in authored order.
+    minItems: 2
+    items:
+      "$ref": molecule.yaml
+additionalProperties: false

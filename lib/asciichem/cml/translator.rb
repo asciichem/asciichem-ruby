@@ -39,6 +39,7 @@ module AsciiChem
         # holds. Native wire remains readable on parse for
         # backwards-compat with older files (FromCanonical).
         TEXT_CHANNEL = [
+          AsciiChem::Model::Adduct,
           AsciiChem::Model::Crystal,
           AsciiChem::Model::Spectrum,
           AsciiChem::Model::ZMatrix,

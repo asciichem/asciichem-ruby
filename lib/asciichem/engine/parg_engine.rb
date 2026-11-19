@@ -33,7 +33,7 @@ module AsciiChem
     class PargEngine
       # Version the vendored artifact was built from; the load fails
       # loudly on drift so the engine never runs a stale grammar.
-      PARG_GRAMMAR_VERSION = '0.8.0'
+      PARG_GRAMMAR_VERSION = '0.9.0'
 
       ARTIFACT_PATH = File.expand_path('parg/asciichem.json', __dir__)
 
@@ -69,7 +69,7 @@ module AsciiChem
       module TreeAdapter
         WRAPPERS = %i[
           molecule reaction annotated_molecule segment plus_term
-          annotation_item formula_tail condition embedded_math
+          annotation_item formula_tail condition embedded_math adduct
         ].freeze
 
         # Sequence captures whose merged array form collapses to the
