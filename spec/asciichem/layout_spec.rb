@@ -81,4 +81,31 @@ RSpec.describe AsciiChem::Layout do
       expect(result).to be_empty
     end
   end
+
+  describe "authored coordinates (the depiction-hint override)" do
+    it "overrides the computed layout when every atom carries x2/y2" do
+      molecule = AsciiChem.parse("H-O-H").nodes.first
+      atoms = molecule.nodes.grep(AsciiChem::Model::Atom)
+      atoms.each_with_index do |atom, index|
+        atom.x2 = 10.0 + index * 7
+        atom.y2 = 20.0 - index * 3
+      end
+      result = described_class.layout(molecule)
+      # The pre-positioned rule speaks the authored geometry verbatim
+      # (the CML x2/y2 round-trip posture): no placer ran.
+      expect(result.atoms.map { |a| [a.x, a.y] }).to eq(
+        [[10.0, 20.0], [17.0, 17.0], [24.0, 14.0]]
+      )
+    end
+
+    it "layouts normally when only some atoms carry coordinates" do
+      molecule = AsciiChem.parse("H-O-H").nodes.first
+      first = molecule.nodes.grep(AsciiChem::Model::Atom).first
+      first.x2 = 10.0
+      first.y2 = 20.0
+      result = described_class.layout(molecule)
+      # The partial authoring is ignored: the layout computed.
+      expect(result.atoms.first.x).not_to eq(10.0)
+    end
+  end
 end
