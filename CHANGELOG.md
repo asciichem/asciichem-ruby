@@ -3,6 +3,18 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.14.0] - 2026-11-21
+
+### Added
+
+- Authored-coordinate override spec: the pre-positioned rule (every
+  atom carrying x2/y2 speaks its own geometry verbatim — the CML
+  round-trip posture; partial authoring computes as before) has spec
+  coverage, pinning the behavior the TypeScript and Python ports
+  shipped (asciichem.github.io#125 step 3).
+- The corpus pin rides asciichem-tests v0.20.0 (the smiles-family
+  recorded-text column).
+
 ## [1.2.13.0] - 2026-11-20
 
 ### Fixed
