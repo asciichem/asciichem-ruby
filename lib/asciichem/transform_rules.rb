@@ -853,6 +853,8 @@ module AsciiChem
       # conditions.
       class ReactionBuilder
         ARROW_KINDS = {
+          '<=>+' => :donation,
+          '<=>-' => :removal,
           '<=>' => :equilibrium,
           '<->' => :resonance,
           '->' => :forward,

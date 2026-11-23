@@ -99,6 +99,40 @@ RSpec.describe AsciiChem::Parser do
       end
     end
 
+    context "with the donation arrows" do
+      # mhchem's `<=>+`/`<=>-`: the equilibrium carrying an electron-pair
+      # donation/removal marker. The mis-parse hazard this closes: the
+      # minus form used to re-tokenize as an equilibrium arrow plus a
+      # separate fragment — a parse succeeding for something the author
+      # did not write (asciichem-ruby#214).
+      it "parses the donation form and round-trips verbatim" do
+        reaction = AsciiChem.parse("A <=>+ B").nodes.first
+        expect(reaction.arrow).to eq(:donation)
+        expect(AsciiChem.parse("A <=>+ B").to_text).to eq("A <=>+ B")
+      end
+
+      it "parses the removal form and round-trips verbatim" do
+        reaction = AsciiChem.parse("A <=>- B").nodes.first
+        expect(reaction.arrow).to eq(:removal)
+        expect(AsciiChem.parse("A <=>- B").to_text).to eq("A <=>- B")
+      end
+
+      it "carries conditions after the donation marker" do
+        reaction = AsciiChem.parse("A <=>+[Fe] B").nodes.first
+        expect(reaction.arrow).to eq(:donation)
+        expect(reaction.conditions.above).to eq("Fe")
+      end
+
+      it "reads every ARROWS registry kind back from its ascii spelling" do
+        AsciiChem::Model::Reaction::ARROWS.each do |kind, attrs|
+          source = "A #{attrs[:ascii]} B"
+          reaction = AsciiChem.parse(source).nodes.first
+          expect(reaction.arrow).to eq(kind)
+          expect(AsciiChem.parse(source).to_text).to eq(source)
+        end
+      end
+    end
+
     context "with whitespace-only input" do
       let(:source) { "   " }
 

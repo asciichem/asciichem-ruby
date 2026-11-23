@@ -52,6 +52,8 @@ module AsciiChem
         forward:     { ascii: '->',   mathml_entity: '→', wire: 'forward' },
         reverse:     { ascii: '<-',   mathml_entity: '←', wire: 'reverse' },
         equilibrium: { ascii: '<=>',  mathml_entity: '⇌', wire: 'equilibrium' },
+        donation:    { ascii: '<=>+', mathml_entity: '⇌⁺', wire: 'donation' },
+        removal:     { ascii: '<=>-', mathml_entity: '⇌⁻', wire: 'removal' },
         resonance:   { ascii: '<->',  mathml_entity: '↔', wire: 'resonance' }
       }.freeze
       ARROW_BY_WIRE = ARROWS.to_h { |kind, attrs| [attrs[:wire], kind] }.freeze

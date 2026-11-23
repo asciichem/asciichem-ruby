@@ -3,6 +3,18 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.15.0] - 2026-11-23
+
+### Added
+
+- The donation arrows `<=>+` (donation) / `<=>-` (removal) — mhchem's
+  equilibrium electron-marker forms — parse as first-class arrow kinds
+  and round-trip verbatim in every formatter. Closes the mis-parse
+  hazard (`A <=>- B` previously re-tokenized as an equilibrium arrow
+  plus a separate fragment) and the donation-arrow parity gap
+  (asciichem-ruby#214). Grammar contract v0.10.0 re-vendored; the
+  model's reaction arrow enum carries the kinds (model v0.10.0).
+
 ## [1.2.14.0] - 2026-11-21
 
 ### Added

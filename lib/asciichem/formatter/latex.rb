@@ -251,6 +251,8 @@ module AsciiChem
         when :forward     then "->"
         when :reverse     then "<-"
         when :equilibrium then "<=>"
+        when :donation    then "<=>+"
+        when :removal     then "<=>-"
         when :resonance   then "<->"
         else "->"
         end
