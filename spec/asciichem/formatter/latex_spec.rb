@@ -39,3 +39,10 @@ RSpec.describe AsciiChem::Formatter::Latex do
     expect(render("H-O-H")).to eq("\\ce{H-O-H}")
   end
 end
+
+RSpec.describe "donation-arrow LaTeX" do
+  it "spells the decorated arrows verbatim" do
+    expect(AsciiChem.parse("A <=>+ B").to_latex).to include("<=>+")
+    expect(AsciiChem.parse("A <=>- B").to_latex).to include("<=>-")
+  end
+end

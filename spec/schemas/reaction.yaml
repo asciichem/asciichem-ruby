@@ -20,8 +20,10 @@ properties:
       $ref: "molecule.yaml"
   arrow:
     default: forward
-    enum: [forward, reverse, equilibrium, resonance]
-    description: forward (->), reverse (<-), equilibrium (<=>), resonance (<->).
+    enum: [forward, reverse, equilibrium, resonance, donation, removal]
+    description: forward (->), reverse (<-), equilibrium (<=>), resonance (<->),
+      donation (<=>+ — the equilibrium carrying an electron-pair donation),
+      removal (<=>- — the equilibrium carrying an electron-pair removal).
   conditions:
     type: object
     description: Text carried above/below the arrow.
