@@ -66,6 +66,17 @@ properties:
     description: The molecule-level state mark (grammar v0.7.0) —
       precipitate (`AgCl v`, typeset as the down arrow) or gas
       (`AgCl ^`, the up arrow). Additive per the v1 additive rule.
+  phase:
+    type: string
+    enum:
+    - aqueous
+    - liquid
+    - solid
+    - gas
+    description: The molecule-level phase (grammar v0.11.0) — the tight
+      parenthesised mhchem spelling — aqueous (`NaCl(aq)`), liquid
+      (`H_2O(l)`), solid (`Fe(s)`), gas (`CO_2(g)`). Collision-free by
+      case against the group reading. Additive per the v1 additive rule.
   identifiers:
     type: array
     description: Substance identifiers attached to this molecule.

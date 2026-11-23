@@ -139,6 +139,81 @@ module AsciiChem
                             state: Model::Molecule::STATES.fetch(state))
       end
   
+
+      # The molecule-level phase (grammar v0.11.0): `NaCl(aq)` — the
+      # tight parenthesised spelling maps through PHASES to the
+      # semantic phase the model carries.
+      rule(stereo: simple(:letter),
+           coefficient: subtree(:coef),
+           units: subtree(:units),
+           phase: simple(:phase)) do
+        Model::Molecule.new(
+          coefficient: CoefficientNormaliser.new(coef).to_s,
+          nodes: Array(units),
+          stereo: StereoNormaliser.normalise(letter),
+          phase: Model::Molecule::PHASES.fetch(phase)
+        )
+      end
+
+      rule(stereo: simple(:letter), units: subtree(:units), phase: simple(:phase)) do
+        Model::Molecule.new(
+          nodes: Array(units),
+          stereo: StereoNormaliser.normalise(letter),
+          phase: Model::Molecule::PHASES.fetch(phase)
+        )
+      end
+
+      rule(coefficient: subtree(:coef), units: subtree(:units), phase: simple(:phase)) do
+        Model::Molecule.new(
+          coefficient: CoefficientNormaliser.new(coef).to_s,
+          nodes: Array(units),
+          phase: Model::Molecule::PHASES.fetch(phase)
+        )
+      end
+
+      rule(units: subtree(:units), phase: simple(:phase)) do
+        Model::Molecule.new(nodes: Array(units),
+                            phase: Model::Molecule::PHASES.fetch(phase))
+      end
+
+      rule(stereo: simple(:letter),
+           coefficient: subtree(:coef),
+           units: subtree(:units),
+           phase: simple(:phase),
+           state: simple(:state)) do
+        Model::Molecule.new(
+          coefficient: CoefficientNormaliser.new(coef).to_s,
+          nodes: Array(units),
+          stereo: StereoNormaliser.normalise(letter),
+          phase: Model::Molecule::PHASES.fetch(phase),
+          state: Model::Molecule::STATES.fetch(state)
+        )
+      end
+
+      rule(stereo: simple(:letter), units: subtree(:units), phase: simple(:phase), state: simple(:state)) do
+        Model::Molecule.new(
+          nodes: Array(units),
+          stereo: StereoNormaliser.normalise(letter),
+          phase: Model::Molecule::PHASES.fetch(phase),
+          state: Model::Molecule::STATES.fetch(state)
+        )
+      end
+
+      rule(coefficient: subtree(:coef), units: subtree(:units), phase: simple(:phase), state: simple(:state)) do
+        Model::Molecule.new(
+          coefficient: CoefficientNormaliser.new(coef).to_s,
+          nodes: Array(units),
+          phase: Model::Molecule::PHASES.fetch(phase),
+          state: Model::Molecule::STATES.fetch(state)
+        )
+      end
+
+      rule(units: subtree(:units), phase: simple(:phase), state: simple(:state)) do
+        Model::Molecule.new(nodes: Array(units),
+                            phase: Model::Molecule::PHASES.fetch(phase),
+                            state: Model::Molecule::STATES.fetch(state))
+      end
+
       # -- adducts ---------------------------------------------------------
 
       # The middle-dot connective (grammar v0.9.0): the adduct wrapper

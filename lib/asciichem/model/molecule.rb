@@ -50,16 +50,38 @@ module AsciiChem
         gas: "^"
       }.freeze
 
-      attr_accessor :coefficient, :nodes, :stereo, :state, :names, :identifiers,
+      # The molecule-level phase (mhchem's tight parenthesised form,
+      # grammar v0.11.0): `NaCl(aq)`, `H_2O(l)`, `Fe(s)`, `CO_2(g)`.
+      # Lowercase-only in the grammar so the group reading — element
+      # symbols are capitalised — can never collide (`Fe(s)` solid
+      # iron, `Fe(S)` a sulfur group). The model carries the SEMANTIC
+      # phase; the renderers map back through PHASE_SPELLINGS so text
+      # round-trips to the authored form.
+      PHASES = {
+        "aq" => :aqueous,
+        "l" => :liquid,
+        "s" => :solid,
+        "g" => :gas
+      }.freeze
+
+      PHASE_SPELLINGS = {
+        aqueous: "(aq)",
+        liquid: "(l)",
+        solid: "(s)",
+        gas: "(g)"
+      }.freeze
+
+      attr_accessor :coefficient, :nodes, :stereo, :state, :phase, :names, :identifiers,
                     :title, :formulas, :properties, :labels, :metadata
 
-      def initialize(nodes:, coefficient: nil, stereo: nil, state: nil,
+      def initialize(nodes:, coefficient: nil, stereo: nil, state: nil, phase: nil,
                      names: [], identifiers: [], title: nil,
                      formulas: [], properties: [], labels: [], metadata: [])
         @nodes = nodes
         @coefficient = coefficient
         @stereo = stereo
         @state = state
+        @phase = phase
         @names = names
         @identifiers = identifiers
         @title = title
@@ -71,7 +93,7 @@ module AsciiChem
 
       def value_attributes
         { nodes: nodes, coefficient: coefficient, stereo: stereo,
-          state: state, names: names, identifiers: identifiers,
+          state: state, phase: phase, names: names, identifiers: identifiers,
           title: title, formulas: formulas, properties: properties,
           labels: labels, metadata: metadata }
       end

@@ -3,6 +3,20 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.16.0] - 2026-11-23
+
+### Added
+
+- The molecule-level phase — mhchem's tight parenthesised spellings
+  `(aq)` / `(l)` / `(s)` / `(g)` — parse as first-class molecule
+  state (`NaCl(aq)`, `Fe(s)`), round-trip verbatim in every
+  formatter, ride the wire form, and carry through CML via the new
+  `aci:phase` extension. Collision-free by case: `Fe(s)` is solid
+  iron while `Fe(S)` stays a sulfur group; a spaced phase
+  (`AgCl (aq)`) rejects. Closes the phase-states half of
+  asciichem-ruby#214. Grammar contract v0.11.0 re-vendored; the
+  model's molecule schema carries the phase (model v0.11.0).
+
 ## [1.2.15.0] - 2026-11-23
 
 ### Added

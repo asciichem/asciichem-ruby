@@ -155,6 +155,7 @@ module AsciiChem
           coefficient: node.coefficient,
           stereo: stereo_to_wire(node.stereo),
           state: node.state&.to_s,
+          phase: node.phase&.to_s,
           identifiers: node.identifiers.map { |i| identifier_to_wire(i) }
         )
       end
@@ -393,6 +394,7 @@ module AsciiChem
           coefficient: wire.coefficient,
           stereo: stereo_from_wire(wire.stereo),
           state: wire.state&.to_sym,
+          phase: wire.phase&.to_sym,
           identifiers: Array(wire.identifiers).map { |i| identifier_from_wire(i) }
         )
       end
