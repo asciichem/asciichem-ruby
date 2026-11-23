@@ -45,6 +45,8 @@ module AsciiChem
         end
         mrow.add_child(mn(molecule.coefficient)) if molecule.coefficient
         molecule.nodes.each { |n| mrow.add_child(render_node(n)) }
+        # mhchem typesets the phase as upright text.
+        mrow.add_child(mtext(Model::Molecule::PHASE_SPELLINGS.fetch(molecule.phase))) if molecule.phase
         mrow.add_child(state_mark(molecule)) if molecule.state
         mrow
       end

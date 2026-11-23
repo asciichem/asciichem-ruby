@@ -69,12 +69,14 @@ module AsciiChem
       attribute :coefficient, :string
       attribute :stereo, :string
       attribute :state, :string
+      attribute :phase, :string
       attribute :identifiers, Identifier, collection: true
       json do
         map "nodes", to: :nodes
         map "coefficient", to: :coefficient
         map "stereo", to: :stereo
         map "state", to: :state
+        map "phase", to: :phase
         map "identifiers", to: :identifiers
       end
     end

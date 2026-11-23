@@ -28,7 +28,7 @@ module AsciiChem
         body = molecule.nodes.map { |n| render_node(n) }.join
         @kekule = previous
         annotations = molecule_annotations(molecule)
-        "#{stereo}#{prefix}#{body}#{state_mark(molecule)}#{annotations}"
+        "#{stereo}#{prefix}#{body}#{phase_mark(molecule)}#{state_mark(molecule)}#{annotations}"
       end
 
       # The authored phase mark, whitespace-separated: `AgCl v` /
@@ -36,6 +36,13 @@ module AsciiChem
       # grammar reads, never the typeset arrow.
       def state_mark(molecule)
         molecule.state ? " #{Model::Molecule::GLYPHS.fetch(molecule.state)}" : ""
+      end
+
+      # The authored phase, tight to the units (the grammar's mhchem
+      # form): `NaCl(aq)`. The round-trip contract renders the
+      # spelling the grammar reads.
+      def phase_mark(molecule)
+        molecule.phase ? Model::Molecule::PHASE_SPELLINGS.fetch(molecule.phase) : ""
       end
 
       def molecule_annotations(molecule)

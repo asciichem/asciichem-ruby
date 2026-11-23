@@ -22,17 +22,24 @@ module AsciiChem
         prefix = blank?(molecule.coefficient) ? "" : molecule.coefficient.to_s
         stereo = molecule.stereo ? "(#{molecule.stereo_letter})-" : ""
         body = molecule.nodes.map { |n| render_node(n) }.join
+        phase = phase_mark(molecule)
         state = state_mark(molecule)
         if @inside_ce
-          "#{stereo}#{prefix}#{body}#{state}"
+          "#{stereo}#{prefix}#{body}#{phase}#{state}"
         else
-          "\\ce{#{stereo}#{prefix}#{body}#{state}}"
+          "\\ce{#{stereo}#{prefix}#{body}#{phase}#{state}}"
         end
       end
 
       # mhchem's own output form for the phase mark.
       def state_mark(molecule)
         molecule.state ? (molecule.state == :precipitate ? "\\downarrow" : "\\uparrow") : ""
+      end
+
+      # The phase as upright text; the spelling carries no TeX-special
+      # characters but rides \\text{} per the mhchem convention.
+      def phase_mark(molecule)
+        molecule.phase ? "\\text{#{Model::Molecule::PHASE_SPELLINGS.fetch(molecule.phase)}}" : ""
       end
 
       def visit_atom(atom)

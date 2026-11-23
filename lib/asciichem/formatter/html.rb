@@ -17,7 +17,12 @@ module AsciiChem
         prefix = molecule.coefficient.nil? || molecule.coefficient.to_s.empty? ? "" : "#{escape(molecule.coefficient)}"
         stereo = molecule.stereo ? "(#{escape(molecule.stereo_letter)})-" : ""
         body = molecule.nodes.map { |n| render_node(n) }.join
-        "#{stereo}#{prefix}#{body}#{state_mark(molecule)}"
+        "#{stereo}#{prefix}#{body}#{phase_mark(molecule)}#{state_mark(molecule)}"
+      end
+
+      # The phase as its literal spelling; no HTML-special characters.
+      def phase_mark(molecule)
+        molecule.phase ? escape(Model::Molecule::PHASE_SPELLINGS.fetch(molecule.phase)) : ""
       end
 
       # The phase arrow as its HTML entity: &darr; / &uarr;.

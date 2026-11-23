@@ -26,7 +26,12 @@ module AsciiChem
         prefix = molecule.coefficient.nil? || molecule.coefficient.to_s.empty? ? "" : molecule.coefficient.to_s
         stereo = molecule.stereo ? "(#{molecule.stereo_letter})-" : ""
         body = molecule.nodes.map { |n| render_node(n) }.join
-        "#{stereo}#{prefix}#{body}#{state_mark(molecule)}"
+        "#{stereo}#{prefix}#{body}#{phase_mark(molecule)}#{state_mark(molecule)}"
+      end
+
+      # The literal phase spelling, tight to the units.
+      def phase_mark(molecule)
+        molecule.phase ? Model::Molecule::PHASE_SPELLINGS.fetch(molecule.phase) : ""
       end
 
       # The unicode arrow, same glyph MathML typesets.
