@@ -72,7 +72,7 @@ module AsciiChem
         case bond.kind
         when :single then "-"
         when :double then "="
-        when :triple then "\\\\equiv{}"
+        when :triple then "\\equiv{}"
         else bond.ascii
         end
       end
