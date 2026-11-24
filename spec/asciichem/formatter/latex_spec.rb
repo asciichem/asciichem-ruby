@@ -38,6 +38,11 @@ RSpec.describe AsciiChem::Formatter::Latex do
   it "renders single bonds" do
     expect(render("H-O-H")).to eq("\\ce{H-O-H}")
   end
+
+  it "renders double and triple bonds as mhchem bond macros" do
+    expect(render("C=C")).to eq("\\ce{C=C}")
+    expect(render("HC#CH")).to eq("\\ce{HC\\equiv{}CH}")
+  end
 end
 
 RSpec.describe "donation-arrow LaTeX" do
