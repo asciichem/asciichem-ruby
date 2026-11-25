@@ -3,6 +3,14 @@
 All notable changes to AsciiChem are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.16.1] - 2026-11-25
+
+### Fixed
+
+- The LaTeX formatter emits the triple bond as the mhchem bond macro
+  `\equiv{}` (as mhchem itself typesets `#`) instead of `\\equiv{}`
+  — a LaTeX line break, not a bond.
+
 ## [1.2.16.0] - 2026-11-23
 
 ### Added
