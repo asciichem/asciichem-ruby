@@ -256,7 +256,10 @@ RSpec.describe 'asciichem-tests conformance corpus' do
       it "#{id} round-trips via CML (L3)" do
         skip 'not flagged' unless fixture['cmlRoundTrip']
 
-        expect(AsciiChem::Cml.parse(AsciiChem.parse(input).to_cml).to_text).to eq(input)
+        # An alias-spelling input lands on the canonical text (the
+        # fixture's `text` field records it; defaults to the input).
+        expected = fixture['text'] || input
+        expect(AsciiChem::Cml.parse(AsciiChem.parse(input).to_cml).to_text).to eq(expected)
       end
     else
       it "#{id} rejects with ParseError" do
