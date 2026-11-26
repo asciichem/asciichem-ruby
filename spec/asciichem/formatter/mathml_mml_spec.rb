@@ -35,8 +35,10 @@ RSpec.describe "MathML emission relies on the mml contract model" do
   it "grafts embedded math through the Mml graph" do
     xml = AsciiChem.parse("`x^2 + 1` H_2O").to_mathml
     expect(parses_under_mml?(xml)).to be(true)
-    expect(xml).to include("<mstyle")
-    expect(xml).to include("<msup>")
+    # The graft re-declares the namespace on each top-level child of
+    # the engine's <math> (plurimath 0.12's MathML-4 output carries no
+    # <mstyle> wrapper — plurimath#477).
+    expect(xml).to include('<msup xmlns="http://www.w3.org/1998/Math/MathML">')
     expect(xml).to include("<mi>x</mi>")
     expect(xml).to include("<mn>2</mn>")
   end
@@ -44,12 +46,12 @@ RSpec.describe "MathML emission relies on the mml contract model" do
   it "round-trips embedded math through Mml with the superscript intact" do
     xml = AsciiChem.parse("`x^2 + 1`").to_mathml
     math = Mml.parse(xml, version: 3)
-    # <math><mrow><mrow><mstyle>…: formula wrapper, embedded-math
-    # wrapper, then the grafted fragment.
-    mstyle = math.mrow_value.first.mrow_value.first.mstyle_value.first
-    expect(mstyle.msup_value.first.mi_value.map(&:value)).to eq([["x"]])
-    expect(mstyle.msup_value.first.mn_value.map(&:value)).to eq([["2"]])
-    expect(mstyle.mo_value.map(&:value).flatten).to eq(["+"])
+    # <math><mrow><mrow>…: formula wrapper, embedded-math wrapper,
+    # then the grafted fragment (no <mstyle> level — plurimath#477).
+    fragment = math.mrow_value.first.mrow_value.first
+    expect(fragment.msup_value.first.mi_value.map(&:value)).to eq([["x"]])
+    expect(fragment.msup_value.first.mn_value.map(&:value)).to eq([["2"]])
+    expect(fragment.mo_value.map(&:value).flatten).to eq(["+"])
   end
 
   it "keeps the fallback row when the fragment cannot be parsed" do
