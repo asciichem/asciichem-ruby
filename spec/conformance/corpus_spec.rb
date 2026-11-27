@@ -42,6 +42,18 @@ RSpec.describe 'asciichem-tests conformance corpus' do
     expect(cases.length).to be > 100
   end
 
+  # The depiction family's golden bytes (asciichem-rs#82) gate the
+  # structural SVG byte-exactly against the reference render. The
+  # elkrb structural path here is not the byte reference, so the rows
+  # report as a visible skip rather than silently passing — the skip
+  # lifts when this repo's structural SVG retires onto the shared
+  # layout contract.
+  depiction_cases = cases.select { |c| c.key?('svg') }
+  it 'reports the depiction family as a visible skip' do
+    skip "the elkrb structural path is not the byte reference; #{depiction_cases.length} depiction rows ungated" if depiction_cases.any?
+    expect(depiction_cases).to be_empty
+  end
+
   parser_cases = cases.select { |c| c.key?('input') && !c.key?('lint') && !c.key?('convention') }
 
   # Structure interchange (TODO.v2 09): SMILES and molfile ingest under
