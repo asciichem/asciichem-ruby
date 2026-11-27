@@ -52,12 +52,52 @@ module AsciiChem
     # numbers only: a fractional remainder means the Hückel arithmetic
     # cannot decide (fused aromatic-schematic atoms), and perception
     # declines rather than invents.
-    def hydrogen_valence_sum(atom_index, edges)
+    #
+    # When a detected aromatic five-membered ring is supplied, its
+    # lone-pair donation donor counts its ring bonds as the kekulized
+    # singles the donation model implies (pyrrole N: two singles + one
+    # H = valence 3 → one implicit hydrogen; furan O: two singles =
+    # valence 2 → none) — the blanket 1.5 sum over-values a donor
+    # (3.0 against valence 2 or 3) and would decline exactly the
+    # heteroatoms the donation rule exists to answer.
+    def hydrogen_valence_sum(atom_index, edges, ring = nil, atoms = nil)
+      donor = ring && atoms && donation_donor?(atoms[atom_index], atoms, atom_index, edges, ring)
       edges.sum do |edge|
         next 0 unless edge.from == atom_index || edge.to == atom_index
 
-        edge.kind == :aromatic ? 1.5 : BOND_ORDER.fetch(edge.kind, 1)
+        if edge.kind == :aromatic
+          donor ? 1.0 : 1.5
+        else
+          BOND_ORDER.fetch(edge.kind, 1)
+        end
       end
+    end
+
+    # The donation donor of an aromatic five-membered ring: a
+    # lone-pair-donating element with no in-system double bond of its
+    # own (its 2π come from the lone pair), uncharged, with no stated
+    # hydrogens (a stated count is the source's word — never
+    # re-derived), and **unique among nitrogens** — the donation is
+    # one lone pair per ring, so a plain `n` beside another donor
+    # element (imidazole's `n` beside an `[nH]`, oxazole's `n` beside
+    # the `o`) is pyridine-type: it keeps the blanket Hückel sum and
+    # answers zero. O and S are the preferred donors and do not defer
+    # (oxazole's `o` stays the donor beside its `n`).
+    def donation_donor?(atom, atoms, atom_index, edges, ring)
+      return false unless ring.length == 5
+      return false unless ring.include?(atom_index)
+      return false if atom.charge || atom.hydrogens
+      return false unless LONE_PAIR_DONORS.include?(atom.element)
+      return false if in_system_double?(atom_index, edges, ring)
+      if atom.element == 'N'
+        return false if ring.any? do |other_index|
+          next false if other_index == atom_index
+
+          LONE_PAIR_DONORS.include?(atoms[other_index].element)
+        end
+      end
+
+      true
     end
 
     # Implicit hydrogens for an atom: the smallest default valence

@@ -10,22 +10,27 @@ RSpec.describe AsciiChem::Perception do
     AsciiChem::Structure::Graph.build(molecule)
   end
 
-  describe 'implicit hydrogens' do
-    def hydrogens_in(smiles, element, position = 0)
-      atoms, edges = graph_for(smiles)
-      picked = atoms.select { |a| a.element == element }[position]
-      order = described_class.hydrogen_valence_sum(atoms.index(picked), edges)
-      described_class.implicit_hydrogens(picked, order)
-    end
+  def hydrogens_in(smiles, element, position = 0)
+    atoms, edges = graph_for(smiles)
+    picked = atoms.select { |a| a.element == element }[position]
+    index = atoms.index(picked)
+    ring = described_class.aromatic_rings(atoms, edges).find { |r| r.include?(index) }
+    order = described_class.hydrogen_valence_sum(index, edges, ring, atoms)
+    described_class.implicit_hydrogens(picked, order)
+  end
 
-    def all_hydrogens(smiles)
-      atoms, edges = graph_for(smiles)
-      atoms.each_with_index.map do |atom, index|
-        described_class.implicit_hydrogens(
-          atom, described_class.hydrogen_valence_sum(index, edges)
-        )
-      end
+  def all_hydrogens(smiles)
+    atoms, edges = graph_for(smiles)
+    rings = described_class.aromatic_rings(atoms, edges)
+    atoms.each_with_index.map do |atom, index|
+      ring = rings.find { |r| r.include?(index) }
+      described_class.implicit_hydrogens(
+        atom, described_class.hydrogen_valence_sum(index, edges, ring, atoms)
+      )
     end
+  end
+
+  describe 'implicit hydrogens' do
 
     it 'gives bare methane carbon four implicit hydrogens' do
       expect(hydrogens_in('C', 'C')).to eq(4)
@@ -118,6 +123,46 @@ RSpec.describe AsciiChem::Perception do
     it 'does not perceive a four-pi or three-membered ring' do
       expect(described_class.aromatic_rings(*graph_for('C1=CCC=C1'))).to be_empty
       expect(described_class.aromatic_rings(*graph_for('C1=CC1'))).to be_empty
+    end
+  end
+
+  describe 'five-membered aromatic donation donors' do
+    it 'answers furan oxygen zero implicit hydrogens (was declined)' do
+      expect(hydrogens_in('c1ccoc1', 'O')).to eq(0)
+    end
+
+    it 'answers thiophene sulfur zero implicit hydrogens (was declined)' do
+      expect(hydrogens_in('c1ccsc1', 'S')).to eq(0)
+    end
+
+    it 'answers unstated-H pyrrole nitrogen one implicit hydrogen (was declined)' do
+      expect(hydrogens_in('c1ccnc1', 'N')).to eq(1)
+    end
+
+    it 'keeps a stated count winning on [nH] pyrrole nitrogen' do
+      expect(hydrogens_in('c1cc[nH]c1', 'N')).to eq(0)
+    end
+
+    it 'answers imidazole by donation type: the [nH] is stated, the plain n is pyridine-type zero' do
+      expect(hydrogens_in('c1c[nH]cn1', 'N', 0)).to eq(0)
+      expect(hydrogens_in('c1c[nH]cn1', 'N', 1)).to eq(0)
+    end
+
+    it 'keeps the donation unique: oxazole nitrogen is pyridine-type beside the oxygen' do
+      expect(hydrogens_in('c1cnoc1', 'N')).to eq(0)
+      expect(hydrogens_in('c1cnoc1', 'O')).to eq(0)
+    end
+
+    it 'leaves six-membered rings untouched: pyridine nitrogen has none' do
+      expect(hydrogens_in('c1ccncc1', 'N')).to eq(0)
+    end
+
+    it 'leaves benzene carbons at one' do
+      expect(all_hydrogens('c1ccccc1')).to all(eq(1))
+    end
+
+    it 'still declines a charged five-ring donor' do
+      expect(hydrogens_in('c1cc[o+]c1', 'O')).to be_nil
     end
   end
 end
