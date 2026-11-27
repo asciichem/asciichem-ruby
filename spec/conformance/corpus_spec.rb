@@ -147,9 +147,12 @@ RSpec.describe 'asciichem-tests conformance corpus' do
     it "#{id} perceives the shared implicit hydrogens" do
       molecule = AsciiChem.parse_smiles(fixture.fetch('smiles')).nodes.first
       atoms, edges = AsciiChem::Structure::Graph.build(molecule)
+      rings = AsciiChem::Perception.aromatic_rings(atoms, edges)
       actual = atoms.each_with_index.map do |atom, index|
+        ring = rings.find { |r| r.include?(index) }
         AsciiChem::Perception.implicit_hydrogens(
-          atom, AsciiChem::Perception.hydrogen_valence_sum(index, edges)
+          atom,
+          AsciiChem::Perception.hydrogen_valence_sum(index, edges, ring, atoms)
         )
       end
       expect(actual).to eq(expected.fetch('implicitHydrogens'))
