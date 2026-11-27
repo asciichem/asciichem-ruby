@@ -93,7 +93,7 @@ module AsciiChem
 
             @perceived_hydrogens[index] = AsciiChem::Perception.implicit_hydrogens(
               atoms[index],
-              AsciiChem::Perception.hydrogen_valence_sum(index, edges)
+              AsciiChem::Perception.hydrogen_valence_sum(index, edges, ring, atoms)
             )
           end
           ring.each_with_index do |atom, i|
@@ -105,10 +105,11 @@ module AsciiChem
 
       # Hydrogens the written token must state: the source's own count
       # wins; otherwise only a ring PERCEIVED from Kekulé bond orders
-      # gets perception's implicit count. A source-aromatic atom
-      # already states its hydrogens the way SMILES does (`[nH]`), and
-      # aromatic 1.5 bond orders do not map onto heteroatom valences
-      # (thiophene's S would otherwise acquire a phantom H).
+      # gets perception's implicit count. Source-aromatic heteroatoms
+      # need no stated H in the token: the donation-donor rule
+      # (perception.rb) re-derives the count deterministically on the
+      # next read — pyrrole round-trips as `c1ccnc1` and still
+      # perceives its N hydrogen.
       def writing_hydrogens(index)
         stated = @atoms[index].hydrogens
         return stated unless stated.nil?
