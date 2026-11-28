@@ -54,6 +54,18 @@ RSpec.describe 'asciichem-tests conformance corpus' do
     expect(depiction_cases).to be_empty
   end
 
+  # The molfile-write family's golden bytes (the cross-runtime writer
+  # contract) gate the laid writer byte-exactly. This repo's identity
+  # seam is the unlaid contract (layout: false, zero coordinates), so
+  # the rows report as a visible skip rather than silently passing —
+  # the skip lifts when a laid writer lands here under the shared
+  # semantic.
+  write_cases = cases.select { |c| c.key?('writtenMolfile') }
+  it 'reports the molfile-write family as a visible skip' do
+    skip "the identity seam is the unlaid contract; #{write_cases.length} molfile-write rows ungated" if write_cases.any?
+    expect(write_cases).to be_empty
+  end
+
   parser_cases = cases.select { |c| c.key?('input') && !c.key?('lint') && !c.key?('convention') }
 
   # Structure interchange (TODO.v2 09): SMILES and molfile ingest under
